@@ -397,6 +397,7 @@ function RealParticipant(pSocket,pTeamname){
 	this.updateScore = function(answerId,marks){
 		if(answerId == response){
 			score += bet;
+			console.log('answer: '+answerId+' answered:'+response);
 			this.setLastCorrect(true);
 		}
 		else{

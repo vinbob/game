@@ -264,6 +264,8 @@ function GameWorld(){
     		$('#question_area .bet').html(' inzet: <input type="number" id="bet" value="1" />	');
     	}
     	
+    	selectedAnswerId = false;
+    			
     	$('#bet').change(function() {
         // Get the value of 'bet' input field
         var betValue = $(this).val();
@@ -271,14 +273,12 @@ function GameWorld(){
         // Check if user is an official_participant or unofficial_participant and if the current state is SHOW_QUESTION or TEST_QUESTION
         if ((userType === 'official_participant' || userType === 'unofficial_participant') && (curState === states.SHOW_QUESTION || curState === states.TEST_QUESTION)) {
             // Send socket event with answerId and betValue
-            socket.emit('quiz_send_answer', { answerId: 404, bet: betValue });
+            socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
         }
     });
 		
 		var answers = stateParams.answers;				
 		$('#question_area .answers').html("");
-		
-		selectedAnswerId = false;
 		
 		for(var i=0;i<answers.length;i++){
 			var curLetter = String.fromCharCode(65 + i);
