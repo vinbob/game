@@ -261,7 +261,7 @@ function GameWorld(){
 		$('#question_area .question').html(stateParams.question);
 		
 		if((userType=='official_participant' || userType=='unofficial_participant') && (curState==states.SHOW_QUESTION || curState==states.TEST_QUESTION)){
-    		$('#question_area .bet').html(' inzet: <input type="number" id="bet" value="1" />	');
+    		$('#question_area .bet').html(' inzet: <input type="number" id="bet" value="1" step="1" />	');
     	}
     	
     	selectedAnswerId = false;
