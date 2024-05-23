@@ -9,17 +9,19 @@
 		<script src="js/jquery.min.js"></script>
 		<script src="js/jquery.plugin.min.js"></script>
 		<script src="js/jquery.countdown.min.js"></script>
-		<script src="socket.io/socket.io.js"></script>
+		<script src="https://cdn.socket.io/socket.io-2.3.1.js"></script>
+		<!--<script src="socket.io/socket.io.js"></script>-->
 		<script src="js/game/quiz.js"></script>
 	</head>
 <body>
-
+<!--
 <div class="element" id="timer_area" style="position: fixed; top:0px; height: 70px; width:100%; background-color: rgb(126, 197, 104); font-size: 2em; color:#fff; padding: 5px;">
 	<div align="center">
 		<div id="timer" style="font-size:1.5em"></div>
 		<div id="answer_status" style="font-size:1.5em"></div>
 	</div>
 </div>
+-->
 
 <div class="element" id="wait_area" style="display: table; height: 100vh; width:100%; overflow: hidden;">
 	<div style="display: table-cell; vertical-align: middle;">
@@ -43,6 +45,8 @@
 	</div>
 	<div class="answers">
 	</div>
+	<div class="bet" style="font-size: 2.5em">
+	</div>
 </div>
 
 <div class="element" id="controlpanel_area" style="width:100%; position: fixed; bottom: 0px; height: 60px; background-color: rgb(108, 108, 108); font-size: 2em; color:#000; padding-top: 7px; padding-right: 10px; padding-left: 10px;">
@@ -56,14 +60,12 @@
 		<span class="element" id="participant_area">
 			<span id="participant_rank" style="color:#fff"></span>
 		</span>
-		<span class="element" id="admin_area_show_answer">
-			<button class="btn btn-default" id="btn_admin_cancel_last_question">Cancel last Question</button>			
-		</span>		
 		<span class="element" id="admin_area_before_start">
 			<button class="btn btn-default" id="btn_admin_test_question">Test Question</button>
 			<button class="btn btn-default" id="btn_admin_start_quiz">Start Quiz</button>
 		</span>			
 		<span class="element" id="admin_area_after_start">
+    		<button class="btn btn-default" id="btn_admin_reveal_answer">Antwoord tonen</button>
 			<button class="btn btn-default" id="btn_admin_next_question">Next Question</button>
 			<button class="btn btn-default" id="btn_admin_end_quiz">End Quiz</button>
 		</span>

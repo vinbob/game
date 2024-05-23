@@ -1,4 +1,5 @@
 var states = {START:0,TEST_QUESTION:1,STARTING:2,SHOW_QUESTION:3,SHOW_ANSWER:4,END:5};
+var startingscore = 15;
 
 function Quizzes(){
 	var quizzes = {};
@@ -185,6 +186,12 @@ function Quizzes(){
 		if(quizId in quizzes)
 		quizzes[quizId].cancelLastQuestion();
 	}
+	
+	this.revealAnswer = function(quizId){
+		if(quizId in quizzes)
+		quizzes[quizId].revealAnswer(quizzes[quizId]);
+	}
+
 
 	this.getLeaderboard = function(quizId){
 		if(quizId in quizzes)
@@ -355,9 +362,10 @@ function RealParticipant(pSocket,pTeamname){
 
 	var teamname;
 	var response = false;
-	var score = 0;
+	var score = startingscore;
 	var rank = 1;
 	var lastCorrect = null;
+	var bet = 1;
 
 	this.initParentParent = function(pSocket){
 		this.initParent(pSocket);
@@ -371,8 +379,10 @@ function RealParticipant(pSocket,pTeamname){
 		teamname = pTeamname;
 	}
 
-	this.setResponse = function(answerId){
+	this.setResponse = function(answerId, betValue){
 		response = answerId;
+		bet = parseInt(betValue);
+		console.log(typeof bet);
 	}
 
 	this.getResponse = function(){
@@ -386,10 +396,11 @@ function RealParticipant(pSocket,pTeamname){
 
 	this.updateScore = function(answerId,marks){
 		if(answerId == response){
-			score += marks;
+			score += bet;
 			this.setLastCorrect(true);
 		}
 		else{
+    		score -= bet;
 			this.setLastCorrect(false);
 		}
 	}
@@ -401,7 +412,7 @@ function RealParticipant(pSocket,pTeamname){
 	}
 
 	this.resetScore = function(){
-		score = 0;
+		score = startingscore;
 	}
 
 	this.getScore = function(){
@@ -495,8 +506,8 @@ function Question(){
 	var answers = [];
 	var correctAnswerId = 0;
 	var pic = "";
-	var time = 30;
-	var marks = 5;
+	var time = 25;
+	var marks = 15;
 
 	this.setQuestion = function(pQuestion){
 		question = pQuestion;
@@ -786,11 +797,11 @@ function Quiz(pQuizId){
 
 		this.sendUpdatesToEveryone({});
 
-		timer.start(testQuestion.getTime(),function(quiz){
-			return function(){
-				quiz.showAnswer();
-			}
-		}(this));
+		//timer.start(testQuestion.getTime(),function(quiz){
+			//return function(){
+			//	quiz.showAnswer();
+			//}
+		//}(this));
 	}
 
 	this.showQuestion = function(question){
@@ -800,11 +811,11 @@ function Quiz(pQuizId){
 
 		this.sendUpdatesToEveryone({});
 
-		timer.start(question.getTime(),function(quiz){
-			return function(){
-				quiz.showAnswer();
-			}
-		}(this));
+		//timer.start(question.getTime(),function(quiz){
+			//return function(){
+			//	quiz.showAnswer();
+			//}
+		//}(this));
 	}
 
 	this.collectResponse = function(participant,response){
@@ -812,8 +823,14 @@ function Quiz(pQuizId){
 		if(!(curState==states.SHOW_QUESTION || curState==states.TEST_QUESTION)) return;
 
 		var submittedAnswerId = response.answerId;
-		participant.setResponse(submittedAnswerId);
+		var betValue = response.bet;
+		
+		participant.setResponse(submittedAnswerId, betValue);
 	}
+	
+	this.revealAnswer = function(quiz){
+    	quiz.showAnswer();
+  }
 
 	this.showAnswer = function(){
 		var curState = quizState.get();

@@ -92,13 +92,8 @@ function GameWorld(){
 			return false;
 		});
 		
-		$('#btn_admin_cancel_last_question').click(function(e){
-			if(confirm("Are you sure you want to cancel the last question?")){
-				if(confirm("Are you really sure?")){
-					socket.emit('quiz_admin_cancel_last_question');
-				}
-			}
-			
+		$('#btn_admin_reveal_answer').click(function(e){
+			socket.emit('quiz_admin_reveal_answer');
 			return false;
 		});
 		
@@ -263,7 +258,22 @@ function GameWorld(){
 		if(stateParams.pic!='') $('#question_area .pic').html("<img style='max-width: 500px; width:100%' src='"+stateParams.pic+"' />");
 		else $('#question_area .pic').html('');
 		
-		$('#question_area .question').html(stateParams.question + ' (' + stateParams.marks + ')' );
+		$('#question_area .question').html(stateParams.question);
+		
+		if((userType=='official_participant' || userType=='unofficial_participant') && (curState==states.SHOW_QUESTION || curState==states.TEST_QUESTION)){
+    		$('#question_area .bet').html(' inzet: <input type="number" id="bet" value="1" />	');
+    	}
+    	
+    	$('#bet').change(function() {
+        // Get the value of 'bet' input field
+        var betValue = $(this).val();
+        
+        // Check if user is an official_participant or unofficial_participant and if the current state is SHOW_QUESTION or TEST_QUESTION
+        if ((userType === 'official_participant' || userType === 'unofficial_participant') && (curState === states.SHOW_QUESTION || curState === states.TEST_QUESTION)) {
+            // Send socket event with answerId and betValue
+            socket.emit('quiz_send_answer', { answerId: 404, bet: betValue });
+        }
+    });
 		
 		var answers = stateParams.answers;				
 		$('#question_area .answers').html("");
@@ -283,7 +293,8 @@ function GameWorld(){
 			$div.click(function(){
 				if((userType=='official_participant' || userType=='unofficial_participant') && (curState==states.SHOW_QUESTION || curState==states.TEST_QUESTION)){
 					selectedAnswerId = $(this).attr("answer_id");
-					socket.emit('quiz_send_answer',{answerId:selectedAnswerId});
+					var betValue = $('#bet').val(); // Get the value of 'bet' input field
+					socket.emit('quiz_send_answer',{answerId:selectedAnswerId, bet: betValue });
 					
 					$('#question_area .answers div').css("background-color","inherit");			
 					$(this).css("background-color","rgb(255, 255, 162)");

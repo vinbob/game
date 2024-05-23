@@ -202,6 +202,12 @@ io.on('connection', function(socket){
 			}
 		});
 		
+		socket.on('quiz_admin_reveal_answer',function(data){
+			if(isAdmin(socket,session)){
+				quizzes.revealAnswer(session.quiz_id);
+			}
+		});
+		
 		socket.on('quiz_admin_end_quiz',function(data){
 			if(isAdmin(socket,session)){
 				quizzes.endQuiz(session.quiz_id);
