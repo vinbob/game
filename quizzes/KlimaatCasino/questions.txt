@@ -3,14 +3,35 @@ img ijtema_2015.png
 admincode test
 quizcode test
 
-q Hoe zorgen broeikasgassen voor klimaatverandering?
+q 1. Welke stelling is waar? 
+a De temperatuur in Nederland is tegenwoordig hetzelfde als dat het 50 jaar geleden in het midden van Frankrijk was. 
+a Noorwegen wekt bijna al haar energie op een duurzame, schone manier op. 
+a De CO2 die mensen uitademen draagt niet bij aan klimaatverandering 
+ac Alle bovenstaande antwoorden zijn juist 
+!
+
+q 2. Hoe zorgen broeikasgassen voor klimaatverandering?
 a Ze zitten in de lucht en weerkaatsen zonlicht terug de ruimte in
 ac Ze zitten in de lucht en kaatsen warmte terug naar de aarde
 a Ze zorgen ervoor dat planten minder goed groeien 
 a Ze bevatten veel energie en warmen daarmee de lucht op
 !
 
-q Hoe kunnen we wetenschappers eigenlijk vertrouwen dat ze de waarheid spreken?  
+q 3. Hoe warm of koud zou de aarde zijn als de atmosfeer helemaal geen broeikasgassen zo bevatten? 
+ac Ongeveer 30 graden kouder, namelijk -18 graden 
+a Ongeveer 20 graden kouder, namelijk -8 graden 
+a Ongeveer 10 graden warmer, namelijk 25 graden 
+a Ongeveer gelijk aan nu, namelijk 15 graden 
+!
+
+q 4. Wat zijn de waarschijnlijke gevolgen als we komende dertig jaar niet genoeg tegen klimaatverandering doen? 
+a Doordat delen van de aarde onleefbaar worden zal het aantal klimaatvluchtelingen toenemen  
+a Ecosystemen kunnen omvallen (“kaartenhuis-effect/tipping point”) en klimaatgerelateerde ziektes zullen meer voorkomen  
+a Extreem weer zal vaker en krachtiger voorkomen en slachtoffers maken  
+ac Alle bovenstaande zijn waar 
+!
+
+q 5. Hoe kunnen we wetenschappers eigenlijk vertrouwen dat ze de waarheid spreken?  
 img 2.png
 a Wetenschappers leggen een eed af als ze beginnen aan hun carriere 
 a Wetenschappers mogen niet stemmen  
@@ -18,23 +39,37 @@ ac Bij al het werk wat ze doen kijken collega’s mee
 a Wetenschappers moeten al hun privégegevens delen, zoals telefoon en computer 
 !
 
-q Hoeveel procent van alle broeikasgasuitstoot is vanwege het maken en eten van voedsel? 
+q 6. Hoeveel procent van alle broeikasgasuitstoot is vanwege het maken en eten van voedsel? 
 a 0 %, voedsel veroorzaakt geen uitstoot van broeikasgassen 
 a 1 %, er is wel uitstoot vanwege voedsel, maar die is klein 
 a 10 %, voedsel veroorzaakt veel uitstoot, maar het is niet een van de belangrijkste oorzaken 
 ac 25 %, een kwart van alle uitstoot is vanwege voedsel 
 !
 
-q Hoeveel dragen koeien bij aan de wereldwijde uitstoot van broeikasgassen?  
+q 7. Welk van onderstaande uitspraken over duurzaamheid en voedsel is juist?  
+a Bijna 80% van de wereldwijde sojaproductie wordt gebruikt voor vegaproducten, de rest voor veevoer.  
+a Het eten van kaas is duurzamer dan ei of kip.  
+ac Wereldwijd kunnen we 10 miljard mensen op een duurzame manier van voedsel voorzien.  
+a In een duurzaam voedselsysteem is geen plek voor dierlijk voedsel.  
+!
+
+q 8. Hoeveel dragen koeien bij aan de wereldwijde uitstoot van broeikasgassen?  
 a 0 %, koeien dragen niet bij aan de opwarming van de aarde 
 a 1 %, de bijdrage van koeien is niet zo groot 
 a 6 %, net zoveel als alle fabrieken in de hele wereld 
 ac 10 %, net zoveel als alle vervoersmiddelen 
 !
 
-q Welk drankje heeft de kleinste broeikasgasuitstoot van boer tot bord?
+q 9. Welk drankje heeft de kleinste broeikasgasuitstoot van boer tot bord?
 ac Thee
 a Cappuccino 
 a Appelsap
 a Halfvolle melk 
+!
+
+q 10. Wat is de belangrijkste factor voor het verminderen van de klimaatimpact van voedsel? 
+a Het gebruiken van biologisch voedsel. 
+ac Het verminderen van voedselverspilling. 
+a Het kopen van alleen lokaal geproduceerd voedsel. 
+a Het verhogen van de transportafstand van voedsel. 
 !
