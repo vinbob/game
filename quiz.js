@@ -336,12 +336,14 @@ function Participant(){
 				if(fields[f]=='rank'){
 					if(this.isRealParticipant){
 						quizState.stateParams.rank = this.getRank();
+						quizState.stateParams.score = this.getScore();
 					}
 				}
 			}
 		}
 
 		socket.emit('quiz_state_update',quizState);
+		//console.log(quizState)
 	}
 }
 
@@ -382,7 +384,7 @@ function RealParticipant(pSocket,pTeamname){
 	this.setResponse = function(answerId, betValue){
 		response = answerId;
 		bet = parseInt(betValue);
-		console.log(typeof bet);
+		console.log(bet);
 	}
 
 	this.getResponse = function(){
@@ -810,7 +812,7 @@ function Quiz(pQuizId){
 		quizState.setShowQuestion(question.getQuestionOnly());
 		quizState.setHiddenParams({answerId: question.getAnswerId(),marks: question.getMarks()});
 
-		this.sendUpdatesToEveryone({});
+		this.sendUpdatesToEveryone({fields: ['rank']});
 
 		//timer.start(question.getTime(),function(quiz){
 			//return function(){
@@ -885,7 +887,7 @@ function Quiz(pQuizId){
 		questions.resetPosition();
 
 		quizState.setStarting({seconds: startWaitTime});
-		this.sendUpdatesToEveryone({});
+		this.sendUpdatesToEveryone({fields: ['rank']});
 
 		timer.start(startWaitTime,function(quiz){
 			return function(){

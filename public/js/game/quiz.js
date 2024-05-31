@@ -155,7 +155,7 @@ function GameWorld(){
 			return function(data){
 				var state = data.state;		
 				var stateParams = data.stateParams;
-				
+				console.log(data)
 				//if receiving updates from the server, hide the leaderboard
 				if($('#btn_show_leaderboard').attr('show_leaderboard')){
 					$('#btn_show_leaderboard').trigger("click");				
@@ -258,24 +258,93 @@ function GameWorld(){
 		if(stateParams.pic!='') $('#question_area .pic').html("<img style='max-width: 500px; width:100%' src='"+stateParams.pic+"' />");
 		else $('#question_area .pic').html('');
 		
-		$('#question_area .question').html(stateParams.question);
+		if(stateParams && stateParams.score){
+			var score = stateParams.score;
+		}
+		
+		var betValue = 0;
 		
 		if((userType=='official_participant' || userType=='unofficial_participant') && (curState==states.SHOW_QUESTION || curState==states.TEST_QUESTION)){
-    		$('#question_area .bet').html(' inzet: <input type="number" id="bet" value="1" step="1" style="width: 100px;" />	');
+    		var betarea = '<input type="submit" id="bet1" value="1" style="width: 40px;';
+    		if(score < 1){
+        		betarea += 'display: none;';
+        }
+    		betarea += '" /><input type="submit" id="bet10" value="10" style="width: 53px;';
+    		if(score < 10){
+        		betarea += 'display: none;';
+        }
+        betarea += '"/>';
+    		$('#question_area .bet').html(' inzetten: '+betarea);
+    		
+    		//showing the betted value
+    		var bettedarea = 'Inzet: <span id="totalbet">'+betValue+'</span> <input type="submit" id="min1" value="-1" style="width: 53px;';
+        bettedarea += '"/>';
+        
+    		$('#question_area .betted').html(bettedarea);
+    		$('#question_area .question').html("Kies je antwoord en zet in!");
+    	} else {
+    	   $('#question_area .question').html(stateParams.question);
     	}
     	
     	selectedAnswerId = false;
     			
-    	$('#bet').change(function() {
+    	$('#bet1').click(function() {
         // Get the value of 'bet' input field
-        var betValue = $(this).val();
-        
+        //var betValue = $(this).val();
+        betValue += 1;
+        if (betValue >= score){
+           $(this).css('display', 'none');
+        }
+        if (betValue >= (score - 9)){
+           $('#bet10').css('display', 'none');
+        }
+        $('#totalbet').html(betValue); //update betted value displayed
         // Check if user is an official_participant or unofficial_participant and if the current state is SHOW_QUESTION or TEST_QUESTION
-        if ((userType === 'official_participant' || userType === 'unofficial_participant') && (curState === states.SHOW_QUESTION || curState === states.TEST_QUESTION)) {
+        if (userType === 'official_participant' && curState === states.SHOW_QUESTION) {
             // Send socket event with answerId and betValue
             socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
         }
     });
+     $('#bet10').click(function() {
+        // Get the value of 'bet' input field
+        //var betValue = $(this).val();
+        betValue += 10;
+        if (betValue >= score){
+           $('#bet1').css('display', 'none');
+        }
+        if (betValue >= (score - 9)){
+           $(this).css('display', 'none');
+        }
+        $('#totalbet').html(betValue); //update betted value displayed
+        // Check if user is an official_participant or unofficial_participant and if the current state is SHOW_QUESTION or TEST_QUESTION
+        if (userType === 'official_participant' && curState === states.SHOW_QUESTION) {
+            // Send socket event with answerId and betValue
+            socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
+        }
+    });
+     $('#min1').click(function() {
+         if (betValue > 0){
+             betValue -= 1;
+         }
+         if ((score - betValue) > 0){
+             $('#bet1').css('display', 'inline');
+             if ((score - betValue) >= 10){
+                 $('#bet10').css('display', 'inline');
+                 if ((score - betValue) >= 100){
+                     $('#bet100').css('display', 'inline');
+                     if ((score - betValue) >= 1000){
+                         $('#bet1000').css('display', 'inline');
+                    }
+                }    
+            }
+         }
+         $('#totalbet').html(betValue);//update betted value displayed
+         // Check if user is an official_participant or unofficial_participant and if the current state is SHOW_QUESTION or TEST_QUESTION
+         if (userType === 'official_participant' && curState === states.SHOW_QUESTION) {
+             // Send socket event with answerId and betValue
+             socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
+         }
+     });
 		
 		var answers = stateParams.answers;				
 		$('#question_area .answers').html("");
@@ -284,22 +353,30 @@ function GameWorld(){
 			var curLetter = String.fromCharCode(65 + i);
 			var answerId = (i+1);
 			
-			var $div = $("<div>", { answer_id:answerId })
-			.attr("style","font-size:2em; padding-top: 10px; border: 1px solid; margin-top: 2px; overflow:hidden; cursor: pointer; cursor: hand; ")
-			.addClass("answer_"+answerId)
-			.append("<span/>")
-			.text(curLetter+'. '+answers[i]);
-			
-			$div.click(function(){
-				if((userType=='official_participant' || userType=='unofficial_participant') && (curState==states.SHOW_QUESTION || curState==states.TEST_QUESTION)){
-					selectedAnswerId = $(this).attr("answer_id");
-					var betValue = $('#bet').val(); // Get the value of 'bet' input field
-					socket.emit('quiz_send_answer',{answerId:selectedAnswerId, bet: betValue });
-					
-					$('#question_area .answers div').css("background-color","inherit");			
-					$(this).css("background-color","rgb(255, 255, 162)");
-				}
-			});
+			if(userType=='official_participant' && curState==states.SHOW_QUESTION){
+    			var $div = $("<div>", { answer_id:answerId })
+    			.attr("style","font-size:2em; padding-top: 10px; border: 1px solid; margin-top: 2px; overflow:hidden; cursor: pointer; cursor: hand; ")
+    			.addClass("answer_"+answerId)
+    			.append("<span/>")
+    			.text(curLetter);
+    			
+    			$div.click(function(){
+    				if((userType=='official_participant' || userType=='unofficial_participant') && (curState==states.SHOW_QUESTION || curState==states.TEST_QUESTION)){
+    					selectedAnswerId = $(this).attr("answer_id");
+    					//var betValue = $('#bet').val(); // Get the value of 'bet' input field
+    					socket.emit('quiz_send_answer',{answerId:selectedAnswerId, bet: betValue });
+    					
+    					$('#question_area .answers div').css("background-color","inherit");			
+    					$(this).css("background-color","rgb(255, 255, 162)");
+    				}
+    			});
+        } else {
+           var $div = $("<div>", { answer_id:answerId })
+    			.attr("style","font-size:2em; padding-top: 10px; border: 1px solid; margin-top: 2px; overflow:hidden; cursor: pointer; cursor: hand; ")
+    			.addClass("answer_"+answerId)
+    			.append("<span/>")
+    			.text(curLetter+'. '+answers[i]);
+        }
 			
 			$("#question_area .answers").append($div);			
 		}
@@ -354,9 +431,9 @@ function GameWorld(){
 	}
 	
 	this.updateGeneralParams = function(stateParams){
-		if(stateParams && stateParams.rank){
-			var rank = stateParams.rank;
-			$('#participant_rank').html('Rank: '+rank);
+		if(stateParams && stateParams.score){
+			var score = stateParams.score;
+			$('#participant_rank').html('Score: '+score);
 		}
 	}
 }
