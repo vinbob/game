@@ -1,4 +1,4 @@
-var states = {START:0,TEST_QUESTION:1,STARTING:2,SHOW_QUESTION:3,SHOW_ANSWER:4,END:5};
+var states = {START:0,TEST_QUESTION:1,STARTING:2,SHOW_QUESTION:3,SHOW_VIDEO:4,SHOW_ANSWER:5,END:6};
 var startingscore = 15;
 
 function Quizzes(){
@@ -191,6 +191,11 @@ function Quizzes(){
 		if(quizId in quizzes)
 		quizzes[quizId].revealAnswer(quizzes[quizId]);
 	}
+	
+	this.hideCoins = function(quizId){
+		if(quizId in quizzes)
+		quizzes[quizId].hideCoins(quizzes[quizId]);
+	}
 
 
 	this.getLeaderboard = function(quizId){
@@ -260,6 +265,7 @@ function Participants(){
 		for(var id in participants){
 			if(participants[id] && participants[id].isRealParticipant){
 				participants[id].updateScore(answerId,marks);
+				console.log("updating score of "+id);
 			}
 		}
 
@@ -343,7 +349,6 @@ function Participant(){
 		}
 
 		socket.emit('quiz_state_update',quizState);
-		//console.log(quizState)
 	}
 }
 
@@ -717,6 +722,11 @@ function QuizState(pQuizId){
 		curState = states.SHOW_ANSWER;
 		stateParams = pStateParams;
 	}
+	
+	this.setShowVideo = function(){
+		console.log('# Quiz state changed to SHOW_VIDEO ['+quizId+']');
+		curState = states.SHOW_VIDEO;
+	}
 
 	this.setEnd = function(pStateParams){
 		console.log('# Quiz state changed to END ['+quizId+']');
@@ -834,10 +844,15 @@ function Quiz(pQuizId){
 	this.revealAnswer = function(quiz){
     	quiz.showAnswer();
   }
+  
+  this.hideCoins = function(){
+      quizState.setShowVideo();
+      this.sendUpdatesToEveryone({});
+  }
 
 	this.showAnswer = function(){
 		var curState = quizState.get();
-		if(!(curState==states.SHOW_QUESTION || curState==states.TEST_QUESTION)) return;
+		if(!(curState==states.SHOW_QUESTION || curState==states.SHOW_VIDEO)) return;
 
 		var hiddenParams = quizState.getHiddenParams();
 		var answerId = hiddenParams.answerId;

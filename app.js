@@ -208,6 +208,12 @@ io.on('connection', function(socket){
 			}
 		});
 		
+		socket.on('show_video',function(data){
+			if(isAdmin(socket,session)){
+				quizzes.hideCoins(session.quiz_id);
+			}
+		});
+		
 		socket.on('quiz_admin_end_quiz',function(data){
 			if(isAdmin(socket,session)){
 				quizzes.endQuiz(session.quiz_id);

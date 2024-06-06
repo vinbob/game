@@ -1,5 +1,5 @@
 function GameWorld(){
-	var states = {START:0,TEST_QUESTION:1,STARTING:2,SHOW_QUESTION:3,SHOW_ANSWER:4,END:5};
+	var states = {START:0,TEST_QUESTION:1,STARTING:2,SHOW_QUESTION:3,SHOW_VIDEO:4,SHOW_ANSWER:5,END:6};
 	var socket = false;
 	
 	var userType = false;
@@ -42,7 +42,7 @@ function GameWorld(){
 				$('#leaderboard_area').show();
 				savedState = curState;
 		}
-		else if(state==states.TEST_QUESTION || state==states.SHOW_QUESTION || state==states.SHOW_ANSWER){
+		else if(state==states.TEST_QUESTION || state==states.SHOW_QUESTION || state==states.SHOW_ANSWER || state==states.SHOW_VIDEO){
 			$('#timer_area').show();
 			$('#question_area').show();
 		}
@@ -64,7 +64,7 @@ function GameWorld(){
 			else if(state==states.START || state==states.STARTING || state==states.END || state==states.TEST_QUESTION){
 				$('#admin_area_before_start').show();
 			}
-			else if(state==states.SHOW_ANSWER){
+			else if(state==states.SHOW_ANSWER || state==states.SHOW_VIDEO){
 				$('#admin_area_show_answer').show();
 			
 				if(stateParams && stateParams.test) $('#admin_area_before_start').show();
@@ -88,12 +88,19 @@ function GameWorld(){
 		});
 		
 		$('#btn_admin_next_question').click(function(e){
+			$('#question_area .bet').html('');
 			socket.emit('quiz_admin_next_question');
 			return false;
 		});
 		
 		$('#btn_admin_reveal_answer').click(function(e){
 			socket.emit('quiz_admin_reveal_answer');
+			return false;
+		});
+		
+		$('#btn_admin_show_video').click(function(e){
+			socket.emit('show_video');
+			$('#question_area .bet').html('<video width="640" height="480" controls><source src="content/KlimaatCasino/broeikaseffect.mp4" type="video/mp4">Your browser does not support the video tag.</video>');
 			return false;
 		});
 		
@@ -184,6 +191,9 @@ function GameWorld(){
 				else if(state == states.END){
 					gameWorld.end(stateParams);
 				}
+				else if(state == states.SHOW_VIDEO){
+    				gameWorld.showQuestion(stateParams);
+				}
 			};
 		}(this)
 		);
@@ -253,6 +263,8 @@ function GameWorld(){
 		this.setWaitStatus('Starting... Good luck and have fun!');
 	}
 	
+	var betValue = 0;
+	var temp_answer = 404;
 	this.showQuestion = function(stateParams){		
 		$('#answer_status').html("");
 		if(stateParams.pic!='') $('#question_area .pic').html("<img style='max-width: 500px; width:100%' src='"+stateParams.pic+"' />");
@@ -262,31 +274,40 @@ function GameWorld(){
 			var score = stateParams.score;
 		}
 		
-		var betValue = 0;
-		
-		if((userType=='official_participant' || userType=='unofficial_participant') && (curState==states.SHOW_QUESTION || curState==states.TEST_QUESTION)){
-    		var betarea = '<input type="submit" id="bet1" value="1" style="width: 40px;';
-    		if(score < 1){
-        		betarea += 'display: none;';
+		if(userType=='official_participant'){
+    		if (curState==states.SHOW_QUESTION){
+        		
+        		//when the new question is loaded, reset all values
+        		betValue = 0;
+        		temp_answer = 404;
+    		     selectedAnswerId = false;
+    		     socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
+    		     
+        		var betarea = '<input type="submit" id="bet1" value="1" style="width: 40px;';
+        		if(score < 1){
+            		betarea += 'display: none;';
+            }
+        		betarea += '" /><input type="submit" id="bet10" value="10" style="width: 53px;';
+        		if(score < 10){
+            		betarea += 'display: none;';
+            }
+            betarea += '"/>';
+        		$('#question_area .bet').html(' inzetten: '+betarea);
+        		
+        		//showing the betted value
+        		var bettedarea = 'Inzet: <span id="totalbet">'+betValue+'</span> <input type="submit" id="min1" value="-1" style="width: 53px;';
+            bettedarea += '"/>';
+            
+        		$('#question_area .betted').html(bettedarea);
+        		$('#question_area .question').html("Kies je antwoord en zet in!");
+        } else { //this means the state must be show video
+           $('#question_area .betted').html("Je inzet is "+betValue);
+        	 $('#question_area .question').html("");
+        	 $('#question_area .bet').html("");
         }
-    		betarea += '" /><input type="submit" id="bet10" value="10" style="width: 53px;';
-    		if(score < 10){
-        		betarea += 'display: none;';
-        }
-        betarea += '"/>';
-    		$('#question_area .bet').html(' inzetten: '+betarea);
-    		
-    		//showing the betted value
-    		var bettedarea = 'Inzet: <span id="totalbet">'+betValue+'</span> <input type="submit" id="min1" value="-1" style="width: 53px;';
-        bettedarea += '"/>';
-        
-    		$('#question_area .betted').html(bettedarea);
-    		$('#question_area .question').html("Kies je antwoord en zet in!");
-    	} else {
+    	} else { //the user is the admin
     	   $('#question_area .question').html(stateParams.question);
     	}
-    	
-    	selectedAnswerId = false;
     			
     	$('#bet1').click(function() {
         // Get the value of 'bet' input field
@@ -353,18 +374,24 @@ function GameWorld(){
 			var curLetter = String.fromCharCode(65 + i);
 			var answerId = (i+1);
 			
-			if(userType=='official_participant' && curState==states.SHOW_QUESTION){
+			if(userType=='official_participant' && (curState==states.SHOW_QUESTION || curState==states.SHOW_VIDEO)){
     			var $div = $("<div>", { answer_id:answerId })
     			.attr("style","font-size:2em; padding-top: 10px; border: 1px solid; margin-top: 2px; overflow:hidden; cursor: pointer; cursor: hand; ")
     			.addClass("answer_"+answerId)
     			.append("<span/>")
     			.text(curLetter);
     			
+    			if(curState==states.SHOW_VIDEO && temp_answer==answerId){
+        			$div.css("background-color","rgb(255, 255, 162)");
+        			console.log(answerId + " en " + temp_answer);
+    			}
+    			
     			$div.click(function(){
     				if((userType=='official_participant' || userType=='unofficial_participant') && (curState==states.SHOW_QUESTION || curState==states.TEST_QUESTION)){
     					selectedAnswerId = $(this).attr("answer_id");
     					//var betValue = $('#bet').val(); // Get the value of 'bet' input field
     					socket.emit('quiz_send_answer',{answerId:selectedAnswerId, bet: betValue });
+    					temp_answer = selectedAnswerId;
     					
     					$('#question_area .answers div').css("background-color","inherit");			
     					$(this).css("background-color","rgb(255, 255, 162)");
@@ -372,7 +399,7 @@ function GameWorld(){
     			});
         } else {
            var $div = $("<div>", { answer_id:answerId })
-    			.attr("style","font-size:2em; padding-top: 10px; border: 1px solid; margin-top: 2px; overflow:hidden; cursor: pointer; cursor: hand; ")
+    			.attr("style","font-size:2em; padding-top: 10px; border: 1px solid; margin-top: 2px; overflow:hidden;")
     			.addClass("answer_"+answerId)
     			.append("<span/>")
     			.text(curLetter+'. '+answers[i]);
