@@ -4,6 +4,7 @@ admincode test
 quizcode test
 
 q 1. Welke stelling is waar? 
+vid frankrijk.mp4
 a De temperatuur in Nederland is tegenwoordig hetzelfde als dat het 50 jaar geleden in het midden van Frankrijk was. 
 a Noorwegen wekt bijna al haar energie op een duurzame, schone manier op. 
 a De CO2 die mensen uitademen draagt niet bij aan klimaatverandering 
@@ -11,6 +12,8 @@ ac Alle bovenstaande antwoorden zijn juist
 !
 
 q 2. Hoe zorgen broeikasgassen voor klimaatverandering?
+vid broeikaseffect.mp4
+bonus Bouwer
 a Ze zitten in de lucht en weerkaatsen zonlicht terug de ruimte in
 ac Ze zitten in de lucht en kaatsen warmte terug naar de aarde
 a Ze zorgen ervoor dat planten minder goed groeien 
@@ -18,6 +21,8 @@ a Ze bevatten veel energie en warmen daarmee de lucht op
 !
 
 q 3. Hoe warm of koud zou de aarde zijn als de atmosfeer helemaal geen broeikasgassen zo bevatten? 
+vid min18.mp4
+bonus Ondernemer
 ac Ongeveer 30 graden kouder, namelijk -18 graden 
 a Ongeveer 20 graden kouder, namelijk -8 graden 
 a Ongeveer 10 graden warmer, namelijk 25 graden 
@@ -25,6 +30,7 @@ a Ongeveer gelijk aan nu, namelijk 15 graden
 !
 
 q 4. Wat zijn de waarschijnlijke gevolgen als we komende dertig jaar niet genoeg tegen klimaatverandering doen? 
+bonus Uitvinder
 a Doordat delen van de aarde onleefbaar worden zal het aantal klimaatvluchtelingen toenemen  
 a Ecosystemen kunnen omvallen (“kaartenhuis-effect/tipping point”) en klimaatgerelateerde ziektes zullen meer voorkomen  
 a Extreem weer zal vaker en krachtiger voorkomen en slachtoffers maken  
@@ -33,6 +39,7 @@ ac Alle bovenstaande zijn waar
 
 q 5. Hoe kunnen we wetenschappers eigenlijk vertrouwen dat ze de waarheid spreken?  
 img 2.png
+vid wetenschappers.mp4
 a Wetenschappers leggen een eed af als ze beginnen aan hun carriere 
 a Wetenschappers mogen niet stemmen  
 ac Bij al het werk wat ze doen kijken collega’s mee  

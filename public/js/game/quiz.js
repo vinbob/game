@@ -100,7 +100,7 @@ function GameWorld(){
 		
 		$('#btn_admin_show_video').click(function(e){
 			socket.emit('show_video');
-			$('#question_area .bet').html('<video width="640" height="480" controls><source src="content/KlimaatCasino/broeikaseffect.mp4" type="video/mp4">Your browser does not support the video tag.</video>');
+			$('#question_area .bet').html('<video width="640" height="480" controls><source src="content/KlimaatCasino/'+ vidlink + '" type="video/mp4">Your browser does not support the video tag.</video>');
 			return false;
 		});
 		
@@ -265,10 +265,15 @@ function GameWorld(){
 	
 	var betValue = 0;
 	var temp_answer = 404;
+	var vidlink = 'broeikaseffect.mp4';
+	var temp_role = "";
 	this.showQuestion = function(stateParams){		
 		$('#answer_status').html("");
 		if(stateParams.pic!='') $('#question_area .pic').html("<img style='max-width: 500px; width:100%' src='"+stateParams.pic+"' />");
 		else $('#question_area .pic').html('');
+		
+		vidlink = 'broeikaseffect.mp4';
+		if(stateParams.vid!='') vidlink = stateParams.vid;
 		
 		if(stateParams && stateParams.score){
 			var score = stateParams.score;
@@ -300,6 +305,9 @@ function GameWorld(){
             
         		$('#question_area .betted').html(bettedarea);
         		$('#question_area .question').html("Kies je antwoord en zet in!");
+        		if(stateParams.bonusrole == temp_role){
+            		$('#question_area .question').html("Bonusvraag! Dubbele punten verdienen.");
+        		}
         } else { //this means the state must be show video
            $('#question_area .betted').html("Je inzet is "+betValue);
         	 $('#question_area .question').html("");
@@ -460,7 +468,8 @@ function GameWorld(){
 	this.updateGeneralParams = function(stateParams){
 		if(stateParams && stateParams.score){
 			var score = stateParams.score;
-			$('#participant_rank').html('Score: '+score);
+			temp_role = stateParams.role;
+			$('#participant_rank').html(temp_role+' | Score: '+score);
 		}
 	}
 }

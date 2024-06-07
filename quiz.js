@@ -32,6 +32,8 @@ function Quizzes(){
 						var sAnswer = "a ";
 						var sCorrectAnswer = "ac ";
 						var sImg = "img ";
+						var sVid = "vid ";
+						var sRole = "bonus ";
 						var sQuestionEnd = "!";
 						var sAdminCode = "admincode ";
 						var sQuizCode = "quizcode ";
@@ -52,6 +54,16 @@ function Quizzes(){
 							}
 							else{
 								currentQuestion.setPic(contentPath + line.substr(sImg.length));
+							}
+						}
+						else if(line.startsWith(sVid)){
+    						if(currentQuestion){
+								currentQuestion.setVid(line.substr(sVid.length));
+							}
+						}
+						else if(line.startsWith(sRole)){
+    						if(currentQuestion){
+								currentQuestion.setBonus(line.substr(sRole.length));
 							}
 						}
 						else if(line.startsWith(sAnswer)){
@@ -261,10 +273,10 @@ function Participants(){
 		}
 	}
 
-	this.updateScores = function(answerId,marks){
+	this.updateScores = function(answerId,marks,bonusrl){
 		for(var id in participants){
 			if(participants[id] && participants[id].isRealParticipant){
-				participants[id].updateScore(answerId,marks);
+				participants[id].updateScore(answerId,marks,bonusrl);
 				console.log("updating score of "+id);
 			}
 		}
@@ -343,6 +355,7 @@ function Participant(){
 					if(this.isRealParticipant){
 						quizState.stateParams.rank = this.getRank();
 						quizState.stateParams.score = this.getScore();
+						quizState.stateParams.role = this.getRole();
 					}
 				}
 			}
@@ -368,11 +381,12 @@ function RealParticipant(pSocket,pTeamname){
 	this.isRealParticipant = true;
 
 	var teamname;
+	var role;
 	var response = false;
 	var score = startingscore;
 	var rank = 1;
 	var lastCorrect = null;
-	var bet = 1;
+	var bet = 0;
 
 	this.initParentParent = function(pSocket){
 		this.initParent(pSocket);
@@ -381,9 +395,17 @@ function RealParticipant(pSocket,pTeamname){
 	this.getTeamname = function(){
 		return teamname;
 	}
+	
+	this.getRole = function(){
+		return role;
+	}
 
 	this.setTeamname = function(pTeamname){
 		teamname = pTeamname;
+	}
+	
+	this.setRole = function(pRole){
+		role = pRole;
 	}
 
 	this.setResponse = function(answerId, betValue){
@@ -401,9 +423,10 @@ function RealParticipant(pSocket,pTeamname){
 		this.resetLastCorrect();
 	}
 
-	this.updateScore = function(answerId,marks){
+	this.updateScore = function(answerId,marks,bonusrl){
 		if(answerId == response){
 			score += bet;
+			if(role == bonusrl){score += bet;}
 			console.log('answer: '+answerId+' answered:'+response);
 			this.setLastCorrect(true);
 		}
@@ -451,12 +474,13 @@ function RealParticipant(pSocket,pTeamname){
 	this.setTeamname(pTeamname);
 }
 
-function OfficialParticipant(pSocket,pTeamname){
+function OfficialParticipant(pSocket,pTeamname, pRole){
 	this.__proto__ = new RealParticipant();
 	this.isOfficialParticipant = true;
 
 	this.initParentParent(pSocket);
 	this.setTeamname(pTeamname);
+	this.setRole(pRole);
 
 	this.getUserType = function(){
 		return 'official_participant';
@@ -514,8 +538,10 @@ function Question(){
 	var answers = [];
 	var correctAnswerId = 0;
 	var pic = "";
+	var vid = "";
 	var time = 25;
 	var marks = 15;
+	var bonusrole = "";
 
 	this.setQuestion = function(pQuestion){
 		question = pQuestion;
@@ -523,6 +549,18 @@ function Question(){
 
 	this.setPic = function(pPic){
 		pic = pPic;
+	}
+	
+	this.setVid = function(pVid){
+		vid = pVid;
+	}
+	
+	this.setBonus = function(pBonus){
+		bonusrole = pBonus;
+	}
+	
+	this.getBonus = function(){
+		return bonusrole;
 	}
 
 	this.setMarks = function(pMarks){
@@ -551,7 +589,7 @@ function Question(){
 	}
 
 	this.getQuestionOnly = function(){
-		return {question:question,answers:answers,pic:pic,time:time,marks:marks};
+		return {question:question,answers:answers,pic:pic,time:time,marks:marks,vid:vid,bonusrole:bonusrole};
 	}
 
 	this.getAnswerId = function(){
@@ -820,7 +858,7 @@ function Quiz(pQuizId){
 	this.showQuestion = function(question){
 		participants.resetResponses();
 		quizState.setShowQuestion(question.getQuestionOnly());
-		quizState.setHiddenParams({answerId: question.getAnswerId(),marks: question.getMarks()});
+		quizState.setHiddenParams({answerId: question.getAnswerId(),marks: question.getMarks(),bonusrole: question.getBonus()});
 
 		this.sendUpdatesToEveryone({fields: ['rank']});
 
@@ -856,10 +894,12 @@ function Quiz(pQuizId){
 
 		var hiddenParams = quizState.getHiddenParams();
 		var answerId = hiddenParams.answerId;
+		console.log(answerId);
 		var test = hiddenParams.test;
 		var marks = hiddenParams.marks;
+		var bonusrl = hiddenParams.bonusrole;
 
-		participants.updateScores(answerId,marks);
+		participants.updateScores(answerId,marks,bonusrl);
 
 		var params = {answerId:answerId};
 		if(typeof hiddenParams!='undefined' && typeof hiddenParams.test !=='undefined') params.test = true;

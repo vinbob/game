@@ -83,11 +83,15 @@ io.on('connection', function(socket){
 		
 		socket.on('connect_connect',function(data){
 			var type = data.type;
-			
 			var participant;
 			
 			if(type=='official' || type=='unofficial'){
 				var team_name = data.team_name;
+				var rolevalue = parseInt(data.q1)+parseInt(data.q2)+parseInt(data.q3)+parseInt(data.q4)+parseInt(data.q5);
+				var role = 'Bouwer';
+				if(rolevalue > 2) role = 'Ondernemer';
+				if(rolevalue > 3) role = 'Uitvinder';
+				
 				if(team_name) team_name = team_name.toUpperCase();
 				
 				if(!quizzes.isValidTeamname(session.quiz_id,team_name)){
@@ -103,7 +107,7 @@ io.on('connection', function(socket){
 						return;
 					}
 					else{
-						participant = new OfficialParticipant(socket,team_name);
+						participant = new OfficialParticipant(socket,team_name,role);
 					}
 				}
 				else if(type=='unofficial'){
