@@ -1,8 +1,3 @@
-title Klimaat Casino
-img ijtema_2015.png
-admincode test2
-quizcode test2
-
 q 1. Welke stelling is waar? 
 vid frankrijk.mp4
 a De temperatuur in Nederland is tegenwoordig hetzelfde als dat het 50 jaar geleden in het midden van Frankrijk was. 

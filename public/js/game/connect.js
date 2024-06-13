@@ -64,7 +64,22 @@ function Connect(){
 		});
 		
 		$('#btn_admin_connect').click(function(){
-			socket.emit('connect_connect',{type:'admin',admin_password:$('#admin_password').val()});
+			let qlist = []; 
+			for (let i in questions) {
+				if ($('#check'+i).is(':checked')) {
+					qlist.push($('#check'+i).val());
+				}
+			}
+			socket.emit('connect_connect',{type:'admin',admin_password:$('#admin_password').val(),questions:qlist});
+			return false;
+		});	
+		$('#btn_admin_questions').click(function(){
+			if ($('#admin_password').val() == 'test') {
+				$('#questions').show();
+				$(this).hide();
+			} else {
+				alert('onjuist wachtwoord');
+			}
 			return false;
 		});	
 	}
@@ -73,4 +88,10 @@ function Connect(){
 $(document).ready(function(){
 	var connect = new Connect();
 	connect.start();
+	qhtml = '';
+	for (let i in questions) {
+		qhtml += '<input type="checkbox" checked value="' +  i + '" id="check' + i + '" /> ' + questions[i].question;
+		qhtml += '<br />';
+	}
+	$('#questions').html(qhtml);
 });

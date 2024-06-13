@@ -13,8 +13,9 @@ function Index(){
 			
 			for(var i in data){
 				var q = data[i];
-				
-				html += "<div><a href='"+q.link+"'>* "+q.quiz+"</a></div>";
+				if (q.quiz == 'test'){
+					html += "<div><a href='"+q.link+"'>* "+q.quiz+"</a></div>";
+				}
 			}
 			
 			$('#quiz_list_area').html(html);

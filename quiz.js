@@ -4,6 +4,26 @@ var startingscore = 15;
 function Quizzes(){
 	var quizzes = {};
 
+	this.addQuestions = function(quizId,selectedQs){
+		console.log(selectedQs);
+		quizzes[quizId].emptyQuiz();
+		for (let i in selectedQs){
+			var selectedquestion = new Question();
+			selectedquestion.setVid(questions[selectedQs[i]].video);
+			selectedquestion.setBonus(questions[selectedQs[i]].bonusrole);
+			for (let a in questions[selectedQs[i]].answers){
+				var ans = questions[selectedQs[i]].answers[a];
+				if (ans.charAt(0) == '!'){ 
+					selectedquestion.addCorrectAnswer(ans.substring(1));
+				} else {
+					selectedquestion.addAnswer(ans);
+				}
+			}
+			selectedquestion.setQuestion(questions[selectedQs[i]].question);
+			quizzes[quizId].addQuestion(selectedquestion);
+		}
+	}
+	
 	this.loadAll = function(){
 		var files = fs.readdirSync('./quizzes');
 
@@ -128,8 +148,9 @@ function Quizzes(){
 
 	this.addParticipant = function(participant){
 		var quizId = participant.getQuizId();
-		if(quizId in quizzes)
-		quizzes[quizId].addParticipant(participant);
+		if(quizId in quizzes){
+			quizzes[quizId].addParticipant(participant);
+		}
 	}
 
 	this.isValidQuizId = function(quizId){
@@ -321,6 +342,7 @@ function Participant(){
 				socket.handshake.session.unique_id = socket.id;
 			}
 
+			//socket.handshake.session.quiz_id = 'test';
 			socket.handshake.session.ready_for_quiz = true;
 			socket.handshake.session.participantId = this.getUniqueId();
 			socket.handshake.session.save();
@@ -337,6 +359,7 @@ function Participant(){
 
 	this.getQuizId = function(){
 		if(socket && socket.handshake && socket.handshake.session && socket.handshake.session.quiz_id){
+			console.log(socket.handshake.session.quiz_id);
 			return socket.handshake.session.quiz_id;
 		}
 
@@ -802,6 +825,10 @@ function Quiz(pQuizId){
 
 	var startWaitTime = 5;
 
+	this.emptyQuiz = function(){
+		questions = new Questions();
+		quizState = new QuizState(quizId);
+	}
 	this.addParticipant = function(participant){
 		participants.addParticipant(participant);
 	}
