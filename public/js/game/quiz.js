@@ -131,12 +131,12 @@ function GameWorld(){
 				if(show!=null){
 					$('#leaderboard_area').hide();
 					$('#btn_show_leaderboard').attr("show_leaderboard",null);
-					$('#btn_show_leaderboard').html('Show Leaderboard');
+					$('#btn_show_leaderboard').html('scores');
 				}
 				else{
 					socket.emit('quiz_get_leaderboard');
 					$('#btn_show_leaderboard').attr("show_leaderboard",true);
-					$('#btn_show_leaderboard').html('Hide Leaderboard');				
+					$('#btn_show_leaderboard').html('Hide scores');				
 				}
 				
 				gameWorld.showAreasBasedOnRoleAndState(null,{leaderboard:true});
@@ -265,16 +265,20 @@ function GameWorld(){
 	
 	var betValue = 0;
 	var temp_answer = 404;
-	var vidlink = 'broeikaseffect.mp4';
+	var vidlink = '';
 	var temp_role = "";
 	this.showQuestion = function(stateParams){		
 		$('#answer_status').html("");
 		if(stateParams.pic!='') $('#question_area .pic').html("<img style='max-width: 500px; width:100%' src='"+stateParams.pic+"' />");
 		else $('#question_area .pic').html('');
 		
-		vidlink = 'broeikaseffect.mp4';
-		if(stateParams.vid!='') vidlink = stateParams.vid;
-		
+		vidlink = '';
+		$('#btn_admin_show_video').hide();
+		if(stateParams.vid!=''){
+			vidlink = stateParams.vid;
+			$('#btn_admin_show_video').show();
+		}
+
 		if(stateParams && stateParams.score){
 			var score = stateParams.score;
 		}
@@ -305,7 +309,7 @@ function GameWorld(){
             
         		$('#question_area .betted').html(bettedarea);
         		$('#question_area .question').html("Kies je antwoord en zet in!");
-        		if(stateParams.bonusrole == temp_role){
+        		if(stateParams.bonusrole.includes(temp_role)){
             		$('#question_area .question').html("Bonusvraag! Dubbele punten verdienen.");
         		}
         } else { //this means the state must be show video

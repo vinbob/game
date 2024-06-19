@@ -3,14 +3,43 @@ var startingscore = 15;
 
 function Quizzes(){
 	var quizzes = {};
-
+	var quiz = new Quiz('test');
+	quiz.setTitle('KlimaatCasino');
+	quizzes['test'] = quiz;
+	console.log("Ready!");
 	this.addQuestions = function(quizId,selectedQs){
 		console.log(selectedQs);
 		quizzes[quizId].emptyQuiz();
+		var onlybasis = true;
+		for (let i in selectedQs){ //Check if the quiz only consists of basis questions
+			if (questions[selectedQs[i]].category != 'Basis'){
+				onlybasis = false;
+			}
+		}
+		var bonusquestions = {};
+		for (let i in rolenames){ //set up the bonusquestion for each role
+			bonusquestions[rolenames[i]] = {qid:0,position:1000};
+		}
+		for (let i in selectedQs){
+			if (onlybasis == true || questions[selectedQs[i]].category != 'Basis'){ //if there are not only basis questions, skip the basis questions
+				var count = 0;
+				for (let j in questions[selectedQs[i]].bonusrole){
+					if (bonusquestions[rolenames[questions[selectedQs[i]].bonusrole[j]]].position > count){ // if the current highest position of the questions for this bonusrole is higher than that of the current question, make this question the highest
+						bonusquestions[rolenames[questions[selectedQs[i]].bonusrole[j]]].position = count;
+						bonusquestions[rolenames[questions[selectedQs[i]].bonusrole[j]]].qid = selectedQs[i];
+					}
+					count += 1;
+				}
+			}
+		}
 		for (let i in selectedQs){
 			var selectedquestion = new Question();
 			selectedquestion.setVid(questions[selectedQs[i]].video);
-			selectedquestion.setBonus(questions[selectedQs[i]].bonusrole);
+			for (let j in bonusquestions){
+				if (bonusquestions[j].qid == selectedQs[i]){ // if this question is the bonus question for a certain role
+					selectedquestion.setBonus(j); //set the bonusrole for this question
+				}
+			}
 			for (let a in questions[selectedQs[i]].answers){
 				var ans = questions[selectedQs[i]].answers[a];
 				if (ans.charAt(0) == '!'){ 
@@ -236,7 +265,7 @@ function Quizzes(){
 		return quizzes[quizId].getLeaderboard();
 	}
 
-	this.loadAll();
+	//this.loadAll();
 }
 
 function Participants(){
@@ -449,7 +478,7 @@ function RealParticipant(pSocket,pTeamname){
 	this.updateScore = function(answerId,marks,bonusrl){
 		if(answerId == response){
 			score += bet;
-			if(role == bonusrl){score += bet;}
+			if(bonusrl.includes(role)){score += bet;}
 			console.log('answer: '+answerId+' answered:'+response);
 			this.setLastCorrect(true);
 		}
@@ -564,7 +593,7 @@ function Question(){
 	var vid = "";
 	var time = 25;
 	var marks = 15;
-	var bonusrole = "";
+	var bonusrole = [];
 
 	this.setQuestion = function(pQuestion){
 		question = pQuestion;
@@ -579,7 +608,7 @@ function Question(){
 	}
 	
 	this.setBonus = function(pBonus){
-		bonusrole = pBonus;
+		bonusrole.push(pBonus);
 	}
 	
 	this.getBonus = function(){

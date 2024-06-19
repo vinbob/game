@@ -54,7 +54,8 @@ function Connect(){
 		});
 		
 		$('#btn_connect_official').click(function(){
-			socket.emit('connect_connect',{type:'official',team_name:$('#official_team_name').val(),quiz_code:$('#official_quiz_code').val(),q1:$('input[name="q1"]:checked').val(),q2:$('input[name="q2"]:checked').val(),q3:$('input[name="q3"]:checked').val(),q4:$('input[name="q4"]:checked').val(),q5:$('input[name="q5"]:checked').val()});
+			var pregameanswers = {q1:$('input[name="q1"]:checked').val(),q2:$('input[name="q2"]:checked').val(),q3:$('input[name="q3"]:checked').val(),q4:$('input[name="q4"]:checked').val(),q5:$('input[name="q5"]:checked').val()}
+			socket.emit('connect_connect',{type:'official',team_name:$('#official_team_name').val(),quiz_code:$('#official_quiz_code').val(),pregameanswers:pregameanswers});
 			return false;
 		});
 
@@ -89,9 +90,22 @@ $(document).ready(function(){
 	var connect = new Connect();
 	connect.start();
 	qhtml = '';
+	var categories = {};
 	for (let i in questions) {
-		qhtml += '<input type="checkbox" checked value="' +  i + '" id="check' + i + '" /> ' + questions[i].question;
-		qhtml += '<br />';
+		cat = questions[i].category;
+		if (!(cat in categories)){
+			categories[cat] = '<details><summary style="cursor:pointer;"><b>'+cat+'</b></summary><table>';
+		}
+		categories[cat] += '<tr><td><input type="checkbox" ';
+		if (cat == 'Basis'){
+			categories[cat] += 'checked ';
+		}
+		categories[cat] += 'value="' +  i + '" id="check' + i + '" /></td><td text-align="left"> ' + questions[i].question + '</td></tr>';
+	}
+	for (let i in categories){
+		qhtml += '';
+		qhtml += categories[i];
+		qhtml += '</table></details>';
 	}
 	$('#questions').html(qhtml);
 });

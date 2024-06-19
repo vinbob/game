@@ -88,11 +88,67 @@ io.on('connection', function(socket){
 			
 			if(type=='official' || type=='unofficial'){
 				var team_name = data.team_name;
-				var rolevalue = parseInt(data.q1)+parseInt(data.q2)+parseInt(data.q3)+parseInt(data.q4)+parseInt(data.q5);
-				var role = 'Bouwer';
-				if(rolevalue > 2) role = 'Ondernemer';
-				if(rolevalue > 3) role = 'Uitvinder';
+				var answerweights = {
+					q1: {
+						1: [0,1],
+						2: [0.5,0],
+						3: [0,0.5],
+						4: [1,0],
+						5: [0,0.5],
+						6: [1,0]
+					},
+					q2: {
+						1: [0,1],
+						2: [0,1],
+						3: [1,0],
+						4: [0,0],
+						5: [1,0],
+						6: [0,0]
+					},
+					q3: {
+						1: [0,0],
+						2: [1,0],
+						3: [0,0],
+						4: [1,0],
+						5: [0,0],
+						6: [0,1]
+					},
+					q4: {
+						1: [0,1],
+						2: [0.5,0],
+						3: [1,0],
+						4: [0,0],
+						5: [1,0],
+						6: [0,0]
+					},
+					q5: {
+						1: [0,0],
+						2: [0,0],
+						3: [0,0.5],
+						4: [1,0],
+						5: [0,0.5],
+						6: [1,0]
+					}};
+				var rolescores = {};
+				for (let rl in rolenames){
+					rolescores[rl] = 0;
+				}
+				for (let quest in data.pregameanswers){
+					for (let rl in rolescores){
+						rolescores[rl] += answerweights[quest][rl][parseInt(data.pregameanswers[quest])];
+					}
+				}
 				
+				let maxKey = null;
+				let maxValue = -Infinity;
+				for (let [key, value] of Object.entries(rolescores)) {
+					if (value > maxValue) {
+						maxValue = value;
+						maxKey = key;
+					}
+				}
+				var role = rolenames[maxKey];
+
 				if(team_name) team_name = team_name.toUpperCase();
 				
 				if(!quizzes.isValidTeamname(session.quiz_id,team_name)){
