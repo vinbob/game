@@ -253,6 +253,11 @@ function Quizzes(){
 		if(quizId in quizzes)
 		quizzes[quizId].revealAnswer(quizzes[quizId]);
 	}
+
+	this.updateLeaderboard = function(quizId, leaderboard){
+		if(quizId in quizzes)
+		quizzes[quizId].updateLeaderboard(quizzes[quizId], leaderboard);
+	}
 	
 	this.hideCoins = function(quizId){
 		if(quizId in quizzes)
@@ -371,7 +376,6 @@ function Participant(){
 				socket.handshake.session.unique_id = socket.id;
 			}
 
-			//socket.handshake.session.quiz_id = 'test';
 			socket.handshake.session.ready_for_quiz = true;
 			socket.handshake.session.participantId = this.getUniqueId();
 			socket.handshake.session.save();
@@ -388,7 +392,7 @@ function Participant(){
 
 	this.getQuizId = function(){
 		if(socket && socket.handshake && socket.handshake.session && socket.handshake.session.quiz_id){
-			console.log(socket.handshake.session.quiz_id);
+			//console.log(socket.handshake.session.quiz_id);
 			return socket.handshake.session.quiz_id;
 		}
 
@@ -414,6 +418,10 @@ function Participant(){
 		}
 
 		socket.emit('quiz_state_update',quizState);
+	}
+
+	this.leaderboardUpdates = function(quizState,leaderboard){
+		socket.emit('new_leaderboard',leaderboard);
 	}
 }
 
@@ -463,7 +471,6 @@ function RealParticipant(pSocket,pTeamname){
 	this.setResponse = function(answerId, betValue){
 		response = answerId;
 		bet = parseInt(betValue);
-		console.log(bet);
 	}
 
 	this.getResponse = function(){
@@ -472,6 +479,7 @@ function RealParticipant(pSocket,pTeamname){
 
 	this.resetResponse = function(){
 		response = false;
+		bet = 0;
 		this.resetLastCorrect();
 	}
 
@@ -520,6 +528,10 @@ function RealParticipant(pSocket,pTeamname){
 
 	this.resetLastCorrect = function(){
 		lastCorrect = null;
+	}
+
+	this.betValue = function(){
+		return bet;
 	}
 
 	this.initParentParent(pSocket);
@@ -661,7 +673,7 @@ function Leaderboard(){
 
 		for(var i=0;i<official_participants.length;i++){
 			var p = official_participants[i];
-			leaderboard['official'].push({team: entities.encode(p.getTeamname()), score: p.getScore(), rank: p.getRank(), isLastCorrect: p.isLastCorrect()});
+			leaderboard['official'].push({team: entities.encode(p.getTeamname()), score: p.getScore(), rank: p.getRank(), isLastCorrect: p.isLastCorrect(), response: p.getResponse(), betValue: p.betValue()});
 		}
 
 		for(var i=0;i<unofficial_participants.length;i++){
@@ -937,12 +949,16 @@ function Quiz(pQuizId){
 	
 	this.revealAnswer = function(quiz){
     	quiz.showAnswer();
-  }
+  	}
+
+	this.updateLeaderboard = function(quiz, leaderboard){
+		quiz.newLeaderboard(leaderboard);
+	}
   
-  this.hideCoins = function(){
-      quizState.setShowVideo();
-      this.sendUpdatesToEveryone({});
-  }
+	this.hideCoins = function(){
+		quizState.setShowVideo();
+		this.sendUpdatesToEveryone({});
+	}
 
 	this.showAnswer = function(){
 		var curState = quizState.get();
@@ -972,6 +988,10 @@ function Quiz(pQuizId){
 				}
 			}(this),5000);
 		}
+	}
+
+	this.newLeaderboard = function(leaderboard){
+		this.sendLeaderboardUpdate(leaderboard);
 	}
 
 	this.cancelLastQuestion = function(){
@@ -1034,9 +1054,21 @@ function Quiz(pQuizId){
 		}
 	}
 
+	this.sendLeaderboardUpdate = function(leaderboard){
+		var allParticipants = participants.getAll();
+		for(var p in allParticipants){
+			this.leaderboardUpdates(allParticipants[p],leaderboard);
+		}
+	}
+
 	this.sendUpdates = function(participant,params){
 		var summary = quizState.getSummary();
 		participant.sendUpdates(summary,params);
+	}
+
+	this.leaderboardUpdates = function(participant,leaderboard){
+		var summary = quizState.getSummary();
+		participant.leaderboardUpdates(summary,leaderboard);
 	}
 
 	this.setTitle = function(pTitle){

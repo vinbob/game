@@ -56,6 +56,7 @@ function Connect(){
 		$('#btn_connect_official').click(function(){
 			var pregameanswers = {q1:$('input[name="q1"]:checked').val(),q2:$('input[name="q2"]:checked').val(),q3:$('input[name="q3"]:checked').val(),q4:$('input[name="q4"]:checked').val(),q5:$('input[name="q5"]:checked').val()}
 			socket.emit('connect_connect',{type:'official',team_name:$('#official_team_name').val(),quiz_code:$('#official_quiz_code').val(),pregameanswers:pregameanswers});
+			socket.emit('update_leaderboard');
 			return false;
 		});
 
@@ -75,7 +76,7 @@ function Connect(){
 			return false;
 		});	
 		$('#btn_admin_questions').click(function(){
-			if ($('#admin_password').val() == 'test') {
+			if ($('#admin_password').val() == 'tttt') {
 				$('#questions').show();
 				$(this).hide();
 			} else {

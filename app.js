@@ -165,6 +165,10 @@ io.on('connection', function(socket){
 					}
 					else{
 						participant = new OfficialParticipant(socket,team_name,role);
+						//var leaderboard = quizzes.getLeaderboard(session.quiz_id);
+						//socket.emit('quiz_leaderboard',leaderboard);
+						//console.log('from connect_connect did quiz_leaderboard');
+						socket.emit('quiz_get_leaderboard');
 					}
 				}
 				else if(type=='unofficial'){
@@ -177,7 +181,7 @@ io.on('connection', function(socket){
 			else if(type=='admin'){
 				var admin_password = data.admin_password;
 				
-				if(admin_password == 'test'){
+				if(admin_password == 'tttt'){
 					quizzes.addQuestions('test',data.questions);
 					participant = new Administrator(socket);
 				} else if(quizzes.isValidAdminPassword(session.quiz_id,admin_password)){
@@ -206,6 +210,9 @@ io.on('connection', function(socket){
 			
 			participant.updateSocket(socket);
 			quizzes.sendUpdates(participant);
+			var leaderboard = quizzes.getLeaderboard(session.quiz_id);
+			//socket.emit('quiz_leaderboard',leaderboard);
+			socket.emit('new_leaderboard', leaderboard);
 		});
 		
 		socket.on('quiz_send_answer',function(data){
@@ -230,7 +237,8 @@ io.on('connection', function(socket){
 		
 		socket.on('quiz_get_leaderboard',function(data){
 			if(!session.ready_for_quiz){
-				socket.emit('quiz_init_nok');		
+				socket.emit('quiz_init_nok');	
+				console.log('quiz_init_nok');	
 				return;
 			}
 			
@@ -239,6 +247,7 @@ io.on('connection', function(socket){
 					
 			var leaderboard = quizzes.getLeaderboard(session.quiz_id);
 			socket.emit('quiz_leaderboard',leaderboard);
+			console.log('quiz_leaderboard from quiz_get_leaderboard');
 		});
 		
 		/*admin functions*/
@@ -270,6 +279,11 @@ io.on('connection', function(socket){
 			if(isAdmin(socket,session)){
 				quizzes.revealAnswer(session.quiz_id);
 			}
+		});
+
+		socket.on('update_leaderboard',function(data){
+			var leaderboard = quizzes.getLeaderboard(session.quiz_id);
+			quizzes.updateLeaderboard(session.quiz_id, leaderboard);
 		});
 		
 		socket.on('show_video',function(data){

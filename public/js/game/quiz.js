@@ -28,7 +28,8 @@ function GameWorld(){
 	
 	this.showAreasBasedOnRoleAndState = function(state,stateParams){
 		$('.element').hide();
-		
+		//console.log('now');
+		//socket.emit('quiz_get_leaderboard');
 		/*All users, all states*/
 		$('#controlpanel_area').show();
 		$('#generic_options_area').show();
@@ -90,11 +91,13 @@ function GameWorld(){
 		$('#btn_admin_next_question').click(function(e){
 			$('#question_area .bet').html('');
 			socket.emit('quiz_admin_next_question');
+			socket.emit('update_leaderboard');
 			return false;
 		});
 		
 		$('#btn_admin_reveal_answer').click(function(e){
 			socket.emit('quiz_admin_reveal_answer');
+			socket.emit('update_leaderboard');
 			return false;
 		});
 		
@@ -118,6 +121,7 @@ function GameWorld(){
 			if(confirm("Are you sure you want to leave the quiz? All your data will be lost. (score, etc.)")){
 				if(confirm("Are you really sure?")){
 					socket.emit('quiz_leave_quiz');
+					socket.emit('update_leaderboard');
 				}
 			}
 			
@@ -134,12 +138,13 @@ function GameWorld(){
 					$('#btn_show_leaderboard').html('scores');
 				}
 				else{
-					socket.emit('quiz_get_leaderboard');
+					//socket.emit('quiz_get_leaderboard');
+					socket.emit('update_leaderboard');
 					$('#btn_show_leaderboard').attr("show_leaderboard",true);
 					$('#btn_show_leaderboard').html('Hide scores');				
 				}
 				
-				gameWorld.showAreasBasedOnRoleAndState(null,{leaderboard:true});
+				//gameWorld.showAreasBasedOnRoleAndState(null,{leaderboard:true});
 			};
 		}(this)
 		);
@@ -162,7 +167,7 @@ function GameWorld(){
 			return function(data){
 				var state = data.state;		
 				var stateParams = data.stateParams;
-				console.log(data)
+				console.log(data);
 				//if receiving updates from the server, hide the leaderboard
 				if($('#btn_show_leaderboard').attr('show_leaderboard')){
 					$('#btn_show_leaderboard').trigger("click");				
@@ -197,58 +202,71 @@ function GameWorld(){
 			};
 		}(this)
 		);
-		
-		socket.on('quiz_leaderboard',function(data){			
-			var html = "";
-			html += "<div>";
-			
-			var types = ['official','unofficial'];
-			var names = {
-				'official' : 'Official Participants',
-				'unofficial' : 'Audience Participants'
-			};
-			
-			for(var t in types){
-				var participantsType = types[t];
-				var name = names[participantsType];
-				var elements = data[participantsType];
-				
-				html += "<h1>" + name + "</h1>";				
-				html += "<table class='table table-hover table-condensed table-striped table-bordered' style='width:80%; font-size: 1.8em'>";
-				
-				html += "<thead>";
-				html += "<tr>";
-				html += "<th style='width:50px' >" + "Rank" + "</th>" + "<th>" + "Team" + "</th>" + "<th>" + "Score" + "</th>";
-				html += "</tr>";
-				html += "</thead>";
-				
-				html += "<tbody>";
-				
-				for(var elem in elements){
-					var p = elements[elem];
+
+		socket.on('new_leaderboard',function(gameWorld){
+			return function(data){
+				console.log(data);	
+				if (userType == 'admin'){
+					console.log('isadmin');
+					var html = "";
+					html += "<div>";
 					
-					var colorStyle = "";
-					if(p.isLastCorrect === true){
-						colorStyle = "background-color: rgb(133, 255, 135)";
-					}
-					else if(p.isLastCorrect === false){
-						colorStyle = "background-color: rgb(255, 162, 162)";
+					var types = ['official'];
+					var names = {
+						'official' : 'Live-score',
+					};
+					
+					for(var t in types){
+						var participantsType = types[t];
+						var name = names[participantsType];
+						var elements = data[participantsType];
+						
+						html += "<h1>" + name + "</h1>";				
+						html += "<table class='table table-hover table-condensed table-striped table-bordered' style='width:80%; font-size: 1.8em'>";
+						
+						html += "<thead>";
+						html += "<tr>";
+						html += "<th style='width:50px' >" + "Rank" + "</th>" + "<th>" + "Speler" + "</th>" + "<th>" + "Score" + "</th><th>Antwoord</th><th>Inzet</th>";
+						html += "</tr>";
+						html += "</thead>";
+						
+						html += "<tbody>";
+						
+						for(var elem in elements){
+							var p = elements[elem];
+							
+							var colorStyle = "";
+							if(p.isLastCorrect === true){
+								colorStyle = "background-color: rgb(133, 255, 135)";
+							}
+							else if(p.isLastCorrect === false){
+								colorStyle = "background-color: rgb(255, 162, 162)";
+							}
+							
+							html += "<tr style='"+colorStyle+"; height:56px;'>";
+							var resp = '';
+							if(p.response){ // if an answer was selected, show a picture of a card facing down
+								resp = '<img src="../content/KlimaatCasino/card.png" width="30" />';
+							}
+							var betv = '';
+							if(p.betValue > 0){
+								betv = p.betValue;
+							}
+							html += "<td>" + p.rank + "</td>" + "<td>" + p.team + "</td>" + "<td>" + p.score + "</td>" + "<td>" + resp + "</td>" + "<td>" + betv + "</td>";
+							html += "</tr>";
+						}
+						
+						html += "</tbody>";
+						
+						html += "</table><br /><br /><br />";
 					}
 					
-					html += "<tr style='"+colorStyle+"'>";
-					html += "<td>" + p.rank + "</td>" + "<td>" + p.team + "</td>" + "<td>" + p.score + "</td>";
-					html += "</tr>";
+					$('#scores').html(html);
 				}
-				
-				html += "</tbody>";
-				
-				html += "</table>";
-			}
-			
-			console.log(html);
-			
-			$('#leaderboard_area').html(html);			
-		});
+			};
+		}(this)
+		);
+
 	}
 	
 	this.setWaitStatus = function(text){
@@ -336,6 +354,7 @@ function GameWorld(){
         if (userType === 'official_participant' && curState === states.SHOW_QUESTION) {
             // Send socket event with answerId and betValue
             socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
+			socket.emit('update_leaderboard');
         }
     });
      $('#bet10').click(function() {
@@ -353,6 +372,7 @@ function GameWorld(){
         if (userType === 'official_participant' && curState === states.SHOW_QUESTION) {
             // Send socket event with answerId and betValue
             socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
+			socket.emit('update_leaderboard');
         }
     });
      $('#min1').click(function() {
@@ -376,6 +396,7 @@ function GameWorld(){
          if (userType === 'official_participant' && curState === states.SHOW_QUESTION) {
              // Send socket event with answerId and betValue
              socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
+			 socket.emit('update_leaderboard');
          }
      });
 		
@@ -403,6 +424,7 @@ function GameWorld(){
     					selectedAnswerId = $(this).attr("answer_id");
     					//var betValue = $('#bet').val(); // Get the value of 'bet' input field
     					socket.emit('quiz_send_answer',{answerId:selectedAnswerId, bet: betValue });
+						socket.emit('update_leaderboard');
     					temp_answer = selectedAnswerId;
     					
     					$('#question_area .answers div').css("background-color","inherit");			
