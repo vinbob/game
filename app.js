@@ -165,9 +165,6 @@ io.on('connection', function(socket){
 					}
 					else{
 						participant = new OfficialParticipant(socket,team_name,role);
-						//var leaderboard = quizzes.getLeaderboard(session.quiz_id);
-						//socket.emit('quiz_leaderboard',leaderboard);
-						//console.log('from connect_connect did quiz_leaderboard');
 						socket.emit('quiz_get_leaderboard');
 					}
 				}
@@ -254,6 +251,8 @@ io.on('connection', function(socket){
 		socket.on('quiz_admin_start_quiz',function(data){
 			if(isAdmin(socket,session)){
 				quizzes.startQuiz(session.quiz_id);
+				var leaderboard = quizzes.getLeaderboard(session.quiz_id);
+				quizzes.updateLeaderboard(session.quiz_id, leaderboard);
 			}
 		});
 		

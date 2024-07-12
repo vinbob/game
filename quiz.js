@@ -404,14 +404,16 @@ function Participant(){
 	}
 
 	this.sendUpdates = function(quizState,params){
+		if(!this.isAdministrator && quizState.state != 6){
+			quizState.stateParams.score = this.getScore();
+			quizState.stateParams.role = this.getRole();
+		}
 		if(typeof params!=='undefined' && typeof params.fields!=='undefined'){
 			var fields = params.fields;
 			for(var f in fields){
 				if(fields[f]=='rank'){
 					if(this.isRealParticipant){
 						quizState.stateParams.rank = this.getRank();
-						quizState.stateParams.score = this.getScore();
-						quizState.stateParams.role = this.getRole();
 					}
 				}
 			}
