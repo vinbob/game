@@ -1,3 +1,13 @@
+var answers = [];
+var openquestion = false;
+var goodanswers = [];
+var wronganswers = [];
+var updateAnswerList = function(){};
+var receivedanswers = [];
+var answerMaker = function(){};
+function toUpdateAns(ans, dir){
+	updateAnswerList(ans, dir);
+}
 function GameWorld(){
 	var states = {START:0,TEST_QUESTION:1,STARTING:2,SHOW_QUESTION:3,SHOW_VIDEO:4,SHOW_ANSWER:5,END:6};
 	var socket = false;
@@ -96,14 +106,21 @@ function GameWorld(){
 		});
 		
 		$('#btn_admin_reveal_answer').click(function(e){
-			socket.emit('quiz_admin_reveal_answer');
-			socket.emit('update_leaderboard');
+			if(openquestion == true && receivedanswers.length > 0){
+				alert('Beoordeel eerst alle binnengekomen antwoorden.');
+			} else {
+				if(openquestion == true){
+					socket.emit('quiz_admin_reveal_answer', answers.concat(goodanswers));
+				} else {
+					socket.emit('quiz_admin_reveal_answer');
+				}
+				socket.emit('update_leaderboard');
+			}
 			return false;
 		});
 		
 		$('#btn_admin_show_video').click(function(e){
 			socket.emit('show_video');
-			$('#question_area .bet').html('<video width="640" height="480" controls><source src="content/KlimaatCasino/'+ vidlink + '" type="video/mp4">Your browser does not support the video tag.</video>');
 			return false;
 		});
 		
@@ -203,11 +220,10 @@ function GameWorld(){
 		}(this)
 		);
 
+		//receivedanswers = [];
 		socket.on('new_leaderboard',function(gameWorld){
 			return function(data){
-				console.log(data);	
-				if (userType == 'admin'){
-					console.log('isadmin');
+				if (userType == 'spectator'){
 					var html = "";
 					html += "<div>";
 					
@@ -222,11 +238,11 @@ function GameWorld(){
 						var elements = data[participantsType];
 						
 						html += "<h1>" + name + "</h1>";				
-						html += "<table class='table table-hover table-condensed table-striped table-bordered' style='width:80%; font-size: 1.8em'>";
+						html += "<table class='table table-hover table-condensed table-striped table-bordered' style='width:80%; font-size: 1.8em; border-color:red;'>";
 						
 						html += "<thead>";
 						html += "<tr>";
-						html += "<th style='width:50px' >" + "Rank" + "</th>" + "<th>" + "Speler" + "</th>" + "<th>" + "Score" + "</th><th>Antwoord</th><th>Inzet</th>";
+						html += "<th style='width:50px; border-color:red;' >" + "Rank" + "</th>" + "<th style='border-color:red;'>" + "Speler" + "</th>" + "<th style='border-color:red;'>" + "Score" + "</th><th style='border-color:red;'>Antwoord</th><th style='border-color:red;'>Inzet</th>";
 						html += "</tr>";
 						html += "</thead>";
 						
@@ -235,7 +251,7 @@ function GameWorld(){
 						for(var elem in elements){
 							var p = elements[elem];
 							
-							var colorStyle = "";
+							var colorStyle = "background-color: green";
 							if(p.isLastCorrect === true){
 								colorStyle = "background-color: rgb(133, 255, 135)";
 							}
@@ -243,7 +259,7 @@ function GameWorld(){
 								colorStyle = "background-color: rgb(255, 162, 162)";
 							}
 							
-							html += "<tr style='"+colorStyle+"; height:56px;'>";
+							html += "<tr style='"+colorStyle+"; height:56px; border-color:red;'>";
 							var resp = '';
 							if(p.response){ // if an answer was selected, show a picture of a card facing down
 								resp = '<img src="../content/KlimaatCasino/card.png" width="30" />';
@@ -262,6 +278,49 @@ function GameWorld(){
 					}
 					
 					$('#scores').html(html);
+				} else if (userType == 'admin'){
+					//receivedanswers = [];
+					var curreceived = [];
+					for(var elem in data['official']){
+						var receivedanswer = data['official'][elem].response;
+						if (typeof receivedanswer === 'string'){
+							const allans = answers.concat(wronganswers).concat(receivedanswers).concat(goodanswers);
+							const lallans = allans.map(ans => ans.toLowerCase());
+							if (!(lallans.includes(receivedanswer.toLowerCase()))){
+								receivedanswers.push(receivedanswer);
+							}
+						}
+						curreceived.push(receivedanswer);
+					}
+
+					for(var a in receivedanswers){
+						var ans = receivedanswers[a];
+						if (!(curreceived.includes(ans)) || !ans){
+							receivedanswers = receivedanswers.filter(item => item !== ans);//remove from received list
+						}
+					}
+					console.log(receivedanswers);
+					var html = '';
+					for(var a in receivedanswers){
+						var ans = receivedanswers[a];
+						if (ans){
+							//html += receivedanswerMaker(a, receivedanswers[a]);
+							html += answerMaker('pending', ans);
+							console.log(ans);
+						}
+					}
+					
+					$('#pending').html(html);
+					//for(var a in receivedanswers){
+					//	var ans = receivedanswers[a];
+					//	$('#good'+a).click(function() {
+					//		console.log('yeap');
+					//		updateAnswerList(ans,'left');
+					//	});
+					//	$('#wrong'+a).click(function() {
+					//		console.log('nope');
+					//	});
+					//}
 				}
 			};
 		}(this)
@@ -285,7 +344,8 @@ function GameWorld(){
 	var temp_answer = 404;
 	var vidlink = '';
 	var temp_role = "";
-	this.showQuestion = function(stateParams){		
+	this.showQuestion = function(stateParams){	
+		openquestion = false;	
 		$('#answer_status').html("");
 		if(stateParams.pic!='') $('#question_area .pic').html("<img style='max-width: 500px; width:100%' src='"+stateParams.pic+"' />");
 		else $('#question_area .pic').html('');
@@ -310,11 +370,11 @@ function GameWorld(){
     		     selectedAnswerId = false;
     		     socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
     		     
-        		var betarea = '<input type="submit" id="bet1" value="1" style="width: 40px;';
+        		var betarea = '<input type="submit" id="bet1" value="1" style="width: 40px; color: black;';
         		if(score < 1){
             		betarea += 'display: none;';
             }
-        		betarea += '" /><input type="submit" id="bet10" value="10" style="width: 53px;';
+        		betarea += '" /><input type="submit" id="bet10" value="10" style="width: 53px; color: black;';
         		if(score < 10){
             		betarea += 'display: none;';
             }
@@ -322,7 +382,7 @@ function GameWorld(){
         		$('#question_area .bet').html(' inzetten: '+betarea);
         		
         		//showing the betted value
-        		var bettedarea = 'Inzet: <span id="totalbet">'+betValue+'</span> <input type="submit" id="min1" value="-1" style="width: 53px;';
+        		var bettedarea = 'Inzet: <span id="totalbet">'+betValue+'</span> <input type="submit" id="min1" value="-1" style="width: 53px; color: black;';
             bettedarea += '"/>';
             
         		$('#question_area .betted').html(bettedarea);
@@ -330,13 +390,20 @@ function GameWorld(){
         		if(stateParams.bonusrole.includes(temp_role)){
             		$('#question_area .question').html("Bonusvraag! Dubbele punten verdienen.");
         		}
-        } else { //this means the state must be show video
-           $('#question_area .betted').html("Je inzet is "+betValue);
-        	 $('#question_area .question').html("");
-        	 $('#question_area .bet').html("");
-        }
+			} else { //this means the state must be show video
+			$('#question_area .betted').html("Je inzet is "+betValue);
+				$('#question_area .question').html("");
+				$('#question_area .bet').html("");
+			}
     	} else { //the user is the admin
     	   $('#question_area .question').html(stateParams.question);
+		   if (userType=='spectator'){
+			    if (curState==states.SHOW_VIDEO){
+					$('#question_area .bet').html('<video width="640" height="480" controls><source src="content/KlimaatCasino/'+ vidlink + '" type="video/mp4">Your browser does not support the video tag.</video>');
+				}else{
+					$('#question_area .bet').html('');
+				}
+			}
     	}
     			
     	$('#bet1').click(function() {
@@ -400,48 +467,134 @@ function GameWorld(){
          }
      });
 		
-		var answers = stateParams.answers;				
+		answers = stateParams.answers;		
+		var type = stateParams.type;		
 		$('#question_area .answers').html("");
 		
-		for(var i=0;i<answers.length;i++){
-			var curLetter = String.fromCharCode(65 + i);
-			var answerId = (i+1);
-			
+	 	if (type == 'open'){
+			openquestion = true;
 			if(userType=='official_participant' && (curState==states.SHOW_QUESTION || curState==states.SHOW_VIDEO)){
-    			var $div = $("<div>", { answer_id:answerId })
-    			.attr("style","font-size:2em; padding-top: 10px; border: 1px solid; margin-top: 2px; overflow:hidden; cursor: pointer; cursor: hand; ")
-    			.addClass("answer_"+answerId)
-    			.append("<span/>")
-    			.text(curLetter);
-    			
-    			if(curState==states.SHOW_VIDEO && temp_answer==answerId){
-        			$div.css("background-color","rgb(255, 255, 162)");
-        			console.log(answerId + " en " + temp_answer);
-    			}
-    			
-    			$div.click(function(){
-    				if((userType=='official_participant' || userType=='unofficial_participant') && (curState==states.SHOW_QUESTION || curState==states.TEST_QUESTION)){
-    					selectedAnswerId = $(this).attr("answer_id");
-    					//var betValue = $('#bet').val(); // Get the value of 'bet' input field
-    					socket.emit('quiz_send_answer',{answerId:selectedAnswerId, bet: betValue });
-						socket.emit('update_leaderboard');
-    					temp_answer = selectedAnswerId;
-    					
-    					$('#question_area .answers div').css("background-color","inherit");			
-    					$(this).css("background-color","rgb(255, 255, 162)");
-    				}
-    			});
-        } else {
-           var $div = $("<div>", { answer_id:answerId })
-    			.attr("style","font-size:2em; padding-top: 10px; border: 1px solid; margin-top: 2px; overflow:hidden;")
-    			.addClass("answer_"+answerId)
-    			.append("<span/>")
-    			.text(curLetter+'. '+answers[i]);
-        }
-			
-			$("#question_area .answers").append($div);			
+				var html = '<div style="color:black;"><input type="text" id="openanswer" maxlength="40" /><input type="submit" value="versturen" id="verzenden" /></div>';
+				$('#question_area .answers').html(html);
+			} else if (userType=='admin' && (curState==states.SHOW_QUESTION || curState==states.SHOW_VIDEO || curState==states.SHOW_ANSWER)){
+				goodanswers = [];
+				wronganswers = [];
+				//receivedanswerMaker = function(a, ans){
+					//return '<span style="cursor: pointer;" id="good'+a+'"><--</span> '+ans+' <span style="cursor: pointer;" id="wrong'+a+'">--></span><br />';
+				//	return '<span style="cursor: pointer;" onclick="toUpdateAns(\''+ans+'\',\'pending\')">--></span>';
+				//}
+				answerMaker = function(curloc, ans){
+					var html = '';
+					if (curloc == 'wrong' || curloc == 'pending'){
+						html += '<span style="cursor: pointer;" onclick="toUpdateAns(\''+ans+'\',\'left\')"><--</span>';
+					}
+					html += ans;
+					if (curloc == 'good' || curloc == 'pending'){
+						html += '<span style="cursor: pointer;" onclick="toUpdateAns(\''+ans+'\',\'right\')">--></span>';
+					}
+					html += '<br />';
+					return html;
+				}
+				updateAnswerList = function(ans, dir){
+					if (dir == 'left'){
+						if (receivedanswers.includes(ans)){ //from pending to good
+							goodanswers.push(ans);
+							receivedanswers = receivedanswers.filter(item => item !== ans);//remove from other list
+						} else { //from wrong to pending}
+							receivedanswers.push(ans);
+							wronganswers = wronganswers.filter(item => item !== ans);//remove from other list
+						}
+					} else { //right
+						if (receivedanswers.includes(ans)){ //from pending to wrong
+							wronganswers.push(ans);
+							receivedanswers = receivedanswers.filter(item => item !== ans);//remove from other list
+						} else { //from good to pending}
+							receivedanswers.push(ans);
+							goodanswers = goodanswers.filter(item => item !== ans);//remove from other list
+						}
+					}
+					//update the lists htmls
+					var html = '';
+					for(var i=0;i<answers.length;i++){
+						html += answers[i] + '<br />';
+					}
+					for(var i=0;i<goodanswers.length;i++){
+						html += answerMaker('good',goodanswers[i]);
+					}
+					$('#good').html(html);
+					html = '';
+					for(var i=0;i<wronganswers.length;i++){
+						html += answerMaker('wrong',wronganswers[i]);
+					}
+					$('#wrong').html(html);
+					html = '';
+					console.log('good: '+goodanswers);
+					console.log('pending: '+receivedanswers);
+					console.log('wrong: '+wronganswers);
+					for(var i=0;i<receivedanswers.length;i++){
+						if (receivedanswers[i]){
+							//html += receivedanswerMaker(i, receivedanswers[i]);
+							html += answerMaker('pending',receivedanswers[i]);
+						}
+					}
+					$('#pending').html(html);
+
+				}
+				var html = '<br /><table style="font-size: 18px;"><tr><td><b>Goed</b></td><td><b>Ingestuurde antwoorden</b></td><td width="150"><b>Fout</b></td></tr>';
+				html += '<tr><td><div id="good"></div></td><td style="border-left:1px white solid;border-right:1px white solid;"><div id="pending"></div></td><td><div id="wrong"></div></td></tr></table>';
+				$('#question_area .answers').html(html);
+				var goodhtml = '';
+				for(var i=0;i<answers.length;i++){
+					goodhtml += answers[i] + '<br />';
+					$('#good').html(goodhtml);
+				}
+			}
+		} else {
+			for(var i=0;i<answers.length;i++){
+				var curLetter = String.fromCharCode(65 + i);
+				var answerId = (i+1);
+				
+				if(userType=='official_participant' && (curState==states.SHOW_QUESTION || curState==states.SHOW_VIDEO)){
+					var $div = $("<div>", { answer_id:answerId })
+					.attr("style","font-size:2em; padding-top: 10px; border: 1px solid; margin-top: 2px; overflow:hidden; cursor: pointer; cursor: hand; ")
+					.addClass("answer_"+answerId)
+					.append("<span/>")
+					.text(curLetter);
+					
+					if(curState==states.SHOW_VIDEO && temp_answer==answerId){
+						$div.css("background-color","rgb(255, 255, 162)");
+					}
+					
+					$div.click(function(){
+						if((userType=='official_participant' || userType=='unofficial_participant') && (curState==states.SHOW_QUESTION || curState==states.TEST_QUESTION)){
+							selectedAnswerId = $(this).attr("answer_id");
+							//var betValue = $('#bet').val(); // Get the value of 'bet' input field
+							socket.emit('quiz_send_answer',{answerId:selectedAnswerId, bet: betValue });
+							socket.emit('update_leaderboard');
+							temp_answer = selectedAnswerId;
+							
+							$('#question_area .answers div').css("background-color","inherit");			
+							$(this).css("background-color","rgb(255, 255, 162)");
+						}
+					});
+				} else if (userType == 'spectator') {
+					var $div = $("<div>", { answer_id:answerId })
+					.attr("style","font-size:2em; padding-top: 10px; border: 1px solid; margin-top: 2px; overflow:hidden;")
+					.addClass("answer_"+answerId)
+					.append("<span/>")
+					.text(curLetter+'. '+answers[i]);
+				}
+				
+				$("#question_area .answers").append($div);			
+			}
 		}
 		
+		$('#verzenden').click(function(){
+			selectedAnswerId = $('#openanswer').val();
+			socket.emit('quiz_send_answer',{answerId:selectedAnswerId, bet: betValue });
+			socket.emit('update_leaderboard');
+		});
+
 		var d = new Date();
 		d.setSeconds(d.getSeconds()+stateParams.time);
 		

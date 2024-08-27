@@ -276,7 +276,7 @@ io.on('connection', function(socket){
 		
 		socket.on('quiz_admin_reveal_answer',function(data){
 			if(isAdmin(socket,session)){
-				quizzes.revealAnswer(session.quiz_id);
+				quizzes.revealAnswer(session.quiz_id, data);
 			}
 		});
 

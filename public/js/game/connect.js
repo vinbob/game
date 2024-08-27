@@ -98,10 +98,14 @@ $(document).ready(function(){
 			categories[cat] = '<details><summary style="cursor:pointer;"><b>'+cat+'</b></summary><table>';
 		}
 		categories[cat] += '<tr><td><input type="checkbox" ';
-		if (cat == 'Basis'){
+		if (i == 58){
 			categories[cat] += 'checked ';
 		}
-		categories[cat] += 'value="' +  i + '" id="check' + i + '" /></td><td text-align="left"> ' + questions[i].question + '</td></tr>';
+		categories[cat] += 'value="' +  i + '" id="check' + i + '" /></td><td text-align="left"> ' ;
+		if(questions[i].type){
+			categories[cat] += '<b>[open vraag]</b> ';
+		}
+		categories[cat] += questions[i].question + '</td></tr>';
 	}
 	for (let i in categories){
 		qhtml += '';
