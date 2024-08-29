@@ -266,7 +266,7 @@ function Quizzes(){
 	
 	this.hideCoins = function(quizId, data){
 		if(quizId in quizzes)
-		quizzes[quizId].hideCoins(quizzes[quizId], data);
+		quizzes[quizId].hideCoins(quizzes[quizId], {savedanswers: [data[0],data[1]]});
 	}
 
 
@@ -425,9 +425,11 @@ function Participant(){
 			}
 		}
 		if(typeof params!=='undefined'){ 
-			console.log(params);
-			savedanswers[0] = params[0]; //pass on the saved answers for open questions in case of refresh
-			savedanswers[1] = params[1];
+			if(typeof params.savedanswers!=='undefined'){ 
+				console.log(params);
+				savedanswers[0] = params.savedanswers[0]; //pass on the saved answers for open questions in case of refresh
+				savedanswers[1] = params.savedanswers[1];
+			}
 		}
 		if(quizState.state != 6){
 			quizState.stateParams.savedanswers = savedanswers;
@@ -1010,8 +1012,13 @@ function Quiz(pQuizId){
 		var params = {answerId:answerId};
 		if(typeof hiddenParams!='undefined' && typeof hiddenParams.test !=='undefined') params.test = true;
 		quizState.setShowAnswer(params);
+		console.log('showanser: '+data);
 
-		this.sendUpdatesToEveryone({fields: ['rank']});
+		if (typeof data == undefined){
+			this.sendUpdatesToEveryone({fields: ['rank']});
+		} else {
+			this.sendUpdatesToEveryone({fields: ['rank'], savedanswers: [data,[]]});
+		}
 
 		if(test){
 			setTimeout(

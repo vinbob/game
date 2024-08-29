@@ -46,7 +46,7 @@ var questions = {
             "Ongeveer gelijk aan nu, namelijk 15 graden" 
         ],
         category: "Basis" ,
-        question: "Hoe warm of koud zou de aarde zijn als de atmosfeer helemaal geen broeikasgassen zo bevatten?",
+        question: "Hoe warm of koud zou de aarde zijn als de atmosfeer helemaal geen broeikasgassen zou bevatten?",
         source: ""}, 
     5:{ 
         video: "", 
@@ -712,5 +712,19 @@ var questions = {
         category: "Basis", 
         question: "testvraag ?",
         source: "https://www.cbs.nl/nl-nl/publicatie/2021/22/klimaatverandering-en-energietransitie tabel H7"},
+    60:{
+        video: "broeikaseffect.mp4", 
+        bonusrole: [5,2,4,6,1,3], 
+        answers: [
+            "kolen",  //
+            "turf", 
+            "steenkolen" 
+        ],
+        category: "Basis", 
+        type: 'open',
+        question: "Vul naast olie en gas nog een vorm van fossiele branstoffen in.",
+        source: ""},
     };
+    
     var rolenames = {1:"Bouwer",2:"Ondernemer",3:"Uitvinder",4:"Coach",5:"Designer",6:"Hulpverlener"};
+

@@ -110,7 +110,11 @@ function GameWorld(){
 				alert('Beoordeel eerst alle binnengekomen antwoorden.');
 			} else {
 				if(openquestion == true){
-					socket.emit('quiz_admin_reveal_answer', answers.concat(goodanswers));
+					if (curState==states.SHOW_VIDEO){
+						socket.emit('quiz_admin_reveal_answer', goodanswers);
+					} else {
+						socket.emit('quiz_admin_reveal_answer', answers.concat(goodanswers));
+					}
 				} else {
 					socket.emit('quiz_admin_reveal_answer');
 				}
@@ -638,7 +642,7 @@ function GameWorld(){
 			}
 		} else if (userType == 'spectator' && openquestion == true){
 			var html = '<h2> Goede antwoorden: ';
-			const allgood = answers.concat(goodanswers);
+			const allgood = stateParams.savedanswers[0];
 			for(var i=0;i<allgood.length;i++){
 				html += allgood[i] + ', ';
 			}
