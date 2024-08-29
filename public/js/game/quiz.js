@@ -120,7 +120,11 @@ function GameWorld(){
 		});
 		
 		$('#btn_admin_show_video').click(function(e){
-			socket.emit('show_video');
+			if(openquestion == true && receivedanswers.length > 0){
+				alert('Beoordeel eerst alle binnengekomen antwoorden.');
+			} else {
+				socket.emit('show_video', [answers.concat(goodanswers),wronganswers]);
+			}
 			return false;
 		});
 		
@@ -345,6 +349,7 @@ function GameWorld(){
 	var vidlink = '';
 	var temp_role = "";
 	this.showQuestion = function(stateParams){	
+		receivedanswers = [];
 		openquestion = false;	
 		$('#answer_status').html("");
 		if(stateParams.pic!='') $('#question_area .pic').html("<img style='max-width: 500px; width:100%' src='"+stateParams.pic+"' />");
@@ -474,26 +479,50 @@ function GameWorld(){
 	 	if (type == 'open'){
 			openquestion = true;
 			if(userType=='official_participant' && (curState==states.SHOW_QUESTION || curState==states.SHOW_VIDEO)){
-				var html = '<div style="color:black;"><input type="text" id="openanswer" maxlength="40" /><input type="submit" value="versturen" id="verzenden" /></div>';
+				var html = '<div style="color:black;"><input type="text" id="openanswer" maxlength="40"';
+				if (curState==states.SHOW_VIDEO){
+					html += 'value="'+stateParams.myans+'" disabled';
+				}
+				html+= ' /><input type="submit" value="versturen" id="verzenden" ';
+				if (curState==states.SHOW_VIDEO){
+					html += 'disabled';
+				}
+				html +=' /></div>';
 				$('#question_area .answers').html(html);
 			} else if (userType=='admin' && (curState==states.SHOW_QUESTION || curState==states.SHOW_VIDEO || curState==states.SHOW_ANSWER)){
 				goodanswers = [];
 				wronganswers = [];
-				//receivedanswerMaker = function(a, ans){
-					//return '<span style="cursor: pointer;" id="good'+a+'"><--</span> '+ans+' <span style="cursor: pointer;" id="wrong'+a+'">--></span><br />';
-				//	return '<span style="cursor: pointer;" onclick="toUpdateAns(\''+ans+'\',\'pending\')">--></span>';
-				//}
+				if (curState==states.SHOW_VIDEO){
+					goodanswers = stateParams.savedanswers[0];
+					wronganswers = stateParams.savedanswers[1];
+				}
 				answerMaker = function(curloc, ans){
 					var html = '';
 					if (curloc == 'wrong' || curloc == 'pending'){
-						html += '<span style="cursor: pointer;" onclick="toUpdateAns(\''+ans+'\',\'left\')"><--</span>';
+						if (curState!=states.SHOW_VIDEO){
+							html += '<span style="cursor: pointer;" onclick="toUpdateAns(\''+ans+'\',\'left\')"><--</span>';
+						}
 					}
 					html += ans;
 					if (curloc == 'good' || curloc == 'pending'){
-						html += '<span style="cursor: pointer;" onclick="toUpdateAns(\''+ans+'\',\'right\')">--></span>';
+						if (curState!=states.SHOW_VIDEO){
+							html += '<span style="cursor: pointer;" onclick="toUpdateAns(\''+ans+'\',\'right\')">--></span>';
+						}
 					}
 					html += '<br />';
 					return html;
+				}
+				createAnswerList = function(loc, standardanswers, insertedanswers){
+					var html = '';
+					if (curState!==states.SHOW_VIDEO){
+						for(var i=0;i<standardanswers.length;i++){
+							html += standardanswers[i] + '<br />';
+						}
+					}
+					for(var i=0;i<insertedanswers.length;i++){
+						html += answerMaker(loc,insertedanswers[i]);
+					}
+					$('#'+loc).html(html);
 				}
 				updateAnswerList = function(ans, dir){
 					if (dir == 'left'){
@@ -513,42 +542,16 @@ function GameWorld(){
 							goodanswers = goodanswers.filter(item => item !== ans);//remove from other list
 						}
 					}
-					//update the lists htmls
-					var html = '';
-					for(var i=0;i<answers.length;i++){
-						html += answers[i] + '<br />';
-					}
-					for(var i=0;i<goodanswers.length;i++){
-						html += answerMaker('good',goodanswers[i]);
-					}
-					$('#good').html(html);
-					html = '';
-					for(var i=0;i<wronganswers.length;i++){
-						html += answerMaker('wrong',wronganswers[i]);
-					}
-					$('#wrong').html(html);
-					html = '';
-					console.log('good: '+goodanswers);
-					console.log('pending: '+receivedanswers);
-					console.log('wrong: '+wronganswers);
-					for(var i=0;i<receivedanswers.length;i++){
-						if (receivedanswers[i]){
-							//html += receivedanswerMaker(i, receivedanswers[i]);
-							html += answerMaker('pending',receivedanswers[i]);
-						}
-					}
-					$('#pending').html(html);
-
+					createAnswerList('good', answers, goodanswers);
+					createAnswerList('wrong', [], wronganswers); //insert standard wrong answers
+					createAnswerList('pending', [], receivedanswers);
 				}
 				var html = '<br /><table style="font-size: 18px;"><tr><td><b>Goed</b></td><td><b>Ingestuurde antwoorden</b></td><td width="150"><b>Fout</b></td></tr>';
 				html += '<tr><td><div id="good"></div></td><td style="border-left:1px white solid;border-right:1px white solid;"><div id="pending"></div></td><td><div id="wrong"></div></td></tr></table>';
 				$('#question_area .answers').html(html);
-				var goodhtml = '';
-				for(var i=0;i<answers.length;i++){
-					goodhtml += answers[i] + '<br />';
-					$('#good').html(goodhtml);
-				}
-			}
+				createAnswerList('good', answers, goodanswers);
+				createAnswerList('wrong', [], wronganswers); // insert standard wrong answers
+			} 
 		} else {
 			for(var i=0;i<answers.length;i++){
 				var curLetter = String.fromCharCode(65 + i);
@@ -626,7 +629,6 @@ function GameWorld(){
 		}
 
 		$('#question_area .answer_'+correctAnswerId).css("background-color","rgb(133, 255, 135)");
-
 		if(userType=='official_participant' || userType=='unofficial_participant'){
 			if(correctAnswer){
 				$('#answer_status').html("Correct answer!");
@@ -634,6 +636,14 @@ function GameWorld(){
 			else{
 				$('#answer_status').html("<span style='color:#f00'>Incorrect answer!</span>");
 			}
+		} else if (userType == 'spectator' && openquestion == true){
+			var html = '<h2> Goede antwoorden: ';
+			const allgood = answers.concat(goodanswers);
+			for(var i=0;i<allgood.length;i++){
+				html += allgood[i] + ', ';
+			}
+			html += '</h2>';
+			$("#question_area .answers").html(html);
 		}
 		else{
 			$('#answer_status').html("<span style='color:#f00'>Time over!</span>");

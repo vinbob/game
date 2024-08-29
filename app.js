@@ -287,7 +287,7 @@ io.on('connection', function(socket){
 		
 		socket.on('show_video',function(data){
 			if(isAdmin(socket,session)){
-				quizzes.hideCoins(session.quiz_id);
+				quizzes.hideCoins(session.quiz_id, data);
 			}
 		});
 		

@@ -1,5 +1,6 @@
 var states = {START:0,TEST_QUESTION:1,STARTING:2,SHOW_QUESTION:3,SHOW_VIDEO:4,SHOW_ANSWER:5,END:6};
 var startingscore = 15;
+var savedanswers = [0,0];
 
 function Quizzes(){
 	var quizzes = {};
@@ -213,6 +214,7 @@ function Quizzes(){
 
 	this.sendUpdates = function(participant){
 		var quizId = participant.getQuizId();
+//hier
 		if(quizId in quizzes)
 		quizzes[quizId].sendUpdates(participant);
 	}
@@ -262,9 +264,9 @@ function Quizzes(){
 		quizzes[quizId].updateLeaderboard(quizzes[quizId], leaderboard);
 	}
 	
-	this.hideCoins = function(quizId){
+	this.hideCoins = function(quizId, data){
 		if(quizId in quizzes)
-		quizzes[quizId].hideCoins(quizzes[quizId]);
+		quizzes[quizId].hideCoins(quizzes[quizId], data);
 	}
 
 
@@ -410,6 +412,7 @@ function Participant(){
 		if(!this.isAdministrator && !this.isSpectator && quizState.state != 6){
 			quizState.stateParams.score = this.getScore();
 			quizState.stateParams.role = this.getRole();
+			quizState.stateParams.myans = this.getResponse();
 		}
 		if(typeof params!=='undefined' && typeof params.fields!=='undefined'){
 			var fields = params.fields;
@@ -420,6 +423,14 @@ function Participant(){
 					}
 				}
 			}
+		}
+		if(typeof params!=='undefined'){ 
+			console.log(params);
+			savedanswers[0] = params[0]; //pass on the saved answers for open questions in case of refresh
+			savedanswers[1] = params[1];
+		}
+		if(quizState.state != 6){
+			quizState.stateParams.savedanswers = savedanswers;
 		}
 
 		socket.emit('quiz_state_update',quizState);
@@ -494,7 +505,7 @@ function RealParticipant(pSocket,pTeamname){
 		console.log(typeof data);
 		console.log('final antwoord: '+response);
 		var checkcorrect = answerId == response;
-		if (data){
+		if (data && response){
 			const ldata = data.map(ans => ans.toLowerCase());
 			checkcorrect = ldata.includes(response.toLowerCase());
 		}
@@ -978,9 +989,10 @@ function Quiz(pQuizId){
 		quiz.newLeaderboard(leaderboard);
 	}
   
-	this.hideCoins = function(){
+	this.hideCoins = function(quizid, data){
 		quizState.setShowVideo();
-		this.sendUpdatesToEveryone({});
+		//this.sendUpdatesToEveryone({});
+		this.sendUpdatesToEveryone(data);
 	}
 
 	this.showAnswer = function(data){
