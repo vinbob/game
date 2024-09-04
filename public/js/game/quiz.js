@@ -416,79 +416,86 @@ function GameWorld(){
     	}
     			
     	$('#bet1').click(function() {
-        // Get the value of 'bet' input field
-        //var betValue = $(this).val();
-        betValue += 1;
-        if (betValue >= score){
-           $(this).css('display', 'none');
-        }
-        if (betValue >= (score - 9)){
-           $('#bet10').css('display', 'none');
-        }
-        $('#totalbet').html(betValue); //update betted value displayed
-        // Check if user is an official_participant or unofficial_participant and if the current state is SHOW_QUESTION or TEST_QUESTION
-        if (userType === 'official_participant' && curState === states.SHOW_QUESTION) {
-            // Send socket event with answerId and betValue
-            socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
-			socket.emit('update_leaderboard');
-        }
-    });
+			if(curState == states.SHOW_QUESTION){
+				// Get the value of 'bet' input field
+				//var betValue = $(this).val();
+				betValue += 1;
+				if (betValue >= score){
+				$(this).css('display', 'none');
+				}
+				if (betValue >= (score - 9)){
+				$('#bet10').css('display', 'none');
+				}
+				$('#totalbet').html(betValue); //update betted value displayed
+				// Check if user is an official_participant or unofficial_participant and if the current state is SHOW_QUESTION or TEST_QUESTION
+				if (userType === 'official_participant' && curState === states.SHOW_QUESTION) {
+					// Send socket event with answerId and betValue
+					socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
+					socket.emit('update_leaderboard');
+				}
+			}
+		});
      $('#bet10').click(function() {
-        // Get the value of 'bet' input field
-        //var betValue = $(this).val();
-        betValue += 10;
-        if (betValue >= score){
-           $('#bet1').css('display', 'none');
-        }
-        if (betValue >= (score - 9)){
-           $(this).css('display', 'none');
-        }
-        $('#totalbet').html(betValue); //update betted value displayed
-        // Check if user is an official_participant or unofficial_participant and if the current state is SHOW_QUESTION or TEST_QUESTION
-        if (userType === 'official_participant' && curState === states.SHOW_QUESTION) {
-            // Send socket event with answerId and betValue
-            socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
-			socket.emit('update_leaderboard');
-        }
+		if(curState == states.SHOW_QUESTION){
+			// Get the value of 'bet' input field
+			//var betValue = $(this).val();
+			betValue += 10;
+			if (betValue >= score){
+			$('#bet1').css('display', 'none');
+			}
+			if (betValue >= (score - 9)){
+			$(this).css('display', 'none');
+			}
+			$('#totalbet').html(betValue); //update betted value displayed
+			// Check if user is an official_participant or unofficial_participant and if the current state is SHOW_QUESTION or TEST_QUESTION
+			if (userType === 'official_participant' && curState === states.SHOW_QUESTION) {
+				// Send socket event with answerId and betValue
+				socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
+				socket.emit('update_leaderboard');
+			}
+		}
     });
      $('#min1').click(function() {
-         if (betValue > 0){
-             betValue -= 1;
-         }
-         if ((score - betValue) > 0){
-             $('#bet1').css('display', 'inline');
-             if ((score - betValue) >= 10){
-                 $('#bet10').css('display', 'inline');
-                 if ((score - betValue) >= 100){
-                     $('#bet100').css('display', 'inline');
-                     if ((score - betValue) >= 1000){
-                         $('#bet1000').css('display', 'inline');
-                    }
-                }    
-            }
-         }
-         $('#totalbet').html(betValue);//update betted value displayed
-         // Check if user is an official_participant or unofficial_participant and if the current state is SHOW_QUESTION or TEST_QUESTION
-         if (userType === 'official_participant' && curState === states.SHOW_QUESTION) {
-             // Send socket event with answerId and betValue
-             socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
-			 socket.emit('update_leaderboard');
-         }
+		if(curState == states.SHOW_QUESTION){
+			if (betValue > 0){
+				betValue -= 1;
+			}
+			if ((score - betValue) > 0){
+				$('#bet1').css('display', 'inline');
+				if ((score - betValue) >= 10){
+					$('#bet10').css('display', 'inline');
+					if ((score - betValue) >= 100){
+						$('#bet100').css('display', 'inline');
+						if ((score - betValue) >= 1000){
+							$('#bet1000').css('display', 'inline');
+						}
+					}    
+				}
+			}
+			$('#totalbet').html(betValue);//update betted value displayed
+			// Check if user is an official_participant or unofficial_participant and if the current state is SHOW_QUESTION or TEST_QUESTION
+			if (userType === 'official_participant' && curState === states.SHOW_QUESTION) {
+				// Send socket event with answerId and betValue
+				socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
+				socket.emit('update_leaderboard');
+			}
+		}
      });
 		
 		answers = stateParams.answers;		
-		var type = stateParams.type;		
+		var type = stateParams.type;	
 		$('#question_area .answers').html("");
 		
 	 	if (type == 'open'){
 			openquestion = true;
-			if(userType=='official_participant' && (curState==states.SHOW_QUESTION || curState==states.SHOW_VIDEO)){
+			if(userType=='official_participant' && (curState==states.SHOW_QUESTION || curState==states.SHOW_VIDEO  || curState==states.SHOW_ANSWER)){
+				console.log('show_answer');
 				var html = '<div style="color:black;"><input type="text" id="openanswer" maxlength="40"';
-				if (curState==states.SHOW_VIDEO){
+				if (curState==states.SHOW_VIDEO || curState==states.SHOW_ANSWER){
 					html += 'value="'+stateParams.myans+'" disabled';
 				}
 				html+= ' /><input type="submit" value="versturen" id="verzenden" ';
-				if (curState==states.SHOW_VIDEO){
+				if (curState==states.SHOW_VIDEO || curState==states.SHOW_ANSWER){
 					html += 'disabled';
 				}
 				html +=' /></div>';
@@ -622,6 +629,10 @@ function GameWorld(){
 	
 		var correctAnswerId = stateParams.answerId;
 		var isTest = stateParams.test;
+		if (stateParams.type == 'open' && userType == 'official_participant'){
+			$('#verzenden').prop('disabled', true);
+			$('#openanswer').prop('disabled', true);
+		}
 		
 		var correctAnswer = false;
 		if(correctAnswerId == selectedAnswerId){

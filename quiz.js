@@ -1,6 +1,11 @@
 var states = {START:0,TEST_QUESTION:1,STARTING:2,SHOW_QUESTION:3,SHOW_VIDEO:4,SHOW_ANSWER:5,END:6};
 var startingscore = 15;
 var savedanswers = [0,0];
+var questiontype = 'mc';
+var curanswers = [];
+var curvideo = '';
+var curpic = '';
+var showedanswer = false;
 
 function Quizzes(){
 	var quizzes = {};
@@ -426,15 +431,18 @@ function Participant(){
 		}
 		if(typeof params!=='undefined'){ 
 			if(typeof params.savedanswers!=='undefined'){ 
-				console.log(params);
 				savedanswers[0] = params.savedanswers[0]; //pass on the saved answers for open questions in case of refresh
 				savedanswers[1] = params.savedanswers[1];
 			}
 		}
 		if(quizState.state != 6){
 			quizState.stateParams.savedanswers = savedanswers;
+			quizState.stateParams.type = questiontype;
+			quizState.stateParams.answers = curanswers;
+			quizState.stateParams.vid = curvideo;
+			quizState.stateParams.pic = curpic;
 		}
-
+		
 		socket.emit('quiz_state_update',quizState);
 	}
 
@@ -646,6 +654,10 @@ function Question(){
 	this.setVid = function(pVid){
 		vid = pVid;
 	}
+
+	this.getVid = function(){
+		return vid;
+	}
 	
 	this.setBonus = function(pBonus){
 		bonusrole.push(pBonus);
@@ -681,6 +693,10 @@ function Question(){
 
 	this.addAnswer = function(pAnswer){
 		answers.push(pAnswer);
+	}
+
+	this.getAnswers = function(){
+		return answers;
 	}
 
 	this.addCorrectAnswer = function(pAnswer){
@@ -851,12 +867,14 @@ function QuizState(pQuizId){
 
 	this.setShowQuestion = function(pStateParams){
 		console.log('# Quiz state changed to SHOW_QUESTION ['+quizId+']');
+		showedanswer = false;
 		curState = states.SHOW_QUESTION;
 		stateParams = pStateParams;
 	}
 
 	this.setShowAnswer = function(pStateParams){
 		console.log('# Quiz state changed to SHOW_ANSWER ['+quizId+']');
+		showedanswer = true;
 		curState = states.SHOW_ANSWER;
 		stateParams = pStateParams;
 	}
@@ -920,7 +938,7 @@ function Quiz(pQuizId){
 
 	this.nextQuestion = function(){
 		var curState = quizState.get();
-		if(!(curState==states.STARTING || curState==states.SHOW_ANSWER)) return;
+		if(!(curState==states.STARTING || curState==states.SHOW_ANSWER || showedanswer == true)) return;
 
 		if(questions.hasNext()){
 			var question = questions.next();
@@ -961,8 +979,11 @@ function Quiz(pQuizId){
 
 	this.showQuestion = function(question){
 		participants.resetResponses();
+		curanswers = question.getAnswers();
+		curvideo = question.getVid();
 		quizState.setShowQuestion(question.getQuestionOnly());
 		quizState.setHiddenParams({answerId: question.getAnswerId(),marks: question.getMarks(),bonusrole: question.getBonus(), type: question.getType()});
+		questiontype = question.getType();
 
 		this.sendUpdatesToEveryone({fields: ['rank']});
 
@@ -1070,7 +1091,7 @@ function Quiz(pQuizId){
 
 	this.endQuiz = function(){
 		var curState = quizState.get();
-		if(!(curState==states.SHOW_QUESTION || curState==states.SHOW_ANSWER)) return;
+		if(!(curState==states.SHOW_QUESTION || curState==states.SHOW_ANSWER || showedanswer == true)) return;
 
 		quizState.setEnd();
 		this.sendUpdatesToEveryone({});
