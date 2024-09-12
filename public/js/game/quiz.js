@@ -205,7 +205,7 @@ function GameWorld(){
 				
 				gameWorld.showAreasBasedOnRoleAndState(state,stateParams);
 				curState = state;
-				
+
 				gameWorld.updateGeneralParams(stateParams);
 				
 				if(state == states.START){
@@ -378,7 +378,7 @@ function GameWorld(){
 			$('#btn_admin_show_video').show();
 		}
 
-		if(stateParams && stateParams.score){
+		if(stateParams){
 			var score = stateParams.score;
 		}
 		
@@ -682,7 +682,7 @@ function GameWorld(){
 	}
 	
 	this.updateGeneralParams = function(stateParams){
-		if(stateParams && stateParams.score){
+		if(stateParams){
 			var score = stateParams.score;
 			temp_role = stateParams.role;
 			$('#participant_rank').html(temp_role+' | Score: '+score);

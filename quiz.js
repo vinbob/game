@@ -567,6 +567,7 @@ function RealParticipant(pSocket,pTeamname){
 		}
 		else{
     		score -= bet;
+			console.log('score is:'+typeof score);
 			this.setLastCorrect(false);
 		}
 	}
