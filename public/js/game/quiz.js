@@ -40,6 +40,7 @@ function GameWorld(){
 		$('#admin_area').hide();
 	}
 	
+	var showedqr = false;
 	this.showAreasBasedOnRoleAndState = function(state,stateParams){
 		$('.element').hide();
 
@@ -84,9 +85,25 @@ function GameWorld(){
 				if(stateParams && stateParams.test) $('#admin_area_before_start').show();
 				else $('#admin_area_after_start').show();
 			}
-		}
-		else if(userType=='spectator'){
+		} else if(userType=='spectator' && showedqr == false){
+			function getUrlWithoutLastPart(url) {
+				// Verwijder het protocol (http:// of https://)
+				let urlWithoutProtocol = url.replace(/^https?:\/\//, '');
+		
+				// Verwijder www. als het aanwezig is
+				urlWithoutProtocol = urlWithoutProtocol.replace(/^www\./, '');
+			
+				// Verwijder alles na de laatste slash
+				return urlWithoutProtocol.substring(0, urlWithoutProtocol.lastIndexOf('/'));
+			}
 
+			$('#qr').html("Scan de QR of ga naar "+getUrlWithoutLastPart(window.location.href)+"/join/"+quizId+" en speel mee!");
+			var qrcode = new QRCode(document.getElementById("qrcode"), {
+				text: getUrlWithoutLastPart(window.location.href)+"/join/"+quizId,
+				width: 128,
+				height: 128
+			});
+			showedqr = true;
 		}
 	}
 	
@@ -334,26 +351,6 @@ function GameWorld(){
 	
 	this.start = function(stateParams){		
 		this.setWaitStatus('Get ready!');
-
-		function getUrlWithoutLastPart(url) {
-			// Verwijder het protocol (http:// of https://)
-			let urlWithoutProtocol = url.replace(/^https?:\/\//, '');
-    
-			// Verwijder www. als het aanwezig is
-			urlWithoutProtocol = urlWithoutProtocol.replace(/^www\./, '');
-		
-			// Verwijder alles na de laatste slash
-			return urlWithoutProtocol.substring(0, urlWithoutProtocol.lastIndexOf('/'));
-		}
-
-		if (userType == 'spectator'){
-			$('#qr').html("Scan de QR of ga naar "+getUrlWithoutLastPart(window.location.href)+"/join/"+quizId+" en speel mee!");
-			var qrcode = new QRCode(document.getElementById("qrcode"), {
-				text: getUrlWithoutLastPart(window.location.href)+"/join/"+quizId,
-				width: 128,
-				height: 128
-			});
-		}
 	}
 	
 	this.starting = function(stateParams){
