@@ -1,3 +1,6 @@
+//var fs = require('fs');
+//eval(fs.readFileSync('../qrcode.min.js')+'');
+
 var answers = [];
 var openquestion = false;
 var goodanswers = [];
@@ -13,6 +16,7 @@ function GameWorld(){
 	var socket = false;
 	
 	var userType = false;
+	var quizId = '';
 	var selectedAnswerId = false;
 	var curState = false;
 	var savedState = false;
@@ -38,8 +42,7 @@ function GameWorld(){
 	
 	this.showAreasBasedOnRoleAndState = function(state,stateParams){
 		$('.element').hide();
-		//console.log('now');
-		//socket.emit('quiz_get_leaderboard');
+
 		/*All users, all states*/
 		$('#controlpanel_area').show();
 		$('#generic_options_area').show();
@@ -180,6 +183,8 @@ function GameWorld(){
 		socket.on('quiz_init_ok',function(gameWorld){
 			return function(data){
 				userType = data.userType;
+				quizId = data.quizId;
+				console.log(data);
 				gameWorld.showAreasBasedOnRoleAndState(states.START,{});
 			};
 		}(this));
@@ -190,7 +195,7 @@ function GameWorld(){
 		
 		socket.on('quiz_state_update',function(gameWorld){
 			return function(data){
-				var state = data.state;		
+				var state = data.state;	
 				var stateParams = data.stateParams;
 				console.log(data);
 				//if receiving updates from the server, hide the leaderboard
@@ -228,7 +233,6 @@ function GameWorld(){
 		}(this)
 		);
 
-		//receivedanswers = [];
 		socket.on('new_leaderboard',function(gameWorld){
 			return function(data){
 				if (userType == 'spectator'){
@@ -287,7 +291,6 @@ function GameWorld(){
 					
 					$('#scores').html(html);
 				} else if (userType == 'admin'){
-					//receivedanswers = [];
 					var curreceived = [];
 					for(var elem in data['official']){
 						var receivedanswer = data['official'][elem].response;
@@ -312,23 +315,12 @@ function GameWorld(){
 					for(var a in receivedanswers){
 						var ans = receivedanswers[a];
 						if (ans){
-							//html += receivedanswerMaker(a, receivedanswers[a]);
 							html += answerMaker('pending', ans);
 							console.log(ans);
 						}
 					}
 					
 					$('#pending').html(html);
-					//for(var a in receivedanswers){
-					//	var ans = receivedanswers[a];
-					//	$('#good'+a).click(function() {
-					//		console.log('yeap');
-					//		updateAnswerList(ans,'left');
-					//	});
-					//	$('#wrong'+a).click(function() {
-					//		console.log('nope');
-					//	});
-					//}
 				}
 			};
 		}(this)
@@ -342,6 +334,26 @@ function GameWorld(){
 	
 	this.start = function(stateParams){		
 		this.setWaitStatus('Get ready!');
+
+		function getUrlWithoutLastPart(url) {
+			// Verwijder het protocol (http:// of https://)
+			let urlWithoutProtocol = url.replace(/^https?:\/\//, '');
+    
+			// Verwijder www. als het aanwezig is
+			urlWithoutProtocol = urlWithoutProtocol.replace(/^www\./, '');
+		
+			// Verwijder alles na de laatste slash
+			return urlWithoutProtocol.substring(0, urlWithoutProtocol.lastIndexOf('/'));
+		}
+
+		if (userType == 'spectator'){
+			$('#qr').html("Scan de QR of ga naar "+getUrlWithoutLastPart(window.location.href)+"/join/"+quizId+" en speel mee!");
+			var qrcode = new QRCode(document.getElementById("qrcode"), {
+				text: getUrlWithoutLastPart(window.location.href)+"/join/"+quizId,
+				width: 128,
+				height: 128
+			});
+		}
 	}
 	
 	this.starting = function(stateParams){

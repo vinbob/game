@@ -21,50 +21,49 @@
 		
 		<div>
 			<form>		
-			<!--
-				<h3>Vul je naam in en klik op 'Start'</h3>
-				<div>
-					<label for="unofficial_team_name">Team name</label>
-					<input type="text" id="unofficial_team_name"  style="text-transform:uppercase"/>
+				<div id="player">
+				<!--
+					<h3>Vul je naam in en klik op 'Start'</h3>
+					<div>
+						<label for="unofficial_team_name">Team name</label>
+						<input type="text" id="unofficial_team_name"  style="text-transform:uppercase"/>
+					</div>
+					<div>
+						<button id="btn_connect_unofficial" class="btn btn-default">Start</button>
+					</div>
+					-->
+					<h3>Vul je naam in en klik op 'Start'</h3>
+					<div>
+						<label for="official_team_name">Naam</label>
+						<input type="text" id="official_team_name"  style="text-transform:uppercase"/>	
+					</div>
+					<div>
+						1. Ik werk het liefst met.. .
+						<input type="radio" name="q1" value="0" checked> mensen <input type="radio" name="q1" value="1"> dingen<br />
+						2. Ik vind het leukste om...
+						<input type="radio" name="q2" value="0" checked> nieuwe ideeën te bedenken <input type="radio" name="q2" value="1"> een idee helemaal uit te werken en werkelijkheid te maken<br />
+						3. Ik...
+						<input type="radio" name="q3" value="0" checked> neem graag de leiding <input type="radio" name="q3" value="1"> ben liever onderdeel van een team<br />
+						4. Ik wil het liefst dingen...
+						<input type="radio" name="q4" value="0" checked> bedenken <input type="radio" name="q4" value="1"> bouwen<br />
+						5. Ik haal voldoening uit...
+						<input type="radio" name="q5" value="0" checked>iemand te kunnen helpen <input type="radio" name="q5" value="1"> iets helemaal te snappen
+						<!--<label for="official_team_code">Quiz Code</label>-->
+						<input type="password" id="official_quiz_code" maxlength="20" size="20" value="test" style="display: none;" />
+					</div>
+					<button id="btn_connect_official" class="btn btn-default">Start</button>
+				</div>			
+				<div id="admin">
+					<h3>Connect as administrator</h3>
+					<div>
+						<label for="admin_password">Password</label>
+						<input type="password" id="admin_password" maxlength="20" size="20" value="tttt" />
+					</div>	
+					<div id="btn_admin_questions" class="btn btn-default" color="blue">Selecteer vragen</div>
+					<div id="questions" style="display:none;">
+					</div>			
+					<button id="btn_admin_connect" class="btn btn-default">Connect</button>
 				</div>
-				<div>
-					<button id="btn_connect_unofficial" class="btn btn-default">Start</button>
-				</div>
-				-->
-				<h3>Vul je naam in en klik op 'Start'</h3>
-				<div>
-					<label for="official_team_name">Naam</label>
-					<input type="text" id="official_team_name"  style="text-transform:uppercase"/>	
-				</div>
-				<div>
-    				1. Ik werk het liefst met.. .
-    				<input type="radio" name="q1" value="0" checked> mensen <input type="radio" name="q1" value="1"> dingen<br />
-    				2. Ik vind het leukste om...
-    				<input type="radio" name="q2" value="0" checked> nieuwe ideeën te bedenken <input type="radio" name="q2" value="1"> een idee helemaal uit te werken en werkelijkheid te maken<br />
-    				3. Ik...
-    				<input type="radio" name="q3" value="0" checked> neem graag de leiding <input type="radio" name="q3" value="1"> ben liever onderdeel van een team<br />
-    				4. Ik wil het liefst dingen...
-    				<input type="radio" name="q4" value="0" checked> bedenken <input type="radio" name="q4" value="1"> bouwen<br />
-    				5. Ik haal voldoening uit...
-    				<input type="radio" name="q5" value="0" checked>iemand te kunnen helpen <input type="radio" name="q5" value="1"> iets helemaal te snappen
-				<div>
-					<label for="official_team_code">Quiz Code</label>
-					<input type="password" id="official_quiz_code" maxlength="20" size="20" value="test" />
-				</div>
-				<button id="btn_connect_official" class="btn btn-default">Start</button>			
-
-				<h3>Gebruik dit scherm als hoofdscherm</h3>			
-				<button id="btn_connect_spectator" class="btn btn-default">Connect</button>
-				
-				<h3>Connect as administrator</h3>
-				<div>
-					<label for="admin_password">Password</label>
-					<input type="password" id="admin_password" maxlength="20" size="20" value="tttt" />
-				</div>	
-				<div id="btn_admin_questions" class="btn btn-default" color="blue">Selecteer vragen</div>
-				<div id="questions" style="display:none;">
-                </div>			
-				<button id="btn_admin_connect" class="btn btn-default">Connect</button>
 			</form>
 		</div>
 	</div>

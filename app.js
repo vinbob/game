@@ -32,7 +32,42 @@ app.get('/quiz/:quiz_id', function(req, res){
 		}
 		else{
 			req.session.quiz_id = quiz_id;
-			res.redirect('/connect.html');
+			res.redirect('/connect.html?type=admin');
+		}
+	}
+	catch(e){
+		console.log(e);
+		console.trace();
+	}
+});
+
+app.get('/digiboard/:quiz_id', function(req, res){
+	try{
+		var quiz_id = req.params.quiz_id;
+		
+		if(!quizzes.isValidQuizId(quiz_id)){
+			res.redirect('/');
+		}
+		else{
+			req.session.quiz_id = quiz_id;
+			res.redirect('/connect.html?quiz_id='+quiz_id+'&type=spectator');
+		}
+	}
+	catch(e){
+		console.log(e);
+		console.trace();
+	}
+});
+app.get('/join/:quiz_id', function(req, res){
+	try{
+		var quiz_id = req.params.quiz_id;
+		
+		if(!quizzes.isValidQuizId(quiz_id)){
+			res.redirect('/');
+		}
+		else{
+			req.session.quiz_id = quiz_id;
+			res.redirect('/connect.html?quiz_id='+quiz_id+'&type=player');
 		}
 	}
 	catch(e){
@@ -179,7 +214,7 @@ io.on('connection', function(socket){
 				var admin_password = data.admin_password;
 				
 				if(admin_password == 'tttt'){
-					quizzes.addQuestions('test',data.questions);
+					quizzes.addQuestions(session.quiz_id,data.questions);
 					participant = new Administrator(socket);
 				} else if(quizzes.isValidAdminPassword(session.quiz_id,admin_password)){
 					participant = new Administrator(socket);
@@ -203,7 +238,7 @@ io.on('connection', function(socket){
 			var participantId = session.participantId;
 			var participant = quizzes.getParticipant(session.quiz_id,participantId);
 			
-			socket.emit('quiz_init_ok',{userType: participant.getUserType() });
+			socket.emit('quiz_init_ok',{userType: participant.getUserType(), quizId: session.quiz_id });
 			
 			participant.updateSocket(socket);
 			quizzes.sendUpdates(participant);

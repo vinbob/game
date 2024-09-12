@@ -649,18 +649,6 @@ var questions = {
         category: "Consumentengedrag", 
         question: "Wie doucht er altijd korter dan 5 minuten?",
         source: "https://www.cbs.nl/nl-nl/publicatie/2021/22/klimaatverandering-en-energietransitie tabel H7"},
-    55:{
-        video: "", 
-        bonusrole: [4,6,2,5,1,3], 
-        answers: [
-            "Van de 65-plussers in Nederland doen 2 op de 5 mensen dit.",  //
-            "Slechts 1 op de 25 Nederlandse jongeren doet dit (18 - 25 jaar).", 
-            "Er zijn evenveel mannen als vrouwen die dit doen.", 
-            "!Alle bovenstaande antwoorden zijn waar." 
-        ],
-        category: "Consumentengedrag", 
-        question: "Wie doucht er altijd korter dan 5 minuten?",
-        source: "https://www.cbs.nl/nl-nl/publicatie/2021/22/klimaatverandering-en-energietransitie tabel H7"},
     56:{
         video: "", 
         bonusrole: [4,2,6,5,1,3], 
@@ -701,18 +689,6 @@ var questions = {
         question: "Vul naast zonne- en windnergie nog een vorm van duurzame energie in.",
         source: ""},
     59:{
-        video: "", 
-        bonusrole: [5,2,4,6,1,3], 
-        answers: [
-            "Mensen van 75 jaar en ouder.",  //
-            "!Vrouwen dragen vaker tweedehandskleding dan mannen.", 
-            "Mensen op het platteland doen dit vaker dan mensen in de stad.", 
-            "Alle bovenstaande antwoorden zijn waar." 
-        ],
-        category: "Basis", 
-        question: "testvraag ?",
-        source: "https://www.cbs.nl/nl-nl/publicatie/2021/22/klimaatverandering-en-energietransitie tabel H7"},
-    60:{
         video: "broeikaseffect.mp4", 
         bonusrole: [5,2,4,6,1,3], 
         answers: [

@@ -13,14 +13,21 @@ function Index(){
 			
 			for(var i in data){
 				var q = data[i];
-				if (q.quiz == 'test'){
+				if (q.quiz == 'vincent'){
 					html += "<div><a href='"+q.link+"'>* "+q.quiz+"</a></div>";
 				}
 			}
 			
-			$('#quiz_list_area').html(html);
+			//$('#quiz_list_area').html(html);
 		});
 	}
+
+	$('#btn_login').click(function(){
+		window.location.href = "/quiz/"+$('#gebruikersnaam').val();
+	});
+	$('#btn_login_digiboard').click(function(){
+		window.location.href = "/digiboard/"+$('#gebruikersnaam').val();
+	});
 }
 
 $(document).ready(function(){

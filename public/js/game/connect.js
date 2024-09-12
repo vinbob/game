@@ -84,7 +84,30 @@ function Connect(){
 			}
 			return false;
 		});	
+
+		function getQueryParams() {
+			const params = new URLSearchParams(window.location.search);
+			return {
+				quiz_id: params.get('quiz_id'),
+				type: params.get('type')
+			};
+		}
+	
+		// URL parameters ophalen
+		const params = getQueryParams();
+		console.log(params.type);
+		// Controleren of spectator true is
+		if (params.type === 'spectator' && params.quiz_id) {
+			socket.emit('connect_connect',{type:'spectator'});
+		} else if (params.type === 'player' && params.quiz_id) {
+			$('#admin').hide();
+		} else if (params.type === 'admin') {
+			$('#player').hide();
+			console.log('yez');
+		}
 	}
+
+	
 }
 
 $(document).ready(function(){
@@ -98,7 +121,7 @@ $(document).ready(function(){
 			categories[cat] = '<details><summary style="cursor:pointer;"><b>'+cat+'</b></summary><table>';
 		}
 		categories[cat] += '<tr><td><input type="checkbox" ';
-		if (i == 58){
+		if (cat == 'Basis'){
 			categories[cat] += 'checked ';
 		}
 		categories[cat] += 'value="' +  i + '" id="check' + i + '" /></td><td text-align="left"> ' ;

@@ -1,17 +1,20 @@
 var states = {START:0,TEST_QUESTION:1,STARTING:2,SHOW_QUESTION:3,SHOW_VIDEO:4,SHOW_ANSWER:5,END:6};
 var startingscore = 15;
-var savedanswers = [0,0];
-var questiontype = 'mc';
-var curanswers = [];
-var curvideo = '';
-var curpic = '';
-var showedanswer = false;
 
 function Quizzes(){
 	var quizzes = {};
-	var quiz = new Quiz('test');
+	var quiz = new Quiz('Vincent');
 	quiz.setTitle('KlimaatCasino');
-	quizzes['test'] = quiz;
+	quizzes['Vincent'] = quiz;
+	var quiz = new Quiz('Joeri');
+	quiz.setTitle('KlimaatCasino');
+	quizzes['Joeri'] = quiz;
+	var quiz = new Quiz('Frank');
+	quiz.setTitle('KlimaatCasino');
+	quizzes['Frank'] = quiz;
+	var quiz = new Quiz('Bibi');
+	quiz.setTitle('KlimaatCasino');
+	quizzes['Bibi'] = quiz;
 	console.log("Ready!");
 	this.addQuestions = function(quizId,selectedQs){
 		console.log(selectedQs);
@@ -274,12 +277,50 @@ function Quizzes(){
 		quizzes[quizId].hideCoins(quizzes[quizId], {savedanswers: [data[0],data[1]]});
 	}
 
-
 	this.getLeaderboard = function(quizId){
 		if(quizId in quizzes)
 		return quizzes[quizId].getLeaderboard();
 	}
 
+	this.getQuestionType = function(quizId){
+		if(quizId in quizzes)
+			return quizzes[quizId].getQuestionType();
+	}
+
+	this.getSavedAnswers = function(quizId){
+		if(quizId in quizzes)
+			return quizzes[quizId].getSavedAnswers();
+	}
+
+	this.setSavedAnswers = function(quizId, good, wrong){
+		if(quizId in quizzes)
+			return quizzes[quizId].setSavedAnswers(good, wrong);
+	}
+
+	this.getCurAnswers = function(quizId){
+		if(quizId in quizzes)
+			return quizzes[quizId].getCurAnswers();
+	}
+
+	this.getCurVid = function(quizId){
+		if(quizId in quizzes)
+			return quizzes[quizId].getCurVid();
+	}
+
+	this.getCurPic = function(quizId){
+		if(quizId in quizzes)
+			return quizzes[quizId].getCurPic();
+	}
+
+	this.getShowedAnswer = function(quizId){
+		if(quizId in quizzes)
+			return quizzes[quizId].getShowedAnswer();
+	}
+
+	this.setShowedAnswer = function(quizId, bool){
+		if(quizId in quizzes)
+			return quizzes[quizId].setShowedAnswer(bool);
+	}
 	//this.loadAll();
 }
 
@@ -431,16 +472,15 @@ function Participant(){
 		}
 		if(typeof params!=='undefined'){ 
 			if(typeof params.savedanswers!=='undefined'){ 
-				savedanswers[0] = params.savedanswers[0]; //pass on the saved answers for open questions in case of refresh
-				savedanswers[1] = params.savedanswers[1];
+				quizzes.setSavedAnswers(this.getQuizId(), params.savedanswers[0], params.savedanswers[1]);//pass on the saved answers for open questions in case of refresh
 			}
 		}
 		if(quizState.state != 6){
-			quizState.stateParams.savedanswers = savedanswers;
-			quizState.stateParams.type = questiontype;
-			quizState.stateParams.answers = curanswers;
-			quizState.stateParams.vid = curvideo;
-			quizState.stateParams.pic = curpic;
+			quizState.stateParams.savedanswers = quizzes.getSavedAnswers(this.getQuizId());
+			quizState.stateParams.type = quizzes.getQuestionType(this.getQuizId());
+			quizState.stateParams.answers = quizzes.getCurAnswers(this.getQuizId());
+			quizState.stateParams.vid = quizzes.getCurVid(this.getQuizId());
+			quizState.stateParams.pic = quizzes.getCurPic(this.getQuizId());
 		}
 		
 		socket.emit('quiz_state_update',quizState);
@@ -867,14 +907,14 @@ function QuizState(pQuizId){
 
 	this.setShowQuestion = function(pStateParams){
 		console.log('# Quiz state changed to SHOW_QUESTION ['+quizId+']');
-		showedanswer = false;
+		quizzes.setShowedAnswer(quizId, false);
 		curState = states.SHOW_QUESTION;
 		stateParams = pStateParams;
 	}
 
 	this.setShowAnswer = function(pStateParams){
 		console.log('# Quiz state changed to SHOW_ANSWER ['+quizId+']');
-		showedanswer = true;
+		quizzes.setShowedAnswer(quizId, true);
 		curState = states.SHOW_ANSWER;
 		stateParams = pStateParams;
 	}
@@ -914,6 +954,12 @@ function Quiz(pQuizId){
 	var quizState = new QuizState(quizId);
 	var adminPassword = '';
 	var quizCode = '';
+	var savedanswers = [0,0];
+	var questiontype = 'mc';
+	var curanswers = [];
+	var curvid = '';
+	var curpic = '';
+	var showedanswer = false;
 
 	var title = false;
 	var pic = false;
@@ -980,7 +1026,7 @@ function Quiz(pQuizId){
 	this.showQuestion = function(question){
 		participants.resetResponses();
 		curanswers = question.getAnswers();
-		curvideo = question.getVid();
+		curvid = question.getVid();
 		quizState.setShowQuestion(question.getQuestionOnly());
 		quizState.setHiddenParams({answerId: question.getAnswerId(),marks: question.getMarks(),bonusrole: question.getBonus(), type: question.getType()});
 		questiontype = question.getType();
@@ -1184,5 +1230,33 @@ function Quiz(pQuizId){
 	this.ready = function(){
 		quizState.setStart(this.getDetails());
 		this.sendUpdatesToEveryone({});
+	}
+
+	this.getQuestionType = function(){
+		return questiontype;
+	}
+
+	this.getSavedAnswers = function(){
+		return savedanswers;
+	}
+
+	this.setSavedAnswers = function(good, wrong){
+		savedanswers = [good,wrong];
+	}
+
+	this.getCurAnswers = function(){
+		return curanswers;
+	}
+
+	this.getCurVid = function(){
+		return curvid;
+	}
+
+	this.getCurPic = function(){
+		return curpic;
+	}
+
+	this.setShowedAnswer = function(bool){
+		showedanswer = bool;
 	}
 }
