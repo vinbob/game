@@ -674,7 +674,7 @@ var questions = {
         question: "Wie draagt het vaakst tweedehandskleding in Nederland?",
         source: "https://www.cbs.nl/nl-nl/publicatie/2021/22/klimaatverandering-en-energietransitie tabel H7"},
     58:{
-        video: "broeikaseffect.mp4", 
+        video: "", 
         bonusrole: [5,2,4,6,1,3], 
         answers: [
             "waterkracht",  //
@@ -686,10 +686,10 @@ var questions = {
         ],
         category: "Basis", 
         type: 'open',
-        question: "Vul naast zonne- en windnergie nog een vorm van duurzame energie in.",
+        question: "Vul naast zonne- en windenergie nog een vorm van duurzame energie in.",
         source: ""},
     59:{
-        video: "broeikaseffect.mp4", 
+        video: "", 
         bonusrole: [5,2,4,6,1,3], 
         answers: [
             "kolen",  //

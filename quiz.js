@@ -65,7 +65,7 @@ function Quizzes(){
 		}
 	}
 	
-	this.loadAll = function(){
+	/*this.loadAll = function(){
 		var files = fs.readdirSync('./quizzes');
 
 		for(var f in files){
@@ -176,7 +176,7 @@ function Quizzes(){
 				console.trace();
 			}
 		}
-	}
+	}*/
 
 	this.getList = function(){
 		var result = [];
@@ -222,7 +222,6 @@ function Quizzes(){
 
 	this.sendUpdates = function(participant){
 		var quizId = participant.getQuizId();
-//hier
 		if(quizId in quizzes)
 		quizzes[quizId].sendUpdates(participant);
 	}
@@ -321,7 +320,11 @@ function Quizzes(){
 		if(quizId in quizzes)
 			return quizzes[quizId].setShowedAnswer(bool);
 	}
-	//this.loadAll();
+
+	this.getTotalQuestions = function(quizId){
+		if(quizId in quizzes)
+			return quizzes[quizId].countQuestions();
+	}
 }
 
 function Participants(){
@@ -354,7 +357,7 @@ function Participants(){
 	}
 
 	this.isValidTeamname = function(teamname){
-		if(teamname.length<=3) return false;
+		if(teamname.length<=1) return false;
 		if(teamname in teamnames) return false;
 		return true;
 	}
@@ -476,6 +479,8 @@ function Participant(){
 			}
 		}
 		if(quizState.state != 6){
+			quizState.stateParams.curq = quizzes.getTotalQuestions(this.getQuizId())[0];
+			quizState.stateParams.totalqs = quizzes.getTotalQuestions(this.getQuizId())[1];
 			quizState.stateParams.savedanswers = quizzes.getSavedAnswers(this.getQuizId());
 			quizState.stateParams.type = quizzes.getQuestionType(this.getQuizId());
 			quizState.stateParams.answers = quizzes.getCurAnswers(this.getQuizId());
@@ -670,6 +675,10 @@ function Questions(){
 
 	this.resetPosition = function(){
 		currentQuestion = 0;
+	}
+
+	this.countQuestions = function(){
+		return [currentQuestion, questions.length];
 	}
 }
 
@@ -961,7 +970,6 @@ function Quiz(pQuizId){
 	var curvid = '';
 	var curpic = '';
 	var showedanswer = false;
-
 	var title = false;
 	var pic = false;
 
@@ -1259,5 +1267,9 @@ function Quiz(pQuizId){
 
 	this.setShowedAnswer = function(bool){
 		showedanswer = bool;
+	}
+
+	this.countQuestions = function(){
+		return questions.countQuestions();
 	}
 }

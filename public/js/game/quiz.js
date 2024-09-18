@@ -370,7 +370,7 @@ function GameWorld(){
 		
 		vidlink = '';
 		$('#btn_admin_show_video').hide();
-		if(stateParams.vid!=''){
+		if(stateParams.vid!==''){
 			vidlink = stateParams.vid;
 			$('#btn_admin_show_video').show();
 		}
@@ -413,8 +413,8 @@ function GameWorld(){
 				$('#question_area .question').html("");
 				$('#question_area .bet').html("");
 			}
-    	} else { //the user is the admin
-    	   $('#question_area .question').html(stateParams.question);
+    	} else { //the user is the admin or spectator
+    	   $('#question_area .question').html('(Vraag '+stateParams.curq+' van de '+stateParams.totalqs+')<br />'+stateParams.question);
 		   if (userType=='spectator'){
 			    if (curState==states.SHOW_VIDEO){
 					$('#question_area .bet').html('<video width="640" height="480" controls><source src="content/KlimaatCasino/'+ vidlink + '" type="video/mp4">Your browser does not support the video tag.</video>');

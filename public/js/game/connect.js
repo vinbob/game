@@ -32,7 +32,7 @@ function Connect(){
 		});
 		
 		socket.on('connect_connect_nok_invalid_team_name',function(){
-			alert('Invalid team name! Please try another one (must be at least 4 characters and not used by another team)');
+			alert('Je naam moet minstens 2 letters hebben en niet al in gebruik zijn.');
 		});
 		
 		socket.on('connect_connect_nok_invalid_admin_password',function(){
