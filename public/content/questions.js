@@ -700,6 +700,17 @@ var questions = {
         type: 'open',
         question: "Vul naast olie en gas nog een vorm van fossiele branstoffen in.",
         source: ""},
+    60:{
+        video: "", 
+        bonusrole: [5,3,1,6,2,4], 
+        answers: [
+            "1 tot 2 graden Celcius",  //
+            "2 tot 4 graden Celcius", 
+            "!5 tot 10 graden Celcius"
+        ],
+        category: "Natuur", 
+        question: "Met hoeveel graden kan de gevoelstemperatuur afnemen in een tuin met veel bomen ten opzichte van een tuin met alleen tegels?",
+        source: "https://www.klimaathelpdesk.org/answers/wat-zijn-de-klimaateffecten-van-een-betegelde-of-groene-tuin/"},
     };
     
     var rolenames = {1:"Bouwer",2:"Ondernemer",3:"Uitvinder",4:"Coach",5:"Designer",6:"Hulpverlener"};
