@@ -187,7 +187,7 @@ var questions = {
             "!Alleen tweedehands kleren kopen.",
             "Bij de aankoop van kleding kiezen voor de duurzaamste materialen.",
             "Je kleren 10 graden kouder wassen.",
-            "De stof van je oude kleren hergebruiken voor Andere doeleinden."
+            "De stof van je oude kleren hergebruiken voor andere doeleinden."
         ],
         category: "Kleding", 
         question: "Welk van deze keuzes is het meest milieubewust? ",
@@ -428,7 +428,7 @@ var questions = {
             "!Je probeert de koop van een nieuwe spijkerbroek zo lang mogelijk uit te stellen door hem te repareren.", 
             "Je koopt een nieuwe spijkerbroek, maar kiest een milieuvriendelijke variant.", 
             "Je koopt een normale spijkerbroek, maar laat je oude broek recyclen.", 
-            "Ja koopt een normale spijkerbroek en laat je oude broek composteren." 
+            "Je koopt een normale spijkerbroek en laat je oude broek composteren." 
         ],
         category: "Kleding", 
         question: "Wat is het beste voor het milieu om te doen als je spijkerbroek begint te slijten?",
@@ -711,7 +711,19 @@ var questions = {
         category: "Natuur", 
         question: "Met hoeveel graden kan de gevoelstemperatuur afnemen in een tuin met veel bomen ten opzichte van een tuin met alleen tegels?",
         source: "https://www.klimaathelpdesk.org/answers/wat-zijn-de-klimaateffecten-van-een-betegelde-of-groene-tuin/"},
+    61:{
+        video: "", 
+        bonusrole: [5,3,1,6,2,4], 
+        answers: [
+            "1 tot 2 graden Celcius",  //
+            "2 tot 4 graden Celcius", 
+            "!5 tot 10 graden Celcius"
+        ],
+        category: "Test", 
+        question: "Met hoeveel graden kan de gevoelstemperatuur afnemen in een tuin met veel bomen ten opzichte van een tuin met alleen tegels?",
+        source: "https://www.klimaathelpdesk.org/answers/wat-zijn-de-klimaateffecten-van-een-betegelde-of-groene-tuin/"},
     };
+
     
     var rolenames = {1:"Bouwer",2:"Ondernemer",3:"Uitvinder",4:"Coach",5:"Designer",6:"Hulpverlener"};
 

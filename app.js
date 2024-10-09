@@ -1,7 +1,10 @@
 var express = require('express');
 var app = express();
 var server = require('http').createServer(app);
-var io = require('socket.io')(server);
+var io = require('socket.io')(server, {
+	pingInterval: 10000, // Send a ping every 10 seconds
+	pingTimeout: 5000,   // If no pong is received within 5 seconds, consider the connection closed
+  });
 var express_session = require("express-session")({
     secret: "c60ebe0a696ee406ad598621c0a70c15",
     resave: true,
@@ -63,7 +66,7 @@ app.get('/join/:quiz_id', function(req, res){
 		var quiz_id = req.params.quiz_id;
 		
 		if(!quizzes.isValidQuizId(quiz_id)){
-			res.redirect('/');
+			res.redirect('/geenquiz.html');
 		}
 		else{
 			req.session.quiz_id = quiz_id;
@@ -262,6 +265,10 @@ io.on('connection', function(socket){
 		});
 		
 		socket.on('quiz_leave_quiz',function(data){
+			quizzes.removeParticipant(session);
+			var leaderboard = quizzes.getLeaderboard(session.quiz_id);
+			console.log(leaderboard)
+			//socket.emit('quiz_leaderboard',leaderboard);
 			session.ready_for_quiz = false;
 			session.participantId = false;
 			socket.emit('quiz_init_nok');
@@ -317,6 +324,7 @@ io.on('connection', function(socket){
 
 		socket.on('update_leaderboard',function(data){
 			var leaderboard = quizzes.getLeaderboard(session.quiz_id);
+			console.log(leaderboard);
 			quizzes.updateLeaderboard(session.quiz_id, leaderboard);
 		});
 		

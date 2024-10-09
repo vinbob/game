@@ -197,6 +197,33 @@ function GameWorld(){
 	}
 	
 	this.bindSocketEvents = function(){
+		let connectionLostTimeout;
+
+		socket.on('connect', () => {
+			console.log('Connected to server');
+			clearTimeout(connectionLostTimeout); // Clear any previous timeout when reconnected
+		});
+
+		socket.on('disconnect', () => {
+			console.log('Disconnected from server');
+			connectionLostTimeout = setTimeout(() => {
+			alert('Connection lost! Please refresh the page.');
+			}, 5000); // Show alert after 5 seconds of disconnection
+		});
+
+		socket.on('reconnect', (attemptNumber) => {
+			console.log('Reconnected after', attemptNumber, 'attempts');
+			clearTimeout(connectionLostTimeout); // Clear timeout on reconnect
+		});
+
+		socket.on('reconnect_attempt', (attemptNumber) => {
+			console.log('Reconnection attempt', attemptNumber);
+		});
+
+		socket.on('reconnect_error', (error) => {
+			console.log('Reconnection failed:', error);
+		});
+		
 		socket.on('quiz_init_ok',function(gameWorld){
 			return function(data){
 				userType = data.userType;
@@ -279,26 +306,27 @@ function GameWorld(){
 						
 						for(var elem in elements){
 							var p = elements[elem];
-							
-							var colorStyle = "background-color: green";
-							if(p.isLastCorrect === true){
-								colorStyle = "background-color: rgb(133, 255, 135)";
+							if (p.issleeping == false){
+								var colorStyle = "background-color: green";
+								if(p.isLastCorrect === true){
+									colorStyle = "background-color: rgb(133, 255, 135)";
+								}
+								else if(p.isLastCorrect === false){
+									colorStyle = "background-color: rgb(255, 162, 162)";
+								}
+								
+								html += "<tr style='"+colorStyle+"; height:56px; border-color:red;'>";
+								var resp = '';
+								if(p.response){ // if an answer was selected, show a picture of a card facing down
+									resp = '<img src="../content/KlimaatCasino/card.png" width="30" />';
+								}
+								var betv = '';
+								if(p.betValue > 0){
+									betv = p.betValue;
+								}
+								html += "<td>" + p.rank + "</td>" + "<td>" + p.team + "</td>" + "<td>" + p.score + "</td>" + "<td>" + resp + "</td>" + "<td>" + betv + "</td>";
+								html += "</tr>";
 							}
-							else if(p.isLastCorrect === false){
-								colorStyle = "background-color: rgb(255, 162, 162)";
-							}
-							
-							html += "<tr style='"+colorStyle+"; height:56px; border-color:red;'>";
-							var resp = '';
-							if(p.response){ // if an answer was selected, show a picture of a card facing down
-								resp = '<img src="../content/KlimaatCasino/card.png" width="30" />';
-							}
-							var betv = '';
-							if(p.betValue > 0){
-								betv = p.betValue;
-							}
-							html += "<td>" + p.rank + "</td>" + "<td>" + p.team + "</td>" + "<td>" + p.score + "</td>" + "<td>" + resp + "</td>" + "<td>" + betv + "</td>";
-							html += "</tr>";
 						}
 						
 						html += "</tbody>";
@@ -435,6 +463,9 @@ function GameWorld(){
 				if (betValue >= (score - 9)){
 				$('#bet10').css('display', 'none');
 				}
+				if(betValue > score){
+					betValue = score;
+				}
 				$('#totalbet').html(betValue); //update betted value displayed
 				// Check if user is an official_participant or unofficial_participant and if the current state is SHOW_QUESTION or TEST_QUESTION
 				if (userType === 'official_participant' && curState === states.SHOW_QUESTION) {
@@ -454,6 +485,9 @@ function GameWorld(){
 			}
 			if (betValue >= (score - 9)){
 			$(this).css('display', 'none');
+			}
+			if(betValue > score){
+				betValue = score;
 			}
 			$('#totalbet').html(betValue); //update betted value displayed
 			// Check if user is an official_participant or unofficial_participant and if the current state is SHOW_QUESTION or TEST_QUESTION

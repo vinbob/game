@@ -194,6 +194,12 @@ function Quizzes(){
 		}
 	}
 
+	this.removeParticipant = function(data){
+		if(data.quiz_id in quizzes){
+			quizzes[data.quiz_id].removeParticipant(data.participantId);
+		}
+	}
+
 	this.isValidQuizId = function(quizId){
 		if(typeof quizId === 'undefined') return false;
 		if(quizId in quizzes) return true;
@@ -354,6 +360,7 @@ function Participants(){
 	this.removeParticipant = function(uniqueId){
 		if(uniqueId in participants)
 			delete participants[uniqueId];
+			this.updateRanks();
 	}
 
 	this.isValidTeamname = function(teamname){
@@ -386,7 +393,6 @@ function Participants(){
 		for(var id in participants){
 			if(participants[id] && participants[id].isRealParticipant){
 				participants[id].updateScore(answerId,marks,bonusrl, data);
-				console.log("updating score of "+id);
 			}
 		}
 
@@ -458,7 +464,7 @@ function Participant(){
 	}
 
 	this.sendUpdates = function(quizState,params){
-		if(!this.isAdministrator && !this.isSpectator && quizState.state != 6){
+		if(!this.isAdministrator && !this.isSpectator && quizState.state != states.END){
 			quizState.stateParams.score = this.getScore();
 			quizState.stateParams.role = this.getRole();
 			quizState.stateParams.myans = this.getResponse();
@@ -477,8 +483,15 @@ function Participant(){
 			if(typeof params.savedanswers!=='undefined'){ 
 				quizzes.setSavedAnswers(this.getQuizId(), params.savedanswers[0], params.savedanswers[1]);//pass on the saved answers for open questions in case of refresh
 			}
+			if(params.state){
+				if(params.state == states.STARTING && !this.isAdministrator && !this.isSpectator){
+					this.setSleeping(true);
+				} else if (params.state == states.END && this.isRealParticipant){
+					this.addRound();
+				}
+			}
 		}
-		if(quizState.state != 6){
+		if(quizState.state != states.END){
 			quizState.stateParams.curq = quizzes.getTotalQuestions(this.getQuizId())[0];
 			quizState.stateParams.totalqs = quizzes.getTotalQuestions(this.getQuizId())[1];
 			quizState.stateParams.savedanswers = quizzes.getSavedAnswers(this.getQuizId());
@@ -487,7 +500,7 @@ function Participant(){
 			quizState.stateParams.vid = quizzes.getCurVid(this.getQuizId());
 			quizState.stateParams.pic = quizzes.getCurPic(this.getQuizId());
 		}
-		
+
 		socket.emit('quiz_state_update',quizState);
 	}
 
@@ -518,6 +531,8 @@ function RealParticipant(pSocket,pTeamname){
 	var rank = 1;
 	var lastCorrect = null;
 	var bet = 0;
+	var sleeping = false;
+	var roundsplayed = 0;
 
 	this.initParentParent = function(pSocket){
 		this.initParent(pSocket);
@@ -539,10 +554,28 @@ function RealParticipant(pSocket,pTeamname){
 		role = pRole;
 	}
 
+	this.addRound = function(){
+		roundsplayed += 1;
+	}
+
+	this.setSleeping = function(issleeping){
+		if(roundsplayed > 0){
+			sleeping = issleeping;
+			console.log('setsleeping:'+sleeping);
+		}
+	}
+
+	this.isSleeping = function(){
+		return sleeping;
+	}
+
 	this.setResponse = function(answerId, betValue){
 		response = answerId;
-		console.log(response);
 		bet = parseInt(betValue);
+		if(!(answerId == false && betValue == 0 ) && sleeping == true){
+			sleeping = false;
+			console.log('awake again');
+		}
 	}
 
 	this.getResponse = function(){
@@ -556,9 +589,6 @@ function RealParticipant(pSocket,pTeamname){
 	}
 
 	this.updateScore = function(answerId,marks,bonusrl, data){
-		console.log(data);
-		console.log(typeof data);
-		console.log('final antwoord: '+response);
 		var checkcorrect = answerId == response;
 		if (data && response){
 			const ldata = data.map(ans => ans.toLowerCase());
@@ -572,7 +602,9 @@ function RealParticipant(pSocket,pTeamname){
 		}
 		else{
     		score -= bet;
-			console.log('score is:'+typeof score);
+			if (score < 0){
+				score = 0;
+			}
 			this.setLastCorrect(false);
 		}
 	}
@@ -775,13 +807,13 @@ function Leaderboard(){
 
 		for(var i=0;i<official_participants.length;i++){
 			var p = official_participants[i];
-			leaderboard['official'].push({team: entities.encode(p.getTeamname()), score: p.getScore(), rank: p.getRank(), isLastCorrect: p.isLastCorrect(), response: p.getResponse(), betValue: p.betValue()});
+			leaderboard['official'].push({team: entities.encode(p.getTeamname()), score: p.getScore(), rank: p.getRank(), isLastCorrect: p.isLastCorrect(), response: p.getResponse(), betValue: p.betValue(), issleeping: p.isSleeping()});
 		}
 
-		for(var i=0;i<unofficial_participants.length;i++){
+		/*for(var i=0;i<unofficial_participants.length;i++){
 			var p = unofficial_participants[i];
 			leaderboard['unofficial'].push({team: entities.encode(p.getTeamname()), score: p.getScore(), rank: p.getRank(), isLastCorrect: p.isLastCorrect()});
-		}
+		}*/
 
 		return leaderboard;
 	}
@@ -791,13 +823,13 @@ function Leaderboard(){
 		var participantArray = [];
 
 		if(participant.isOfficialParticipant) participantArray = official_participants;
-		else if (participant.isUnofficialParticipant) participantArray = unofficial_participants;
+		//else if (participant.isUnofficialParticipant) participantArray = unofficial_participants;
 
 		var curRank = 1;
 
 		for(var i=0;i<participantArray.length;i++){
 			var curScore = participantArray[i].getScore();
-			if(i>0 && curScore != participantArray[i-1].getScore()){
+			if(i>0 && curScore != participantArray[i-1].getScore() && participantArray[i-1].isSleeping() == false){
 				curRank ++;
 			}
 
@@ -1057,6 +1089,7 @@ function Quiz(pQuizId){
 		var betValue = response.bet;
 		
 		participant.setResponse(submittedAnswerId, betValue);
+		participants.updateRanks();
 	}
 	
 	this.revealAnswer = function(quiz, data){
@@ -1135,7 +1168,7 @@ function Quiz(pQuizId){
 		questions.resetPosition();
 
 		quizState.setStarting({seconds: startWaitTime});
-		this.sendUpdatesToEveryone({fields: ['rank']});
+		this.sendUpdatesToEveryone({fields: ['rank'], state: states.STARTING});
 
 		timer.start(startWaitTime,function(quiz){
 			return function(){
@@ -1149,7 +1182,7 @@ function Quiz(pQuizId){
 		if(!(curState==states.SHOW_QUESTION || curState==states.SHOW_ANSWER || showedanswer == true)) return;
 
 		quizState.setEnd();
-		this.sendUpdatesToEveryone({});
+		this.sendUpdatesToEveryone({state: states.END});
 
 		setTimeout(
 		function(gameWorld){

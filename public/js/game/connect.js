@@ -121,7 +121,7 @@ $(document).ready(function(){
 			categories[cat] = '<details><summary style="cursor:pointer;"><b>'+cat+'</b></summary><table>';
 		}
 		categories[cat] += '<tr><td><input type="checkbox" ';
-		if (cat == 'Basis'){
+		if (cat == 'Test'){
 			categories[cat] += 'checked ';
 		}
 		categories[cat] += 'value="' +  i + '" id="check' + i + '" /></td><td text-align="left"> ' ;
