@@ -98,6 +98,10 @@ var isAdmin = function(socket,session){
 
 io.on('connection', function(socket){
 	try{
+		socket.on('disconnect', (reason) => {
+			console.log(`Client ${socket.id} disconnected. Reason: ${reason}`);
+		});
+
 		var session = socket.handshake.session;
 		
 		/*index.html*/
@@ -267,7 +271,6 @@ io.on('connection', function(socket){
 		socket.on('quiz_leave_quiz',function(data){
 			quizzes.removeParticipant(session);
 			var leaderboard = quizzes.getLeaderboard(session.quiz_id);
-			console.log(leaderboard)
 			//socket.emit('quiz_leaderboard',leaderboard);
 			session.ready_for_quiz = false;
 			session.participantId = false;
@@ -324,7 +327,6 @@ io.on('connection', function(socket){
 
 		socket.on('update_leaderboard',function(data){
 			var leaderboard = quizzes.getLeaderboard(session.quiz_id);
-			console.log(leaderboard);
 			quizzes.updateLeaderboard(session.quiz_id, leaderboard);
 		});
 		

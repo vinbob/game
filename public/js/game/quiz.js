@@ -199,6 +199,19 @@ function GameWorld(){
 	this.bindSocketEvents = function(){
 		let connectionLostTimeout;
 
+		/*ping option
+		// Custom timer to detect connection loss
+		let pingCheckTimeout;
+
+		// This event is triggered whenever a ping is received
+		socket.io.on('ping', () => {
+		  console.log('Ping received from the server');
+		  clearTimeout(pingCheckTimeout);  // Clear any existing timeout
+		  pingCheckTimeout = setTimeout(() => {
+			alert('Server is not responding. Please refresh the page.');
+		  }, 5000);  // Show alert if no ping response in 5 seconds
+		});*/
+
 		socket.on('connect', () => {
 			console.log('Connected to server');
 			clearTimeout(connectionLostTimeout); // Clear any previous timeout when reconnected
@@ -207,13 +220,14 @@ function GameWorld(){
 		socket.on('disconnect', () => {
 			console.log('Disconnected from server');
 			connectionLostTimeout = setTimeout(() => {
-			alert('Connection lost! Please refresh the page.');
+		    location.reload();  // Reload the page if no ping within the timeout
 			}, 5000); // Show alert after 5 seconds of disconnection
 		});
 
 		socket.on('reconnect', (attemptNumber) => {
 			console.log('Reconnected after', attemptNumber, 'attempts');
 			clearTimeout(connectionLostTimeout); // Clear timeout on reconnect
+			//clearTimeout(pingCheckTimeout);
 		});
 
 		socket.on('reconnect_attempt', (attemptNumber) => {

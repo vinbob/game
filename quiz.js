@@ -17,7 +17,6 @@ function Quizzes(){
 	quizzes['Bibi'] = quiz;
 	console.log("Ready!");
 	this.addQuestions = function(quizId,selectedQs){
-		console.log(selectedQs);
 		quizzes[quizId].emptyQuiz();
 		var onlybasis = true;
 		for (let i in selectedQs){ //Check if the quiz only consists of basis questions
@@ -64,119 +63,6 @@ function Quizzes(){
 			quizzes[quizId].addQuestion(selectedquestion);
 		}
 	}
-	
-	/*this.loadAll = function(){
-		var files = fs.readdirSync('./quizzes');
-
-		for(var f in files){
-			try{
-				var quizId = files[f];
-				var path = ('./quizzes/'+quizId+'/questions.txt');
-				var contentPath = 'content/'+quizId+'/';
-
-				if(fs.existsSync(path)){
-					console.log("# Loading Quiz: "+quizId);
-					var quiz = new Quiz(quizId);
-					var currentQuestion = false;
-
-					var content = fs.readFileSync(path,'utf8');
-					var i = 0;
-					while (i < content.length)
-					{
-						var j = content.indexOf("\n", i);
-						if (j == -1) j = content.length;
-						var line = content.substr(i, j-i);
-						line = line.replace("\r","");
-
-						var sTitle = "title ";
-						var sQuestion = "q ";
-						var sAnswer = "a ";
-						var sCorrectAnswer = "ac ";
-						var sImg = "img ";
-						var sVid = "vid ";
-						var sRole = "bonus ";
-						var sQuestionEnd = "!";
-						var sAdminCode = "admincode ";
-						var sQuizCode = "quizcode ";
-						var sTime = "time ";
-						var sMarks = "marks ";
-
-						if(line == sQuestionEnd){
-							if(currentQuestion){
-								quiz.addQuestion(currentQuestion);
-							}
-						}
-						else if(line.startsWith(sTitle)){
-							quiz.setTitle(line.substr(sTitle.length));
-						}
-						else if(line.startsWith(sImg)){
-							if(!currentQuestion){
-								quiz.setPic(contentPath  + line.substr(sImg.length));
-							}
-							else{
-								currentQuestion.setPic(contentPath + line.substr(sImg.length));
-							}
-						}
-						else if(line.startsWith(sVid)){
-    						if(currentQuestion){
-								currentQuestion.setVid(line.substr(sVid.length));
-							}
-						}
-						else if(line.startsWith(sRole)){
-    						if(currentQuestion){
-								currentQuestion.setBonus(line.substr(sRole.length));
-							}
-						}
-						else if(line.startsWith(sAnswer)){
-							if(currentQuestion){
-								currentQuestion.addAnswer(line.substr(sAnswer.length));
-							}
-						}
-						else if(line.startsWith(sCorrectAnswer)){
-							if(currentQuestion){
-								currentQuestion.addCorrectAnswer(line.substr(sCorrectAnswer.length));
-							}
-						}
-						else if(line.startsWith(sQuestion)){
-							currentQuestion = new Question();
-							currentQuestion.setQuestion(line.substr(sQuestion.length));
-						}
-						else if(line.startsWith(sAdminCode)){
-							quiz.setAdminCode(line.substr(sAdminCode.length));
-						}
-						else if(line.startsWith(sQuizCode)){
-							quiz.setQuizCode(line.substr(sQuizCode.length));
-						}
-						else if(line.startsWith(sTime)){
-							try {
-								if(currentQuestion) currentQuestion.setTime(parseInt(line.substr(sTime.length)));
-							}
-							catch (e) {
-							  console.log("# Invalid time: "+line);
-							}
-						}
-						else if(line.startsWith(sMarks)){
-							try {
-								if(currentQuestion) currentQuestion.setMarks(parseInt(line.substr(sMarks.length)));
-							}
-							catch (e) {
-							  console.log("# Invalid marks: "+line);
-							}
-						}
-
-						i = j+1;
-					}
-
-					quizzes[quizId] = quiz;
-					quiz.ready();
-				}
-			}
-			catch(e){
-				console.log(e);
-				console.trace();
-			}
-		}
-	}*/
 
 	this.getList = function(){
 		var result = [];
@@ -452,7 +338,6 @@ function Participant(){
 
 	this.getQuizId = function(){
 		if(socket && socket.handshake && socket.handshake.session && socket.handshake.session.quiz_id){
-			//console.log(socket.handshake.session.quiz_id);
 			return socket.handshake.session.quiz_id;
 		}
 
@@ -561,7 +446,6 @@ function RealParticipant(pSocket,pTeamname){
 	this.setSleeping = function(issleeping){
 		if(roundsplayed > 0){
 			sleeping = issleeping;
-			console.log('setsleeping:'+sleeping);
 		}
 	}
 
@@ -574,7 +458,6 @@ function RealParticipant(pSocket,pTeamname){
 		bet = parseInt(betValue);
 		if(!(answerId == false && betValue == 0 ) && sleeping == true){
 			sleeping = false;
-			console.log('awake again');
 		}
 	}
 
@@ -597,7 +480,6 @@ function RealParticipant(pSocket,pTeamname){
 		if(checkcorrect){
 			score += bet;
 			if(bonusrl.includes(role)){score += bet;}
-			console.log('answer: '+answerId+' answered:'+response);
 			this.setLastCorrect(true);
 		}
 		else{
@@ -1121,7 +1003,6 @@ function Quiz(pQuizId){
 		var params = {answerId:answerId};
 		if(typeof hiddenParams!='undefined' && typeof hiddenParams.test !=='undefined') params.test = true;
 		quizState.setShowAnswer(params);
-		console.log('showanser: '+data);
 
 		if (typeof data == undefined){
 			this.sendUpdatesToEveryone({fields: ['rank']});
