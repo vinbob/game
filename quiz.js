@@ -1,4 +1,4 @@
-var states = {START:0,TEST_QUESTION:1,STARTING:2,SHOW_QUESTION:3,SHOW_VIDEO:4,SHOW_ANSWER:5,END:6};
+var states = {START:0,TEST_QUESTION:1,STARTING:2,SHOW_QUESTION:3,SHOW_VIDEO:4,SHOW_ANSWER:5,START_ENDGAME:6,  PRESCENARIO:7, BALLROLLING:8, POSTSCENARIO:9, END:10};
 var startingscore = 15;
 
 function Quizzes(){
@@ -64,6 +64,33 @@ function Quizzes(){
 		}
 	}
 
+	/*this.potentialQuiz = function(unique_id){
+		var potentialquiz = undefined;
+		for(var q in quizzes){
+			if(potentialquiz == undefined){
+				potentialquiz = quizzes[q].potentialQuiz(unique_id);
+			}
+		}
+		return potentialquiz;
+	}*/
+	this.enableEndgame = function(quizId){
+		if(quizId in quizzes){
+			quizzes[quizId].enableEndgame();
+		}
+	}
+
+	this.getScenario = function(quizId){
+		if(quizId in quizzes){
+			return quizzes[quizId].getScenario();
+		}
+	}
+
+	this.getLives = function(quizId){
+		if(quizId in quizzes){
+			return quizzes[quizId].getLives();
+		}
+	}
+
 	this.getList = function(){
 		var result = [];
 		for(var q in quizzes){
@@ -71,6 +98,10 @@ function Quizzes(){
 		}
 
 		return result;
+	}
+
+	this.getAll = function(){
+		return quizzes;
 	}
 
 	this.addParticipant = function(participant){
@@ -126,6 +157,21 @@ function Quizzes(){
 	this.startQuiz = function(quizId){
 		if(quizId in quizzes)
 		quizzes[quizId].startQuiz();
+	}
+
+	this.startEndgame = function(quizId){
+		if(quizId in quizzes)
+			quizzes[quizId].startEndgame();
+	}
+
+	this.spinEndgame = function(quizId){
+		if(quizId in quizzes)
+			quizzes[quizId].spinEndgame();
+	}
+
+	this.nextScenario = function(quizId){
+		if(quizId in quizzes)
+			quizzes[quizId].nextScenario();
 	}
 
 	this.endQuiz = function(quizId){
@@ -285,6 +331,46 @@ function Participants(){
 		this.updateRanks();
 	}
 
+	this.handleRedBlack = function(color){
+		for(var id in participants){
+			if(participants[id] && participants[id].isRealParticipant){
+				participants[id].handleRedBlack(color);
+			}
+		}
+
+		this.updateRanks();
+	}
+
+	this.getAllscores = function(){
+		scores = [];
+		for(var id in participants){
+			if(participants[id] && participants[id].isRealParticipant){
+				if(participants[id].isSleeping() == false){
+					scores.push(participants[id].getScore());
+				}
+			}
+		}
+		return scores;
+	}
+
+	this.getAllbets = function(){
+		var bets = [];
+		for(var id in participants){
+			if(participants[id] && participants[id].isRealParticipant){
+				bets.push(participants[id].getResponse());
+			}
+		}
+		return bets;
+	}
+
+	this.addBonus = function(bonus){
+		for(var id in participants){
+			if(participants[id] && participants[id].isRealParticipant){
+				participants[id].addBonus(bonus);
+			}
+		}
+	}
+
 	this.revertScores = function(answerId,marks){
 		for(var id in participants){
 			if(participants[id] && participants[id].isRealParticipant){
@@ -301,6 +387,14 @@ function Participants(){
 
 	this.getLeaderboard = function(){
 		return leaderboard;
+	}
+
+	this.MeasureUnlocked = function(measurename){
+		for(var id in participants){
+			if(participants[id] && participants[id].isRealParticipant){
+				participants[id].MeasureUnlocked(measurename);
+			}
+		}
 	}
 
 	setInterval(function(participants){
@@ -324,6 +418,14 @@ function Participant(){
 
 			socket.handshake.session.ready_for_quiz = true;
 			socket.handshake.session.participantId = this.getUniqueId();
+			if(this.isSpectator){
+				socket.handshake.session.participantName = 'Digi-board';
+			} else if (this.isAdministrator){
+				socket.handshake.session.participantName = 'Admin';
+			} else {
+				socket.handshake.session.participantName = this.tName;
+			}
+			socket.handshake.session.browser = this.tBrowser;
 			socket.handshake.session.save();
 		}
 	}
@@ -394,10 +496,10 @@ function Participant(){
 	}
 }
 
-function Spectator(pSocket){
+function Spectator(pSocket, pBrowser){
 	this.__proto__ = new Participant();
 	this.isSpectator = true;
-
+	this.tBrowser = pBrowser;
 	this.initParent(pSocket);
 
 	this.getUserType = function(){
@@ -418,6 +520,7 @@ function RealParticipant(pSocket,pTeamname){
 	var bet = 0;
 	var sleeping = false;
 	var roundsplayed = 0;
+	//var endgameresponse = {};
 
 	this.initParentParent = function(pSocket){
 		this.initParent(pSocket);
@@ -443,6 +546,10 @@ function RealParticipant(pSocket,pTeamname){
 		roundsplayed += 1;
 	}
 
+	this.addBonus = function(bonus){
+		score += bonus;
+	}
+
 	this.setSleeping = function(issleeping){
 		if(roundsplayed > 0){
 			sleeping = issleeping;
@@ -453,11 +560,30 @@ function RealParticipant(pSocket,pTeamname){
 		return sleeping;
 	}
 
-	this.setResponse = function(answerId, betValue){
-		response = answerId;
-		bet = parseInt(betValue);
-		if(!(answerId == false && betValue == 0 ) && sleeping == true){
-			sleeping = false;
+	this.setResponse = function(answerId, betValue, quizmeasures){
+		if (typeof answerId === 'object' && answerId !== null) {
+			var betsum = 0;
+			for (a in answerId){
+				var measurename = answerId[a].name;
+				if(measurename !== 'rood' && measurename !== 'zwart'){
+					if(quizmeasures[measurename].unlocked == false){
+						betsum += answerId[a].betval;
+						if (betsum > score){
+							answerId[a].betval -= betsum - score;
+							betsum = score;
+						}
+					} else {
+						answerId[a].betval = 0;
+					}
+				}
+			}
+			response = answerId;
+		} else {
+			response = answerId;
+			bet = parseInt(betValue);
+			if(!(answerId == false && betValue == 0 ) && sleeping == true){
+				sleeping = false;
+			}
 		}
 	}
 
@@ -478,7 +604,7 @@ function RealParticipant(pSocket,pTeamname){
 			checkcorrect = ldata.includes(response.toLowerCase());
 		}
 		if(checkcorrect){
-			score += bet;
+			score += bet + 5;
 			if(bonusrl.includes(role)){score += bet;}
 			this.setLastCorrect(true);
 		}
@@ -488,6 +614,37 @@ function RealParticipant(pSocket,pTeamname){
 				score = 0;
 			}
 			this.setLastCorrect(false);
+		}
+	}
+
+	this.handleRedBlack = function(color){
+		for(i in response){
+			if(response[i].name == 'rood' || response[i].name == 'zwart'){
+				if(response[i].name == color){
+					score += response[i].betval;
+					console.log(response);
+					response[i].betval = 0;
+				} else {
+					console.log(response[i].name+': '+response[i].betval)
+					score -= response[i].betval;
+					if(score < 0){
+						score = 0;
+					}
+					response[i].betval = 0;
+				}
+			}
+		}
+	}
+
+	this.MeasureUnlocked = function(measurename){
+		for(i in response){
+			if(response[i].name == measurename){
+				score -= response[i].betval;
+				response[i].betval = 0;
+				if(score < 0){
+					score = 0;
+				}
+			}
 		}
 	}
 
@@ -503,6 +660,10 @@ function RealParticipant(pSocket,pTeamname){
 
 	this.getScore = function(){
 		return score;
+	}
+
+	this.setScore = function(newscore){
+		score = newscore;
 	}
 
 	this.getRank = function(){
@@ -533,10 +694,11 @@ function RealParticipant(pSocket,pTeamname){
 	this.setTeamname(pTeamname);
 }
 
-function OfficialParticipant(pSocket,pTeamname, pRole){
+function OfficialParticipant(pSocket,pTeamname, pRole, pBrowser){
 	this.__proto__ = new RealParticipant();
 	this.isOfficialParticipant = true;
-
+	this.tName = pTeamname;
+	this.tBrowser = pBrowser;
 	this.initParentParent(pSocket);
 	this.setTeamname(pTeamname);
 	this.setRole(pRole);
@@ -558,10 +720,10 @@ function UnofficialParticipant(pSocket,pTeamname){
 	}
 }
 
-function Administrator(pSocket){
+function Administrator(pSocket, pBrowser){
 	this.__proto__ = new Participant();
 	this.isAdministrator = true;
-
+	this.tBrowser = pBrowser;
 	this.initParent(pSocket);
 	this.getUserType = function(){
 		return 'admin';
@@ -795,12 +957,6 @@ function Timer(){
 	}
 }
 
-function Responses(){
-}
-
-function Response(){
-}
-
 function QuizState(pQuizId){
 	var quizId = pQuizId;
 	var curState = states.START;
@@ -848,6 +1004,38 @@ function QuizState(pQuizId){
 		curState = states.SHOW_VIDEO;
 	}
 
+	this.startEndgame = function(){
+		console.log('# Quiz state changed to START_ENDGAME ['+quizId+']');
+		curState = states.START_ENDGAME;
+	}
+
+	this.setPrescenario = function(quizmeasures){
+		console.log('# Quiz state changed to PRESCENARIO ['+quizId+']');
+		curState = states.PRESCENARIO;
+		stateParams.disasters = disasters;
+		stateParams.measures = quizmeasures;
+		var s = quizzes.getScenario(quizId);
+		stateParams.scenario = [s, scenarios[s]];
+		stateParams.totallives = totallives;
+		stateParams.lives = quizzes.getLives(quizId);
+	}
+
+	this.updateLives = function(){
+		stateParams.lives = quizzes.getLives(quizId);
+	}
+
+	this.setBallrolling = function(rouletteresult){
+		console.log('# Quiz state changed to BALLROLLING ['+quizId+']');
+		curState = states.BALLROLLING;
+		stateParams.rouletteresult = rouletteresult;
+	}
+
+	this.setPostscenario = function(data){
+		console.log('# Quiz state changed to POSTSCENARIO ['+quizId+']');
+		curState = states.POSTSCENARIO;
+		stateParams.resultcolor = data;
+	}
+
 	this.setEnd = function(pStateParams){
 		console.log('# Quiz state changed to END ['+quizId+']');
 		curState = states.END;
@@ -886,8 +1074,155 @@ function Quiz(pQuizId){
 	var showedanswer = false;
 	var title = false;
 	var pic = false;
+	var endgame = false;
+	var scenario = 0;
+	var scenariobonus = 0;
+	var quizmeasures = {};
+	var totalscore = 0;
+	var lives = totallives;
 
 	var startWaitTime = 5;
+
+	/*this.potentialQuiz = function(unique_id){
+		var allParticipants = participants.getAll();
+		console.log(allParticipants);
+		if (unique_id in allParticipants){
+			console.log(quizId);
+			return quizId;
+		} else {
+			return undefined;
+		}
+	}*/
+	this.getParticipants = function(){
+		return participants.getAll();
+	}
+
+	this.enableEndgame = function(){
+		endgame = true;
+	}
+
+	this.getScenario = function(){
+		return scenario;
+	}
+
+	this.getLives = function(){
+		return lives;
+	}
+
+	this.startEndgame = function(){
+		eval(fs.readFileSync('public/content/endgame.js')+'');
+		quizmeasures = measures;
+		scenario = 0;
+		lives = totallives;
+		for(var qm in quizmeasures){
+			quizmeasures[qm].unlocked = false;
+		}
+		const maxscore = Math.max(...participants.getAllscores());
+		scenariobonus = Math.round(maxscore*(endgamebonus/100));
+		this.setScenarioBonus(scenariobonus);
+		participants.addBonus(scenariobonus);
+		totalscore = participants.getAllscores().reduce((partialSum, a) => partialSum + a, 0);
+		for (m in quizmeasures){
+			quizmeasures[m].currentcost = Math.round(quizmeasures[m].cost1/100*totalscore*(1+quizmeasures[m].cost_increase/100*scenario));
+		}
+		quizState.setPrescenario(quizmeasures);
+		this.sendUpdatesToEveryone({disasters, scenario, quizmeasures});
+	}
+
+	this.spinEndgame = function(){
+		var curState = quizState.get();
+		if(!(curState==states.PRESCENARIO)) return;
+		function getRandomInt(min, max) {
+		  const minCeiled = Math.ceil(min);
+		  const maxFloored = Math.floor(max);
+		  return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled); // The maximum is exclusive and the minimum is inclusive
+		}
+		var rouletteresult = getRandomInt(0,37);
+		quizState.setBallrolling(rouletteresult);
+		this.sendUpdatesToEveryone({fields: ['rank'], state: states.BALLROLLING});
+		this.newLeaderboard(this.getLeaderboard());
+
+		var roulettenumbers = [0,18,29,7,28,12,35,3,26,5,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,22,24,16,33,1,20,14,31,9]
+		var rouletteorder = {0:'green',18:'red',29:'black',7:'red',28:'black',12:'red',35:'black',3:'red',26:'black',5:'red',32:'black',15:'red',19:'black',4:'red'
+			,21:'black',2:'red',25:'black',17:'red',34:'black',6:'red',27:'black',13:'red',36:'black',11:'red',30:'black',8:'red',23:'black',10:'red',22:'black',24:'red'
+			,16:'black',33:'red',1:'black',20:'red',14:'black',31:'red',9:'black'};
+		var i = 1;
+		for(d in disasters){
+			var risk = disasters[d].risks[scenario];
+			for(m in quizmeasures){
+				if(quizmeasures[m].unlocked == true){
+					for (e in quizmeasures[m].effects){
+						console.log(quizmeasures[m].effects[e][0]);
+						console.log(d);
+						if(quizmeasures[m].effects[e][0] == d){
+							console.log('match!');
+							if (quizmeasures[m].effects[e][1] == "="){
+								risk = quizmeasures[m].effects[e][2];
+								console.log('=');
+							} else if (quizmeasures[m].effects[e][1] == "/"){
+								risk = Math.round(risk / quizmeasures[m].effects[e][2]);
+								console.log('/');
+							}
+						}
+					}
+				}
+			}
+			for (let step = 0; step < risk; step++) {
+				rouletteorder[roulettenumbers[i]] = disasters[d].color;
+				i++;
+			}
+		}
+		console.log(rouletteorder);
+		var resultcolor = rouletteorder[rouletteresult];
+		if(resultcolor!='green' && resultcolor!='red' && resultcolor!='black'){
+			lives--;
+			quizState.updateLives();
+		}
+		var kleur = 'anders';
+		if(resultcolor == 'black'){
+			kleur = 'zwart';
+		} else if (resultcolor == 'red'){
+			kleur = 'rood';
+		}
+		participants.handleRedBlack(kleur);
+
+		timer.start(startWaitTime,function(quiz){
+			return function(){
+				quiz.showPostscenario(resultcolor);
+				quiz.newLeaderboard(quiz.getLeaderboard());
+			}
+		}(this));
+	}
+
+	this.setScenarioBonus = function(sb){
+		scenariobonus = sb;
+	}
+
+	this.getScenarioBonus = function(){
+		return scenariobonus;
+	}
+
+	this.nextScenario = function(){
+		scenario++;
+		if(scenario >= Object.keys(scenarios).length){
+			this.endQuiz();
+		} else if (lives <= 0){
+			this.endQuiz();
+		} else {
+			for (m in quizmeasures){
+				quizmeasures[m].currentcost = Math.round(quizmeasures[m].cost1/100*totalscore*(1+quizmeasures[m].cost_increase/100*scenario));
+			}
+			participants.addBonus(this.getScenarioBonus());
+			quizState.setPrescenario(quizmeasures);
+			this.sendUpdatesToEveryone({disasters, scenario, quizmeasures});
+			this.newLeaderboard(this.getLeaderboard());
+		}
+	}
+
+	this.showPostscenario = function(resultcolor){
+		quizState.setPostscenario(resultcolor);
+		this.sendUpdatesToEveryone({disasters, scenario, quizmeasures});
+	}
 
 	this.emptyQuiz = function(){
 		questions = new Questions();
@@ -914,37 +1249,15 @@ function Quiz(pQuizId){
 			this.showQuestion(question);
 		}
 		else{
-			this.endQuiz();
+			if(endgame){
+				quizState.startEndgame();
+				this.sendUpdatesToEveryone({});
+			} else {
+				this.endQuiz();
+			}
 		}
 	}
 
-	this.showTestQuestion = function(){
-		var curState = quizState.get();
-		if(!(curState==states.START)) return;
-
-		participants.resetResponses();
-
-		var testQuestion = new Question();
-		testQuestion.setQuestion('What is the name of the largest continent in the world?');
-		testQuestion.addAnswer('Africa');
-		testQuestion.addCorrectAnswer('Asia');
-		testQuestion.addAnswer('North America');
-		testQuestion.addAnswer('South America');
-		testQuestion.addAnswer('Antartica');
-		testQuestion.addAnswer('Europe');
-		testQuestion.setTime(15);
-
-		quizState.setShowTestQuestion(testQuestion.getQuestionOnly());
-		quizState.setHiddenParams({answerId: testQuestion.getAnswerId(),test:true, marks: testQuestion.getMarks()});
-
-		this.sendUpdatesToEveryone({});
-
-		//timer.start(testQuestion.getTime(),function(quiz){
-			//return function(){
-			//	quiz.showAnswer();
-			//}
-		//}(this));
-	}
 
 	this.showQuestion = function(question){
 		participants.resetResponses();
@@ -965,12 +1278,34 @@ function Quiz(pQuizId){
 
 	this.collectResponse = function(participant,response){
 		var curState = quizState.get();
-		if(!(curState==states.SHOW_QUESTION || curState==states.TEST_QUESTION)) return;
+		if(!(curState==states.SHOW_QUESTION || curState==states.TEST_QUESTION || curState==states.PRESCENARIO)) return;
 
 		var submittedAnswerId = response.answerId;
 		var betValue = response.bet;
-		
-		participant.setResponse(submittedAnswerId, betValue);
+		participant.setResponse(submittedAnswerId, betValue, quizmeasures);
+		if(curState == states.PRESCENARIO){
+			var curmeasures = quizmeasures;
+			for(var qm in curmeasures){
+				curmeasures[qm].bettotal = 0;
+			}
+			var allbets = participants.getAllbets();
+			for (var b in allbets){
+				if (typeof allbets[b] === 'object'){
+					for (var i in allbets[b]){
+						var measurename = allbets[b][i].name;
+						if(measurename !== 'rood' && measurename !== 'zwart' && quizmeasures[measurename].unlocked == false){
+							curmeasures[measurename].bettotal += allbets[b][i].betval;
+							var curmeasure = curmeasures[measurename];
+							if (curmeasure.bettotal >= Math.round(curmeasure.cost1/100*totalscore*(1+curmeasure.cost_increase/100*scenario))){
+								quizmeasures[measurename].unlocked = true;
+								participants.MeasureUnlocked(measurename);
+								this.sendUpdatesToEveryone({disasters, scenario, quizmeasures});
+							}
+						}
+					}
+				}
+			}
+		}
 		participants.updateRanks();
 	}
 	
@@ -1038,7 +1373,7 @@ function Quiz(pQuizId){
 	}
 
 	this.getLeaderboard = function(){
-		return participants.getLeaderboard().get();
+		return [participants.getLeaderboard().get(), quizmeasures];
 	}
 
 	this.startQuiz = function(){
@@ -1108,6 +1443,10 @@ function Quiz(pQuizId){
 
 	this.getTitle = function(){
 		return this.title;
+	}
+
+	this.getId = function(){
+		return quizId;
 	}
 
 	this.setPic = function(pPic){

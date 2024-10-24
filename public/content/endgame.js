@@ -1,0 +1,98 @@
+var endgamebonus = 20; //percentage of the one with the highest score, added to every players score at the beginning of the endgame
+var scenariobonus = 0; //added to every players score after every scenario (now just hard coded the same as endgamebonus)
+var totallives = 2;
+
+var scenarios = {
+    0: "2030",
+    1: "2050",
+    2: "2100"
+}
+
+var disasters = {
+    1:{
+        name: "Rivier overstromingen in Nederland",
+        color: "blue",
+        risks: [3,4,5] //risk per scenario
+    },
+    2:{
+        name: "Tropische ziekte uitbraak in Nederland",
+        color: "orange",
+        risks: [4,3,2] //risk per scenario
+    },
+    3:{
+        name: "Droogte in Nederland",
+        color: "beige",
+        risks: [2,4,7] //risk per scenario
+    },
+    4:{
+        name:"Klimaat angst in Nederland",
+        color: "purple",
+        risks: [2,3,6] //risk per scenario
+    },
+    5:{
+        name:"Hittegolven in Nederland",
+        color: "pink",
+        risks: [2,4,7] //risk per scenario
+    }
+}
+
+var measures = {
+    "Planten van meer bomen in de stad.":{
+        category: "Landbouw/Groen",
+        cost1:8, // % of total wealth
+        cost_increase:50, // % increase per scenario
+        effects:[
+            [5, "=", 1] //[disaster number, operation, operate by]
+        ],
+        bonusrole: [1,2,3,4,5,6]
+    },
+    "Social media campagne met informatie over klimaatverandering.":{
+        category: "Media",
+        cost1:10, // % of total wealth
+        cost_increase:10, // % increase per scenario
+        effects:[//[disaster number, operator, operant]
+            [4, "=", 1] 
+        ],
+        bonusrole: [1,2,3,4,5,6]
+    },
+    "Landbouw zaden genetisch manipuleren.":{
+        category: "Landbouw/Groen",
+        cost1:20, // % of total wealth
+        cost_increase:20, // % increase per scenario
+        effects:[//[disaster number, operator, operant]
+            [3, "=", 1] 
+        ],
+        bonusrole: [1,2,3,4,5,6]
+    },
+    "Verbeteringen stadsriolering.":{
+        category: "Bouw",
+        cost1:25, // % of total wealth
+        cost_increase:25, // % increase per scenario
+        effects:[//[disaster number, operator, operant]
+            [2, "=", 0] 
+        ],
+        bonusrole: [1,2,3,4,5,6]
+    },
+    "Meer geld voor mensen die zonnepanelen plaatsen.":{
+        category: "Economie",
+        cost1:45, // % of total wealth
+        cost_increase:10, // % increase per scenario
+        effects:[//[disaster number, operator, operant]
+            [1, "/", 2],
+            [2, "/", 2],
+            [3, "/", 2],
+            [4, "/", 2],
+            [5, "/", 2] 
+        ],
+        bonusrole: [1,2,3,4,5,6]
+    },
+    "Meer politieke samenwerking tussen Nederland en Duitsland.":{
+        category: "Economie/bestuur",
+        cost1:10, // % of total wealth
+        cost_increase:100, // % increase per scenario
+        effects:[//[disaster number, operator, operant]
+            [1, "=", 1] 
+        ],
+        bonusrole: [1,2,3,4,5,6]
+    }
+}

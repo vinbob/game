@@ -1,10 +1,15 @@
 function Index(){
 	var socket = false;
 	
+	var uniqueId = localStorage.getItem('uniqueId');
+
 	this.start = function(){
 		socket = io();
 		this.bindSocketEvents();
-		socket.emit('index_init');
+		socket.emit('index_init', uniqueId);
+		socket.on('redirect_to_quiz', function(){
+			location.href='quiz.html';
+		});
 	}
 	
 	this.bindSocketEvents = function(){
@@ -20,6 +25,12 @@ function Index(){
 			
 			//$('#quiz_list_area').html(html);
 		});
+		
+		socket.on('connect_connect_ok',function(data){
+			location.href='quiz.html';
+			localStorage.setItem('uniqueId', data);
+			return false;
+		});		
 	}
 
 	$('#btn_login').click(function(){

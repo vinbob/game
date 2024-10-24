@@ -1,0 +1,91 @@
+:root {
+    --custom-green: #64ce64;
+    --custom-red: #FF6347;
+    --custom-black: #333333;
+    --custom-blue: #3632ff;
+    --custom-orange: #ff9633;
+    --custom-beige: #a77a50;
+    --custom-purple: #911b69;
+    --custom-pink: #ff69ff;
+}
+/*body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f4f4f4;
+}*/
+
+.roulette-container {
+    position: relative;
+    width: 400px;  
+    height: 400px;  
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.roulette-wheel {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: conic-gradient(
+        var(--custom-green) 0deg 9.73deg, var(--custom-red) 9.73deg 19.45deg,
+        var(--custom-black) 19.45deg 29.18deg,
+        var(--custom-red) 29.18deg 38.91deg,
+        var(--custom-black) 38.91deg 48.63deg,
+        var(--custom-red) 48.63deg 58.36deg,
+        var(--custom-black) 58.36deg 68.09deg,
+        var(--custom-red) 68.09deg 77.81deg,
+        var(--custom-black) 77.81deg 87.54deg,
+        var(--custom-red) 87.54deg 97.27deg,
+        var(--custom-black) 97.27deg 107deg,
+        var(--custom-red) 107deg 116.72deg,
+        var(--custom-black) 116.72deg 126.45deg,
+        var(--custom-red) 126.45deg 136.18deg,
+        var(--custom-black) 136.18deg 145.9deg,
+        var(--custom-red) 145.9deg 155.63deg,
+        var(--custom-black) 155.63deg 165.36deg,
+        var(--custom-red) 165.36deg 175.08deg,
+        var(--custom-black) 175.08deg 184.81deg,
+        var(--custom-red) 184.81deg 194.54deg,
+        var(--custom-black) 194.54deg 204.27deg,
+        var(--custom-red) 204.27deg 213.99deg,
+        var(--custom-black) 213.99deg 223.72deg,
+        var(--custom-red) 223.72deg 233.45deg,
+        var(--custom-black) 233.45deg 243.17deg,
+        var(--custom-red) 243.17deg 252.9deg,
+        var(--custom-black) 252.9deg 262.63deg,
+        var(--custom-red) 262.63deg 272.36deg,
+        var(--custom-black) 272.36deg 282.08deg,
+        var(--custom-red) 282.08deg 291.81deg,
+        var(--custom-black) 291.81deg 301.54deg,
+        var(--custom-red) 301.54deg 311.26deg,
+        var(--custom-black) 311.26deg 320.99deg,
+        var(--custom-red) 320.99deg 330.72deg,
+        var(--custom-black) 330.72deg 340.45deg,
+        var(--custom-red) 340.45deg 350.17deg,
+        var(--custom-black) 350.17deg 360deg
+    );
+}
+
+.numbers-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /*transform: rotate(90deg);  Correct de draaiing van de nummers */
+}
+
+.number {
+    position: absolute;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    transform-origin: 50% 100%;
+}

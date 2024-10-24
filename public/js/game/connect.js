@@ -1,6 +1,7 @@
 function Connect(){
 	var socket = false;
-	
+	var uniqueId = localStorage.getItem('uniqueId');
+
 	this.start = function(){
 		socket = io();
 		this.bindViewEvents();
@@ -41,13 +42,35 @@ function Connect(){
 		
 		socket.on('connect_connect_ok',function(data){
 			location.href='quiz.html';
-			
+			localStorage.setItem('uniqueId', data);
 			return false;
 		});		
 		
 	}
 	
 	this.bindViewEvents = function(){
+		function getBrowserName() {
+			const userAgent = navigator.userAgent;
+			
+			if (userAgent.indexOf("Firefox") > -1) {
+			  return "Mozilla Firefox";
+			} else if (userAgent.indexOf("SamsungBrowser") > -1) {
+			  return "Samsung Internet";
+			} else if (userAgent.indexOf("Opera") > -1 || userAgent.indexOf("OPR") > -1) {
+			  return "Opera";
+			} else if (userAgent.indexOf("Trident") > -1) {
+			  return "Microsoft Internet Explorer";
+			} else if (userAgent.indexOf("Edge") > -1 || userAgent.indexOf("Edg") > -1) {
+			  return "Microsoft Edge";
+			} else if (userAgent.indexOf("Chrome") > -1 && userAgent.indexOf("Safari") > -1) {
+			  return "Google Chrome";
+			} else if (userAgent.indexOf("Safari") > -1 && userAgent.indexOf("Chrome") == -1) {
+			  return "Apple Safari";
+			} else {
+			  return "Unknown browser";
+			}
+		  }
+		  
 		$('#btn_connect_unofficial').click(function(){
 			socket.emit('connect_connect',{type:'unofficial',team_name:$('#unofficial_team_name').val()});			
 			return false;
@@ -55,13 +78,13 @@ function Connect(){
 		
 		$('#btn_connect_official').click(function(){
 			var pregameanswers = {q1:$('input[name="q1"]:checked').val(),q2:$('input[name="q2"]:checked').val(),q3:$('input[name="q3"]:checked').val(),q4:$('input[name="q4"]:checked').val(),q5:$('input[name="q5"]:checked').val()}
-			socket.emit('connect_connect',{type:'official',team_name:$('#official_team_name').val(),quiz_code:$('#official_quiz_code').val(),pregameanswers:pregameanswers});
+			socket.emit('connect_connect',{type:'official',team_name:$('#official_team_name').val(),quiz_code:$('#official_quiz_code').val(),pregameanswers:pregameanswers, browser: getBrowserName()});
 			socket.emit('update_leaderboard');
 			return false;
 		});
 
 		$('#btn_connect_spectator').click(function(){
-			socket.emit('connect_connect',{type:'spectator'});
+			socket.emit('connect_connect',{type:'spectator', browser: getBrowserName()});
 			return false;
 		});
 		
@@ -72,7 +95,7 @@ function Connect(){
 					qlist.push($('#check'+i).val());
 				}
 			}
-			socket.emit('connect_connect',{type:'admin',admin_password:$('#admin_password').val(),questions:qlist});
+			socket.emit('connect_connect',{type:'admin',admin_password:$('#admin_password').val(),questions:qlist,endgame:$('#admin_endgame').is(':checked'), browser: getBrowserName()});
 			return false;
 		});	
 		$('#btn_admin_questions').click(function(){
@@ -121,7 +144,7 @@ $(document).ready(function(){
 			categories[cat] = '<details><summary style="cursor:pointer;"><b>'+cat+'</b></summary><table>';
 		}
 		categories[cat] += '<tr><td><input type="checkbox" ';
-		if (cat == 'Basis'){
+		if (cat == 'Test'){
 			categories[cat] += 'checked ';
 		}
 		categories[cat] += 'value="' +  i + '" id="check' + i + '" /></td><td text-align="left"> ' ;
