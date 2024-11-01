@@ -622,7 +622,6 @@ function RealParticipant(pSocket,pTeamname){
 			if(response[i].name == 'rood' || response[i].name == 'zwart'){
 				if(response[i].name == color){
 					score += response[i].betval;
-					console.log(response);
 					response[i].betval = 0;
 				} else {
 					console.log(response[i].name+': '+response[i].betval)
@@ -1152,16 +1151,11 @@ function Quiz(pQuizId){
 			for(m in quizmeasures){
 				if(quizmeasures[m].unlocked == true){
 					for (e in quizmeasures[m].effects){
-						console.log(quizmeasures[m].effects[e][0]);
-						console.log(d);
 						if(quizmeasures[m].effects[e][0] == d){
-							console.log('match!');
 							if (quizmeasures[m].effects[e][1] == "="){
 								risk = quizmeasures[m].effects[e][2];
-								console.log('=');
 							} else if (quizmeasures[m].effects[e][1] == "/"){
 								risk = Math.round(risk / quizmeasures[m].effects[e][2]);
-								console.log('/');
 							}
 						}
 					}
@@ -1172,7 +1166,7 @@ function Quiz(pQuizId){
 				i++;
 			}
 		}
-		console.log(rouletteorder);
+
 		var resultcolor = rouletteorder[rouletteresult];
 		if(resultcolor!='green' && resultcolor!='red' && resultcolor!='black'){
 			lives--;

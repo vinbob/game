@@ -264,6 +264,7 @@ function GameWorld(){
 			console.log('Reconnected after', attemptNumber, 'attempts');
 			clearTimeout(connectionLostTimeout); // Clear timeout on reconnect
 			//clearTimeout(pingCheckTimeout);
+			location.reload();
 		});
 
 		socket.on('reconnect_attempt', (attemptNumber) => {
@@ -353,6 +354,7 @@ function GameWorld(){
 					for (m in measures){
 						measurebets.push(0);
 					}
+					console.log(measurebets);
 					var html = "";
 					html += "<div>";
 					
@@ -419,10 +421,13 @@ function GameWorld(){
 									for (m in measures){
 										i++;
 										resp = '';
-										if(typeof p.response[i] !== 'undefined'){
+										//console.log(typeof p.response[i].betval);
+										console.log(p);
+										if(typeof p.response[i] !== 'undefined' && typeof p.response[i] !=='string'){
 											var responseval = p.response[i].betval;
 											measurebets[i-1] += responseval;
 											$('#measurebet'+i).html(measurebets[i-1]);
+											console.log('measurebet'+i+': '+measurebets[i-1]);
 											if (data[1][m].unlocked == true){
 												$('#measuretext'+i).css('color','yellow');
 												$('#measurebet'+i).html(measures[m].currentcost);

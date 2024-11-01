@@ -698,7 +698,7 @@ var questions = {
         ],
         category: "Basis", 
         type: 'open',
-        question: "Vul naast olie en gas nog een vorm van fossiele branstoffen in.",
+        question: "Vul naast olie en gas nog een vorm van fossiele brandstoffen in.",
         source: ""},
     60:{
         video: "", 

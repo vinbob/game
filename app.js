@@ -105,6 +105,11 @@ io.on('connection', function(socket){
 			console.log(`${socket.handshake.session.participantName} (${socket.handshake.session.unique_id} | ${socket.handshake.session.browser}) disconnected. Reason: ${reason}`);
 		});
 
+		socket.on('connect',function(data){
+			console.log(`(re)connected${socket.handshake.session.participantName} (${socket.handshake.session.unique_id} | ${socket.handshake.session.browser}).`);
+			//socket.emit('redirect_to_quiz'); 
+		});
+
 		var session = socket.handshake.session;
 		
 		var tryReconnect = function(uniqueId, socket){
