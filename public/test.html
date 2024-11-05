@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Test</title>
+		<meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, width=device-width">	
+		<link rel="stylesheet" href="css/bootstrap.min.css">
+		<link rel="stylesheet" href="css/bootstrap-theme.min.css">
+		<script src="js/jquery.min.js"></script>
+		<script src="https://socket.io/socket.io.js"></script>
+		<style type="text/css">
+		/* Stijl voor de antwoordvelden */
+		.dropzone {
+		    width: 200px;
+		    height: 200px;
+		    border: 2px dashed #333;
+		    margin: 20px;
+		    display: inline-block;
+		    position: relative;
+		    text-align: center;
+		    line-height: 200px;
+		    font-size: 1.2em;
+		    color: #333;
+		    -webkit-user-select: none; /* Safari */        
+			-moz-user-select: none; /* Firefox */
+			-ms-user-select: none; /* IE10+/Edge */
+			user-select: none; /* Standard */
+		}
+
+		/* Container voor de fiches */
+		#chipContainer {
+		    position: relative;
+		    width: 70px;
+		    height: 70px;
+		    margin-top: 20px;
+		}
+		.chip {
+		    width: 35px;
+		    height: 35px;
+		    border-radius: 50%;
+		    border-style: dashed;
+		    border-color: white;
+		    background-color: blue;
+		    box-shadow: 4px -4px 8px rgba(0, 0, 0, 0.3);
+		    position: absolute;
+		    top: 0;
+		    left: 0;
+		    display: flex;
+		    align-items: center;
+		    justify-content: center;
+		    font-size: 1.5em;
+		    cursor: pointer;
+		    color: white;
+		    transition: transform 0.1s ease, top 1s ease;
+		    -webkit-user-select: none; /* Safari */        
+			-moz-user-select: none; /* Firefox */
+			-ms-user-select: none; /* IE10+/Edge */
+			user-select: none; /* Standard */
+		}
+		</style>
+	</head>
+<body>
+<div class="dropzone">Antwoord 1</div>
+<div class="dropzone">Antwoord 2</div>
+<!-- Fichestapel -->
+<div id="chipContainer">
+  <div class="chip" data-value="1">1</div>
+  <div class="chip" data-value="1">1</div>
+  <div class="chip" data-value="1">1</div>
+  <div class="chip" data-value="1">1</div>
+  <div class="chip" data-value="1">1</div>
+  <div class="chip" data-value="1">1</div>
+  <div class="chip" data-value="1">1</div>
+  <div class="chip" data-value="1">1</div>
+  <div class="chip" data-value="1">1</div>
+  <div class="chip" data-value="1">1</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+<script>
+  // Zorg ervoor dat elke fiche boven de vorige wordt weergegeven door ze in een stapel te positioneren
+  const chips = document.querySelectorAll('.chip');
+  chips.forEach((chip, index) => {
+    chip.style.top = `${index * 5}px`; // Zorg voor lichte overlap
+    chip.style.zIndex = 10 - index;    // Zorg dat de onderste fiches onderop liggen
+  });
+
+  // Gebruik Interact.js om de fiches draggable te maken
+  interact('.chip').draggable({
+    inertia: true,
+    listeners: {
+      start (event) {
+        // Selecteer alle chips boven de huidige en beweeg ze mee
+        const currentIndex = Array.from(chips).indexOf(event.target);
+        console.log(currentIndex);
+        for (let i = currentIndex; i >= 0; i--) {
+          chips[i].classList.add('dragging');
+        }
+      },
+      move (event) {
+        // Beweeg alle geselecteerde chips
+        let x = (parseFloat(event.target.getAttribute('data-x')) || 0) + event.dx;
+        let y = (parseFloat(event.target.getAttribute('data-y')) || 0) + event.dy;
+
+        // Verplaats alle geselecteerde fiches (bovenste meegaan met onderste)
+        document.querySelectorAll('.dragging').forEach(chip => {
+          chip.style.transform = `translate(${x}px, ${y}px)`;
+          chip.setAttribute('data-x', x);
+          chip.setAttribute('data-y', y);
+        });
+      },
+      end (event) {
+        // Verwijder 'dragging' klasse wanneer de drag eindigt
+        document.querySelectorAll('.dragging').forEach(chip => chip.classList.remove('dragging'));
+      }
+    }
+  });
+
+  // Dropzone logica
+  interact('.dropzone').dropzone({
+    accept: '.chip',
+    ondrop: function (event) {
+      console.log('Fiche geplaatst op:', event.target);
+    }
+  });
+</script>
+
+</body>
+</html>
