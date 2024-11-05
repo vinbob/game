@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Test</title>
+		<meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, width=device-width">	
+		<link rel="stylesheet" href="css/bootstrap.min.css">
+		<link rel="stylesheet" href="css/bootstrap-theme.min.css">
+		<script src="js/jquery.min.js"></script>
+		<script src="https://socket.io/socket.io.js"></script>
+		<style type="text/css">
+		/* Stijl voor de antwoordvelden */
+		.dropzone {
+		    width: 200px;
+		    height: 200px;
+		    border: 2px dashed #333;
+		    margin: 20px;
+		    display: inline-block;
+		    position: relative;
+		    text-align: center;
+		    line-height: 200px;
+		    font-size: 1.2em;
+		    color: #333;
+		    -webkit-user-select: none; /* Safari */        
+			-moz-user-select: none; /* Firefox */
+			-ms-user-select: none; /* IE10+/Edge */
+			user-select: none; /* Standard */
+		}
+
+		/* Container voor de fiches */
+		#chipContainer {
+		    position: relative;
+		    width: 70px;
+		    height: 70px;
+		    margin-top: 20px;
+		}
+		.chip {
+		    width: 50px;
+		    height: 50px;
+		    border-radius: 50%;
+		    border-style: dashed;
+		    border-color: white;
+		    background-color: blue;
+		    box-shadow: 4px -4px 8px rgba(0, 0, 0, 0.3);
+		    position: absolute;
+		    top: 540px; /* Plaats de chip onder de antwoord-divs */
+            left: 20px; /* Je kunt deze waarde aanpassen om de chip horizontaal te verplaatsen */
+		    display: flex;
+		    align-items: center;
+		    justify-content: center;
+		    font-size: 1.5em;
+		    cursor: pointer;
+		    color: white;
+		    transition: transform 0.1s ease, top 0.1s ease;
+		    -webkit-user-select: none; /* Safari */        
+			-moz-user-select: none; /* Firefox */
+			-ms-user-select: none; /* IE10+/Edge */
+			user-select: none; /* Standard */
+		}
+		</style>
+	</head>
+<body>
+<div class="dropzone">Antwoord 1</div>
+<div class="dropzone">Antwoord 2</div>
+<div id="draggable" class="chip">
+    1
+</div>
+<div id="draggable2" class="chip" style="top:535px;">
+    1
+</div>
+<script type="text/javascript">
+	const draggable = document.getElementById("draggable");
+
+let offsetX = 0;
+let offsetY = 0;
+
+draggable.addEventListener("touchstart", function (e) {
+    // Prevent default touch behavior
+    e.preventDefault();
+    
+    // Bereken offset, zodat het element volgt vanaf het punt waar je het aanraakt
+    offsetX = e.touches[0].clientX - draggable.getBoundingClientRect().left;
+    offsetY = e.touches[0].clientY - draggable.getBoundingClientRect().top;
+});
+
+draggable.addEventListener("touchmove", function (e) {
+    e.preventDefault();
+    
+    // Verplaats het element op basis van de touch-coördinaten en offset
+    const touch = e.touches[0];
+    draggable.style.left = `${touch.clientX - offsetX}px`;
+    draggable.style.top = `${touch.clientY - offsetY}px`;
+});
+
+draggable.addEventListener("touchend", function (e) {
+    // Optional: voeg logica toe voor als het element wordt losgelaten
+    draggable.style.left = `20px`;
+    draggable.style.top = `540px`;
+});
+
+const draggable2 = document.getElementById("draggable2");
+
+offsetX = 0;
+offsetY = 0;
+
+draggable2.addEventListener("touchstart", function (e) {
+    // Prevent default touch behavior
+    e.preventDefault();
+    
+    // Bereken offset, zodat het element volgt vanaf het punt waar je het aanraakt
+    offsetX = e.touches[0].clientX - draggable2.getBoundingClientRect().left;
+    offsetY = e.touches[0].clientY - draggable2.getBoundingClientRect().top;
+});
+
+draggable2.addEventListener("touchmove", function (e) {
+    e.preventDefault();
+    
+    // Verplaats het element op basis van de touch-coördinaten en offset
+    const touch = e.touches[0];
+    draggable2.style.left = `${touch.clientX - offsetX}px`;
+    draggable2.style.top = `${touch.clientY - offsetY}px`;
+});
+
+draggable2.addEventListener("touchend", function (e) {
+    // Optional: voeg logica toe voor als het element wordt losgelaten
+});
+
+</script>
+
+
+</body>
+</html>
