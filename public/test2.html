@@ -10,7 +10,7 @@
 		<style type="text/css">
 		/* Stijl voor de antwoordvelden */
 		.dropzone {
-		    width: 200px;
+		    width: 30%;
 		    height: 200px;
 		    border: 2px dashed #333;
 		    margin: 20px;
@@ -42,7 +42,7 @@
 		    background-color: blue;
 		    box-shadow: 4px -4px 8px rgba(0, 0, 0, 0.3);
 		    position: absolute;
-		    top: 540px; /* Plaats de chip onder de antwoord-divs */
+		    top: 340px; /* Plaats de chip onder de antwoord-divs */
             left: 20px; /* Je kunt deze waarde aanpassen om de chip horizontaal te verplaatsen */
 		    display: flex;
 		    align-items: center;
@@ -59,69 +59,125 @@
 		</style>
 	</head>
 <body>
-<div class="dropzone">Antwoord 1</div>
-<div class="dropzone">Antwoord 2</div>
-<div id="draggable" class="chip">
-    1
-</div>
-<div id="draggable2" class="chip" style="top:535px;">
-    1
-</div>
+<div id="dropzone1" class="dropzone">Antwoord 1</div>
+<div id="dropzone2" class="dropzone">Antwoord 2</div>
 <script type="text/javascript">
-	const draggable = document.getElementById("draggable");
+let isDragging = {};
+let offsetX = {};
+let offsetY = {};
+let fiches1 = {};
+let amount = 10;
+let onanswer = 0;
+let inHand = 0;
+let dist = 8;
 
-let offsetX = 0;
-let offsetY = 0;
+// Haal de coördinaten van dropzone1 op
+const dropzone1Rect = dropzone1.getBoundingClientRect();
 
-draggable.addEventListener("touchstart", function (e) {
-    // Prevent default touch behavior
-    e.preventDefault();
+function Drag(element, x, y){
+	element.style.left = `${x}px`;
+	element.style.top = `${y}px`;
+	element.style.boxShadow = "8px -8px 8px rgba(0, 0, 0, 0.3)";
+}
+
+for (let i = 0; i < amount; i++) {
+	isDragging[i] = false;
+	// Maak een nieuwe div aan
+	const newDiv = document.createElement("div");
+	fiches1[i] = newDiv;
+	// Stel de class en id in
+	newDiv.className = "chip";
+	newDiv.id = "draggable3";
+
+	// Voeg optionele inhoud toe
+	newDiv.textContent = "1";
+
+	// Voeg de nieuwe div toe aan de body
+	document.body.appendChild(newDiv);
+	newDiv.style.top = `${newDiv.getBoundingClientRect().top - dist*i}px`;
+
+	function Grab(element, i, e){
+		inHand = amount - i;
+	    for (j = amount; j >= i; j--){
+	   		isDragging[j] = true;
+	   	}
+	    // Bereken offset, zodat het element volgt vanaf het punt waar je het aanraakt
+	    offsetX[i] = e.clientX - element.getBoundingClientRect().left;
+	    offsetY[i] = e.clientY - element.getBoundingClientRect().top;
+	}
+
+	newDiv.addEventListener("mousedown", function (e) {
+	    // Prevent default touch behavior
+	    e.preventDefault();
+	    Grab(newDiv, i, e);
+	});
+
+	newDiv.addEventListener("touchstart", function (e) {
+	    // Prevent default touch behavior
+	    e.preventDefault();
+	    isDragging[i] = true;
+	    
+	    Grab(newDiv, i, e.touches[0]);
+	    // Bereken offset, zodat het element volgt vanaf het punt waar je het aanraakt
+	    //offsetX[i] = e.touches[0].clientX - newDiv.getBoundingClientRect().left;
+	    //offsetY[i] = e.touches[0].clientY - newDiv.getBoundingClientRect().top;
+	});
+
+	document.addEventListener("mousemove", function (e) {
+		if (!isDragging[i]) return;
+	    e.preventDefault();
+	    for (let k = (amount - 1); k >= (amount - inHand); k--){
+	    	Drag(fiches1[k], e.pageX - offsetX[i], e.pageY - offsetY[i] + dist*(amount - k) - inHand*dist);
+	    }
+	});
+
+	newDiv.addEventListener("touchmove", function (e) {
+		if (!isDragging[i]) return;
+	    e.preventDefault();
+	    
+	    // Verplaats het element op basis van de touch-coördinaten en offset
+	    const touch = e.touches[0];
+	    for (let k = (amount - 1); k >= (amount - inHand); k--){
+	    	Drag(fiches1[k], touch.clientX - offsetX[i], touch.clientY - offsetY[i] + dist*(amount - k) - inHand*dist);
+	    }
+	});
+
+}
+
+function Drop(){
+	// Haal de coördinaten van het draggable-element op
+    const draggableRect = fiches1[amount-inHand].getBoundingClientRect();
     
-    // Bereken offset, zodat het element volgt vanaf het punt waar je het aanraakt
-    offsetX = e.touches[0].clientX - draggable.getBoundingClientRect().left;
-    offsetY = e.touches[0].clientY - draggable.getBoundingClientRect().top;
+    // Controleer of draggable binnen dropzone1 valt
+    const isOverDropzone1 =
+        draggableRect.left < dropzone1Rect.right &&
+        draggableRect.right > dropzone1Rect.left &&
+        draggableRect.top < dropzone1Rect.bottom &&
+        draggableRect.bottom > dropzone1Rect.top;
+	for (let j = 0; j < amount; j++) {
+		if (isDragging[j] == true){
+			isDragging[j] = false;
+			fiches1[j].style.boxShadow = "4px -4px 8px rgba(0, 0, 0, 0.3)";
+
+		    if (isOverDropzone1) {
+		        fiches1[j].style.left = `20px`;
+		        fiches1[j].style.top = `100px`;
+		    } else {
+		        // Zet de positie terug als het niet boven dropzone1 is
+		        fiches1[j].style.left = `20px`;
+		        fiches1[j].style.top = `${340 - j*dist}px`;
+		    }
+    	}
+	}
+	inHand = 0;
+}
+
+document.addEventListener("mouseup", function (e) {
+	Drop();
 });
 
-draggable.addEventListener("touchmove", function (e) {
-    e.preventDefault();
-    
-    // Verplaats het element op basis van de touch-coördinaten en offset
-    const touch = e.touches[0];
-    draggable.style.left = `${touch.clientX - offsetX}px`;
-    draggable.style.top = `${touch.clientY - offsetY}px`;
-});
-
-draggable.addEventListener("touchend", function (e) {
-    // Optional: voeg logica toe voor als het element wordt losgelaten
-    draggable.style.left = `20px`;
-    draggable.style.top = `540px`;
-});
-
-const draggable2 = document.getElementById("draggable2");
-
-offsetX = 0;
-offsetY = 0;
-
-draggable2.addEventListener("touchstart", function (e) {
-    // Prevent default touch behavior
-    e.preventDefault();
-    
-    // Bereken offset, zodat het element volgt vanaf het punt waar je het aanraakt
-    offsetX = e.touches[0].clientX - draggable2.getBoundingClientRect().left;
-    offsetY = e.touches[0].clientY - draggable2.getBoundingClientRect().top;
-});
-
-draggable2.addEventListener("touchmove", function (e) {
-    e.preventDefault();
-    
-    // Verplaats het element op basis van de touch-coördinaten en offset
-    const touch = e.touches[0];
-    draggable2.style.left = `${touch.clientX - offsetX}px`;
-    draggable2.style.top = `${touch.clientY - offsetY}px`;
-});
-
-draggable2.addEventListener("touchend", function (e) {
-    // Optional: voeg logica toe voor als het element wordt losgelaten
+document.addEventListener("touchend", function (e) {
+	Drop();
 });
 
 </script>
