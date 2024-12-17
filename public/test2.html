@@ -64,10 +64,10 @@ let dist = 8;
 
 let answercount = 4;
 let fiches = [[1,"blue"],[5,"red"],[20,"green"],[100,"black"]];
-let minstackheight = 13;
+let minstackheight = 7;
 
 //de score en stapeltjes
-let score = 1178;
+let score = 169;
 let yourstack = [0,0,0,0];
 var stackobj = {yours: {}};
 for(let i = 0; i < answercount; i++){
@@ -130,6 +130,7 @@ function Grab(cID, e){
 			stackChip.chip.style.boxShadow = "8px -8px 8px rgba(0, 0, 0, 0.3)";
 	   		stackChip.chip.style.width = "60px";
 	   		stackChip.chip.style.height = "60px";
+	   		stackChip.chip.style.zIndex = String(i+1000);
 	   		inHand.push(stackChip);
 	   		delete stackobj[curstack][thisChip.val][i];
 		}
@@ -137,6 +138,86 @@ function Grab(cID, e){
 	stackobj[curstack][thisChip.val] = stackobj[curstack][thisChip.val].filter(n => n);
 
 	//console.log($('#chip'+cID)[0].getBoundingClientRect().top);
+}
+
+function AddChip(val, droploc){
+	let color = "";
+	let j = 0;
+	for (let i = 0; i < fiches.length; i++){
+		if(fiches[i][0] == val){
+			j = i;
+			color = fiches[i][1];
+		}
+	}
+	// Maak een nieuwe div aan
+	const chip = document.createElement("div");
+	// Stel de class en id in
+	chip.className = "chip";
+	chip.id = 'chip'+chipID;
+
+	// Voeg optionele inhoud toe
+	chip.textContent = String(val);
+
+	// Voeg de nieuwe div toe aan de body
+	document.body.appendChild(chip);
+	chip.style.top = `${dropzoneyours.getBoundingClientRect().top - dist*stackobj[droploc][val].length}px`;
+	chip.style.left = `${dropzoneyours.getBoundingClientRect().left + 60*j + 20}px`;
+	chip.style.zIndex = String(stackobj[droploc][val].length);
+	chip.style.backgroundColor = color;
+
+	let curid = chipID;
+	chip.addEventListener("mousedown", function (e) {
+	    // Prevent default touch behavior
+	    e.preventDefault();
+	    Grab(curid, e);
+	});
+
+	stackobj[droploc][val].push({chip: chip, chipID: chipID, val: val});
+	chipID++;
+}
+
+function CheckExchange(droploc){
+	console.log(stackobj[droploc]);
+	let tofill = 0;
+	let nextval = 0;
+	let j = 0;
+	for (const [key, value] of Object.entries(stackobj[droploc])) {
+		let color = "";
+		j = 0;
+		console.log("tofill: "+tofill)
+		for (let i = 0; i < fiches.length; i++){
+			if(fiches[i][0] == tofill){
+				j = i;
+				console.log(j);
+				color = fiches[i][1];
+			}
+		}
+		if (tofill > 0){
+			if (value.length > 0){
+				console.log("Een "+key+" inwisselen voor "+key/tofill+" van "+tofill);
+				stackobj[droploc][key][stackobj[droploc][key].length - 1].chip.remove();
+				stackobj[droploc][key].pop();
+
+				for (let k = 0; k < key/tofill; k++){
+					AddChip(tofill, droploc);
+				}
+			}
+		}
+		tofill = 0;
+		if (j < fiches.length){
+			nextval = fiches[j+1][0];
+		}
+		if (value.length < minstackheight){
+			tofill = key;
+		} else if (value.length - (nextval / fiches[j][0]) > minstackheight && j < fiches.length){
+			for (let k = 0; k < (nextval / fiches[j][0]); k++){
+				stackobj[droploc][key][stackobj[droploc][key].length - 1].chip.remove();
+				stackobj[droploc][key].pop();
+			}
+			AddChip(nextval, droploc);
+			console.log(nextval);
+		} 
+	}
 }
 
 function Drop(){
@@ -167,11 +248,15 @@ function Drop(){
 				}
 				i++
 			}
+			inHand[k].chip.style.zIndex = String(stackobj[droploc][inHand[k].val].length);
 	        inHand[k].chip.style.left = `${$('#dropzone'+droploc)[0].getBoundingClientRect().left + stackplace*60 + 20}px`;
 	        inHand[k].chip.style.top = `${$('#dropzone'+droploc)[0].getBoundingClientRect().top - stackobj[droploc][inHand[k].val].length * dist}px`;
 	        stackobj[droploc][inHand[k].val].push(inHand[k]);
 	    }
 	    inHand = [];
+
+
+	    CheckExchange('yours');
 	}
 }
 
@@ -229,7 +314,6 @@ document.addEventListener("mousemove", function (e) {
     	//console.log(e.clientY);
     	let x = e.clientX - offsetX
     	let y = e.clientY - offsetY - k*dist;
-    	console.log(e.clientY);
     	inHand[k].chip.style.transition = "transform 0.1s ease, top 0.1s ease";
     	Drag(inHand[k].chip, x, y);
     }

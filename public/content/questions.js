@@ -775,9 +775,9 @@ var questions = {
         video: "", 
         bonusrole: [5,2,4,6,1,3], 
         answers: [
-            "cole",  //
+            "coal",  //
             "turf", 
-            "brown cole",
+            "brown coal",
             "peat" 
         ],
         category: "English", 
