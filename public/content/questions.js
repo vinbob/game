@@ -722,6 +722,68 @@ var questions = {
         category: "Test", 
         question: "Met hoeveel graden kan de gevoelstemperatuur afnemen in een tuin met veel bomen ten opzichte van een tuin met alleen tegels?",
         source: "https://www.klimaathelpdesk.org/answers/wat-zijn-de-klimaateffecten-van-een-betegelde-of-groene-tuin/"},
+    62:{ 
+         
+        video: "frankrijk.mp4", 
+        bonusrole: [3,1,2,5,4,6], 
+        answers: [
+            "The temperature in the Netherlands now is the same as it was in the North of France 50 years ago.",
+            "Norway is generating alomst all of its energy in a sustainable way.",
+            "The CO2 that is breathed out by humans does not contribute to climate change.",
+            "!All of the above are true."
+        ], 
+        category: "English" ,
+        question: "Which one is true?",
+        source: ""},
+    63:{ 
+        video: "broeikaseffect.mp4", 
+        bonusrole: [3,5,1,2,4,6], 
+        answers: [
+            "They are in the air and reflect heat back to space.",
+            "!They are in the air and reflect heat back down to Earth",
+            "They slow down the growth of plants.",
+            "They contain a lot of energy that heats up the air."
+        ],
+        category: "English" ,
+        question: "How do greenhouse gases like CO2 cause climate change?",
+        source: ""}, 
+    64:{
+        video: "", 
+        bonusrole: [1,3,5,2,4,6], 
+        answers: [
+            "That takes (almost) no energy.",
+            "!Around 3 Watthours, same as a lightbulb that is on for 3 minutes.", 
+            "Around 30 Watthours, same as a microwave that is on for 3 minutes.",
+            "Around 40 Watthours, same as an airconditioning that is on for 3 minutes."
+        ],
+        category: "English" ,
+        question: "How much energy does a message (prompt) on ChatGPT cost?",
+        source: "https://www.klimaathelpdesk.org/answers/wat-is-de-klimaatimpact-van-chatgpt-hoeveel-co-kost-het-om-chatgpt-een-essay-over-klimaatverandering-te-laten-schrijven/ & https://ecozo.nl/verbruik-per-type-apparaat/"}, 
+    65:{ 
+        video: "min18.mp4", 
+        bonusrole: [3,1,2,4,5,6], 
+        answers: [
+            "!Around 30 degrees C colder, so -18 degrees",
+            "Around 20 degrees C colder, so -8 degrees", 
+            "Around 10 degrees C warmer, so 25 degrees",
+            "Around the same as now, so 15 degrees" 
+        ],
+        category: "English" ,
+        question: "How warm or cold would Earth be on average if there were no greenhouse gasses in the atmosphere.",
+        source: ""}, 
+    66:{
+        video: "", 
+        bonusrole: [5,2,4,6,1,3], 
+        answers: [
+            "cole",  //
+            "turf", 
+            "brown cole",
+            "peat" 
+        ],
+        category: "English", 
+        type: 'open',
+        question: "Beside oil and gas, fill in another type of fossil fuel.",
+        source: ""},
     };
 
     

@@ -10,28 +10,20 @@
 		<style type="text/css">
 		/* Stijl voor de antwoordvelden */
 		.dropzone {
-		    width: 30%;
-		    height: 200px;
+		    width: 35%;
+		    height: 100px;
 		    border: 2px dashed #333;
 		    margin: 20px;
 		    display: inline-block;
 		    position: relative;
 		    text-align: center;
-		    line-height: 200px;
+		    line-height: 100px;
 		    font-size: 1.2em;
 		    color: #333;
 		    -webkit-user-select: none; /* Safari */        
 			-moz-user-select: none; /* Firefox */
 			-ms-user-select: none; /* IE10+/Edge */
 			user-select: none; /* Standard */
-		}
-
-		/* Container voor de fiches */
-		#chipContainer {
-		    position: relative;
-		    width: 70px;
-		    height: 70px;
-		    margin-top: 20px;
 		}
 		.chip {
 		    width: 50px;
@@ -42,7 +34,7 @@
 		    background-color: blue;
 		    box-shadow: 4px -4px 8px rgba(0, 0, 0, 0.3);
 		    position: absolute;
-		    top: 340px; /* Plaats de chip onder de antwoord-divs */
+		    top: 50px; /* Plaats de chip onder de antwoord-divs */
             left: 20px; /* Je kunt deze waarde aanpassen om de chip horizontaal te verplaatsen */
 		    display: flex;
 		    align-items: center;
@@ -59,17 +51,46 @@
 		</style>
 	</head>
 <body>
-<div id="dropzone1" class="dropzone">Antwoord 1</div>
-<div id="dropzone2" class="dropzone">Antwoord 2</div>
+	<div id="answerzone"></div>
+<div style="height: 100px;"></div>
+<div id="dropzoneyours"></div>
 <script type="text/javascript">
+'use strict';
 let isDragging = {};
-let offsetX = {};
-let offsetY = {};
+var offsetX;
+var offsetY;
 let fiches1 = {};
-let amount = 10;
-let onanswer = 0;
-let inHand = 0;
 let dist = 8;
+
+let answercount = 4;
+let fiches = [[1,"blue"],[5,"red"],[20,"green"],[100,"black"]];
+let minstackheight = 13;
+
+//de score en stapeltjes
+let score = 1178;
+let yourstack = [0,0,0,0];
+var stackobj = {yours: {}};
+for(let i = 0; i < answercount; i++){
+	stackobj[i] = {};
+}
+for (const [key, value] of Object.entries(stackobj)) {
+	for (let i = 0; i < fiches.length; i++){
+		stackobj[key][fiches[i][0]] = [];
+	}
+}
+
+var inHand = [];
+
+let html = '';
+const dropzones = [];
+for (let i = 0; i < answercount; i++){
+	html += '<div id="dropzone'+i+'" class="dropzone">Antwoord '+(i+1)+'</div>';
+}
+$('#answerzone').html(html);
+
+for (let i = 0; i < answercount; i++){
+	dropzones.push($('#dropzone'+i)[0].getBoundingClientRect());
+}
 
 // Haal de coördinaten van dropzone1 op
 const dropzone1Rect = dropzone1.getBoundingClientRect();
@@ -77,10 +98,144 @@ const dropzone1Rect = dropzone1.getBoundingClientRect();
 function Drag(element, x, y){
 	element.style.left = `${x}px`;
 	element.style.top = `${y}px`;
-	element.style.boxShadow = "8px -8px 8px rgba(0, 0, 0, 0.3)";
 }
 
-for (let i = 0; i < amount; i++) {
+function Grab(cID, e){
+	let curstack;
+	let thisChip;
+	let curpos;
+	for (const [key, value] of Object.entries(stackobj)) {
+	  for (const [k, val] of Object.entries(value)) {
+	  	for(let i = 0; i < val.length; i++){
+		  	if (val[i].chipID == cID){
+		  		curstack = key;
+		  		thisChip = val[i];
+		  		curpos = i;
+		  	}
+		  }
+	  }
+	}
+
+	if(thisChip == undefined){
+		console.log('chip undefined');
+		return;
+	}
+
+	offsetX = e.clientX - thisChip.chip.getBoundingClientRect().left;
+    offsetY = e.clientY - thisChip.chip.getBoundingClientRect().top;
+
+	for (let i = 0; i < stackobj[curstack][thisChip.val].length; i++) {
+		if(i >= curpos){
+			let stackChip = stackobj[curstack][thisChip.val][i];
+			stackChip.chip.style.boxShadow = "8px -8px 8px rgba(0, 0, 0, 0.3)";
+	   		stackChip.chip.style.width = "60px";
+	   		stackChip.chip.style.height = "60px";
+	   		inHand.push(stackChip);
+	   		delete stackobj[curstack][thisChip.val][i];
+		}
+	}
+	stackobj[curstack][thisChip.val] = stackobj[curstack][thisChip.val].filter(n => n);
+
+	//console.log($('#chip'+cID)[0].getBoundingClientRect().top);
+}
+
+function Drop(){
+	if(inHand.length > 0){
+		// Haal de coördinaten van het draggable-element op
+	    const draggableRect = inHand[0].chip.getBoundingClientRect();
+	    
+	    // Controleer of draggable binnen dropzone1 valt
+	    let droploc = 'yours';
+	    for (let i = 0; i < answercount; i++){
+	    	let checkzone = $('#dropzone'+i)[0].getBoundingClientRect();
+	        if (draggableRect.left < checkzone.right && draggableRect.right > checkzone.left && draggableRect.top < checkzone.bottom && draggableRect.bottom > checkzone.top){
+	        	droploc = i;
+	        }
+	    }
+
+		for (let k = 0; k < inHand.length; k++){
+	    	// Zet de positie terug als het niet boven de dropzone is
+	    	inHand[k].chip.style.position = "absolute";
+	    	inHand[k].chip.style.boxShadow = "4px -4px 8px rgba(0, 0, 0, 0.3)";
+			inHand[k].chip.style.width = "50px";
+			inHand[k].chip.style.height = "50px";
+			let stackplace = 0;
+			let i = 0;
+			for (const [key, value] of Object.entries(stackobj[droploc])) {
+				if (key == inHand[k].val){
+					stackplace = i;
+				}
+				i++
+			}
+	        inHand[k].chip.style.left = `${$('#dropzone'+droploc)[0].getBoundingClientRect().left + stackplace*60 + 20}px`;
+	        inHand[k].chip.style.top = `${$('#dropzone'+droploc)[0].getBoundingClientRect().top - stackobj[droploc][inHand[k].val].length * dist}px`;
+	        stackobj[droploc][inHand[k].val].push(inHand[k]);
+	    }
+	    inHand = [];
+	}
+}
+
+
+for (let s = 0; s < score; s++){
+	yourstack[0]++;
+	for(let i = 0; i < fiches.length - 1; i++){
+		if(yourstack[i] - minstackheight >= fiches[i+1][0] / fiches[i][0]){
+			yourstack[i] -= fiches[i+1][0] / fiches[i][0];
+			yourstack[i+1]++;
+		}
+	}
+}
+
+
+let nowscore = score;
+let chipID = 0;
+for (let j = 0; j < fiches.length; j++){
+	let ficheval = fiches[j][0]
+
+	for (let i = 0; i < yourstack[j]; i++){
+		//isDragging[i] = false;
+		// Maak een nieuwe div aan
+		const chip = document.createElement("div");
+		//fiches1[i] = newDiv;
+		// Stel de class en id in
+		chip.className = "chip";
+		chip.id = 'chip'+chipID;
+
+		// Voeg optionele inhoud toe
+		chip.textContent = fiches[j][0];
+
+		// Voeg de nieuwe div toe aan de body
+		document.body.appendChild(chip);
+		chip.style.top = `${dropzoneyours.getBoundingClientRect().top - dist*i}px`;
+		chip.style.left = `${dropzoneyours.getBoundingClientRect().left + 60*j + 20}px`;
+		chip.style.backgroundColor = fiches[j][1];
+
+		let curid = chipID;
+		chip.addEventListener("mousedown", function (e) {
+		    // Prevent default touch behavior
+		    e.preventDefault();
+		    Grab(curid, e);
+		});
+
+		stackobj["yours"][ficheval].push({chip: chip, chipID: chipID, val: ficheval});
+		chipID++;
+	}
+}
+
+document.addEventListener("mousemove", function (e) {
+	if (inHand.length < 1) return;
+    e.preventDefault();
+    for (let k = 0; k < inHand.length; k++){
+    	//console.log(e.clientY);
+    	let x = e.clientX - offsetX
+    	let y = e.clientY - offsetY - k*dist;
+    	console.log(e.clientY);
+    	inHand[k].chip.style.transition = "transform 0.1s ease, top 0.1s ease";
+    	Drag(inHand[k].chip, x, y);
+    }
+});
+
+/*for (let i = 0; i < amount; i++) {
 	isDragging[i] = false;
 	// Maak een nieuwe div aan
 	const newDiv = document.createElement("div");
@@ -94,17 +249,7 @@ for (let i = 0; i < amount; i++) {
 
 	// Voeg de nieuwe div toe aan de body
 	document.body.appendChild(newDiv);
-	newDiv.style.top = `${newDiv.getBoundingClientRect().top - dist*i}px`;
-
-	function Grab(element, i, e){
-		inHand = amount - i;
-	    for (j = amount; j >= i; j--){
-	   		isDragging[j] = true;
-	   	}
-	    // Bereken offset, zodat het element volgt vanaf het punt waar je het aanraakt
-	    offsetX[i] = e.clientX - element.getBoundingClientRect().left;
-	    offsetY[i] = e.clientY - element.getBoundingClientRect().top;
-	}
+	newDiv.style.top = `${yourstackzone.getBoundingClientRect().top - dist*i}px`;
 
 	newDiv.addEventListener("mousedown", function (e) {
 	    // Prevent default touch behavior
@@ -142,35 +287,7 @@ for (let i = 0; i < amount; i++) {
 	    }
 	});
 
-}
-
-function Drop(){
-	// Haal de coördinaten van het draggable-element op
-    const draggableRect = fiches1[amount-inHand].getBoundingClientRect();
-    
-    // Controleer of draggable binnen dropzone1 valt
-    const isOverDropzone1 =
-        draggableRect.left < dropzone1Rect.right &&
-        draggableRect.right > dropzone1Rect.left &&
-        draggableRect.top < dropzone1Rect.bottom &&
-        draggableRect.bottom > dropzone1Rect.top;
-	for (let j = 0; j < amount; j++) {
-		if (isDragging[j] == true){
-			isDragging[j] = false;
-			fiches1[j].style.boxShadow = "4px -4px 8px rgba(0, 0, 0, 0.3)";
-
-		    if (isOverDropzone1) {
-		        fiches1[j].style.left = `20px`;
-		        fiches1[j].style.top = `100px`;
-		    } else {
-		        // Zet de positie terug als het niet boven dropzone1 is
-		        fiches1[j].style.left = `20px`;
-		        fiches1[j].style.top = `${340 - j*dist}px`;
-		    }
-    	}
-	}
-	inHand = 0;
-}
+}*/
 
 document.addEventListener("mouseup", function (e) {
 	Drop();

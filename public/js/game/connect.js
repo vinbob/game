@@ -137,26 +137,38 @@ $(document).ready(function(){
 	var connect = new Connect();
 	connect.start();
 	qhtml = '';
+	aqhtml = '';
 	var categories = {};
+	var aq = {};
 	for (let i in questions) {
 		cat = questions[i].category;
 		if (!(cat in categories)){
 			categories[cat] = '<details><summary style="cursor:pointer;"><b>'+cat+'</b></summary><table>';
+			aq[cat] = '<b>'+cat+'</b><br/>';
 		}
 		categories[cat] += '<tr><td><input type="checkbox" ';
-		if (cat == 'Test'){
+		if (cat == 'English'){
 			categories[cat] += 'checked ';
 		}
 		categories[cat] += 'value="' +  i + '" id="check' + i + '" /></td><td text-align="left"> ' ;
+		aq[cat] += i+'. ';
 		if(questions[i].type){
 			categories[cat] += '<b>[open vraag]</b> ';
+			aq[cat] += '[open vraag]';
 		}
 		categories[cat] += questions[i].question + '</td></tr>';
+		aq[cat] += '<u>'+questions[i].question+'</u><br />';
+		for(let a in questions[i].answers){
+			aq[cat] += questions[i].answers[a]+'<br />';
+		}
+		aq[cat] += '<br />';
 	}
 	for (let i in categories){
 		qhtml += '';
 		qhtml += categories[i];
+		aqhtml += aq[i];
 		qhtml += '</table></details>';
 	}
 	$('#questions').html(qhtml);
+	//$('#allquestions').html(aqhtml);
 });

@@ -10,34 +10,34 @@ var scenarios = {
 
 var disasters = {
     1:{
-        name: "Rivier overstromingen in Nederland",
+        name: "River flooding in the Netherlands",
         color: "blue",
         risks: [3,4,5] //risk per scenario
     },
     2:{
-        name: "Tropische ziekte uitbraak in Nederland",
+        name: "Tropical disease outbreak in the Netherlands",
         color: "orange",
         risks: [4,3,2] //risk per scenario
     },
     3:{
-        name: "Droogte in Nederland",
+        name: "Drought in the Netherlands",
         color: "beige",
         risks: [2,4,7] //risk per scenario
     },
     4:{
-        name:"Klimaat angst in Nederland",
+        name:"Climate fear in the Netherlands",
         color: "purple",
         risks: [2,3,6] //risk per scenario
     },
     5:{
-        name:"Hittegolven in Nederland",
+        name:"Heatwaves in the Netherlands",
         color: "pink",
         risks: [2,4,7] //risk per scenario
     }
 }
 
 var measures = {
-    "Planten van meer bomen in de stad.":{
+    "Planting more trees in cities.":{
         category: "Landbouw/Groen",
         cost1:8, // % of total wealth
         cost_increase:50, // % increase per scenario
@@ -46,7 +46,7 @@ var measures = {
         ],
         bonusrole: [1,2,3,4,5,6]
     },
-    "Social media campagne met informatie over klimaatverandering.":{
+    "Social media campaign with information about climate change.":{
         category: "Media",
         cost1:10, // % of total wealth
         cost_increase:10, // % increase per scenario
@@ -55,7 +55,7 @@ var measures = {
         ],
         bonusrole: [1,2,3,4,5,6]
     },
-    "Landbouw zaden genetisch manipuleren.":{
+    "Genetically modify farm crops.":{
         category: "Landbouw/Groen",
         cost1:20, // % of total wealth
         cost_increase:20, // % increase per scenario
@@ -64,7 +64,7 @@ var measures = {
         ],
         bonusrole: [1,2,3,4,5,6]
     },
-    "Verbeteringen stadsriolering.":{
+    "Improve urban sewage systems.":{
         category: "Bouw",
         cost1:25, // % of total wealth
         cost_increase:25, // % increase per scenario
@@ -73,7 +73,7 @@ var measures = {
         ],
         bonusrole: [1,2,3,4,5,6]
     },
-    "Meer geld voor mensen die zonnepanelen plaatsen.":{
+    "More money for people who buy solar panels.":{
         category: "Economie",
         cost1:45, // % of total wealth
         cost_increase:10, // % increase per scenario
@@ -86,7 +86,7 @@ var measures = {
         ],
         bonusrole: [1,2,3,4,5,6]
     },
-    "Meer politieke samenwerking tussen Nederland en Duitsland.":{
+    "Strenghten political bonds between the Netherlands and Germany":{
         category: "Economie/bestuur",
         cost1:10, // % of total wealth
         cost_increase:100, // % increase per scenario
