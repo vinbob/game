@@ -147,7 +147,7 @@ $(document).ready(function(){
 			aq[cat] = '<b>'+cat+'</b><br/>';
 		}
 		categories[cat] += '<tr><td><input type="checkbox" ';
-		if (cat == 'English'){
+		if (cat == 'Test'){
 			categories[cat] += 'checked ';
 		}
 		categories[cat] += 'value="' +  i + '" id="check' + i + '" /></td><td text-align="left"> ' ;

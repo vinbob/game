@@ -535,12 +535,21 @@ function GameWorld(){
 	}
 	
 	setBetarea = function(score){
+		var maxbet = Math.ceil(score / 2);
+		var myanstot = 0; //the total betvalue, in case of refresh
+		if(userType === 'official_participant' && curState === states.PRESCENARIO){
+			for (let i in selectedAnswerId){
+				myanstot += selectedAnswerId[i].betval;
+			}
+		}
+		betValue += myanstot;
+		
 		var betarea = '<input type="submit" id="bet1" value="1" style="width: 40px; color: black;';
-		if(score < 1){
+		if((maxbet - myanstot) < 1){
 			betarea += 'display: none;';
 		}
 		betarea += '" /><input type="submit" id="bet10" value="10" style="width: 53px; color: black;';
-		if(score < 10){
+		if((maxbet - myanstot) < 10){
 			betarea += 'display: none;';
 		}
 		betarea += '"/>';
@@ -548,18 +557,16 @@ function GameWorld(){
 
 		$('#bet1').click(function() {
 			if(userType === 'official_participant' && (curState === states.SHOW_QUESTION || curState === states.PRESCENARIO)){
-				// Get the value of 'bet' input field
-				//var betValue = $(this).val();
 				if(curState == states.SHOW_QUESTION || selectedMeasure != ''){
 					betValue += 1;
-					if (betValue >= score){
+					if (betValue >= maxbet){
 					$(this).css('display', 'none');
 					}
-					if (betValue >= (score - 9)){
+					if (betValue >= (maxbet - 9)){
 					$('#bet10').css('display', 'none');
 					}
-					if(betValue > score){
-						betValue = score;
+					if(betValue > maxbet){
+						betValue = maxbet;
 					}
 				}
 				$('#totalbet').html(betValue); //update betted value displayed
@@ -575,9 +582,9 @@ function GameWorld(){
 							if (betValue < 0){
 								betValue = 0;
 							}
-							if ((score - betValue) > 0){
+							if ((maxbet - betValue) > 0){
 								$('#bet1').css('display', 'inline');
-								if ((score - betValue) >= 10){
+								if ((maxbet - betValue) >= 10){
 									$('#bet10').css('display', 'inline'); 
 								}
 							}
@@ -601,14 +608,14 @@ function GameWorld(){
 				//var betValue = $(this).val();
 				if(curState == states.SHOW_QUESTION || selectedMeasure != ''){
 					betValue += 10;
-					if (betValue >= score){
+					if (betValue >= maxbet){
 					$('#bet1').css('display', 'none');
 					}
-					if (betValue >= (score - 9)){
+					if (betValue >= (maxbet - 9)){
 					$(this).css('display', 'none');
 					}
-					if(betValue > score){
-						betValue = score;
+					if(betValue > maxbet){
+						betValue = maxbet;
 					}
 					$('#totalbet').html(betValue); //update betted value displayed
 				}
@@ -624,9 +631,9 @@ function GameWorld(){
 							if (betValue < 0){
 								betValue = 0;
 							}
-							if ((score - betValue) > 0){
+							if ((maxbet - betValue) > 0){
 								$('#bet1').css('display', 'inline');
-								if ((score - betValue) >= 10){
+								if ((maxbet - betValue) >= 10){
 									$('#bet10').css('display', 'inline'); 
 								}
 							}
@@ -645,32 +652,6 @@ function GameWorld(){
 				}
 			}
 		});
-		
-		/*if(curState == states.PRESCENARIO && userType == 'official_participant') {
-			for (i in selectedAnswerId){
-				console.log(i);
-				$('#cancel'+i).click(function() {
-						betValue -= selectedAnswerId[i].betval;
-						selectedAnswerId[i].betval = 0;
-						console.log('click'+i);
-						$('#bet_m'+i).html("");
-						if (betValue < 0){
-							betValue = 0;
-						}
-						if ((score - betValue) > 0){
-							$('#bet1').css('display', 'inline');
-							if ((score - betValue) >= 10){
-								$('#bet10').css('display', 'inline'); 
-							}
-						}
-
-						// Send socket event with answerId and betValue
-						socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
-						socket.emit('update_leaderboard');
-					}
-				);
-			}
-		}*/
 		
 	}
 	let betValue = 0;
@@ -1123,9 +1104,9 @@ function GameWorld(){
 				c++;
 				selectedAnswerId[c] = {name: 'zwart', betval: 0};
 			}
-			alreadyBetted = function(i, betv, state){
+			alreadyBetted = function(i, betv, mtype='measure'){
 				var alreadybetted = '';
-				if(betv > 0 && measures[m].unlocked == false){
+				if(betv > 0 && (measures[m].unlocked == false || mtype == 'color')){ 
 					alreadybetted = betv;
 					if(data.state != states.BALLROLLING && data.state != states.POSTSCENARIO){
 						alreadybetted +='&nbsp;&nbsp;&nbsp;<img id="cancel'+i+'" src="content/KlimaatCasino/cross.png" width="20" />';
@@ -1191,7 +1172,7 @@ function GameWorld(){
 							$(this).css("background-color","rgb(255, 255, 162)");
 					});
 			$("#question_area .answers").append($div);	
-			alreadyBetted(i, selectedAnswerId[i].betval);		
+			alreadyBetted(i, selectedAnswerId[i].betval, 'color');		
 			i++;
 			var $div = $("<div>", { measure:i })
 					.attr("style","font-size:1.5em; padding-top: 10px; border: 1px solid; margin-top: 2px; overflow:hidden; cursor: pointer; cursor: hand; ")
@@ -1206,9 +1187,10 @@ function GameWorld(){
 							$(this).css("background-color","rgb(255, 255, 162)");
 						});
 			$("#question_area .answers").append($div);		
-			alreadyBetted(i, selectedAnswerId[i].betval);
+			alreadyBetted(i, selectedAnswerId[i].betval, 'color');
 			if(data.state != states.BALLROLLING && data.state != states.POSTSCENARIO){
 				setBetarea(score);
+				console.log(selectedAnswerId);
 			}
 		}
 	}

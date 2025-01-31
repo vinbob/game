@@ -1,127 +1,132 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<title>Test</title>
-		<meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, width=device-width">	
-		<link rel="stylesheet" href="css/bootstrap.min.css">
-		<link rel="stylesheet" href="css/bootstrap-theme.min.css">
-		<script src="js/jquery.min.js"></script>
-		<script src="https://socket.io/socket.io.js"></script>
-		<style type="text/css">
-		/* Stijl voor de antwoordvelden */
-		.dropzone {
-		    width: 200px;
-		    height: 200px;
-		    border: 2px dashed #333;
-		    margin: 20px;
-		    display: inline-block;
-		    position: relative;
-		    text-align: center;
-		    line-height: 200px;
-		    font-size: 1.2em;
-		    color: #333;
-		    -webkit-user-select: none; /* Safari */        
-			-moz-user-select: none; /* Firefox */
-			-ms-user-select: none; /* IE10+/Edge */
-			user-select: none; /* Standard */
-		}
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Form</title>
+  <style type="text/css">
+     /* styles.css */
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f0f0f0;
+  }
 
-		/* Container voor de fiches */
-		#chipContainer {
-		    position: relative;
-		    width: 70px;
-		    height: 70px;
-		    margin-top: 20px;
-		}
-		.chip {
-		    width: 35px;
-		    height: 35px;
-		    border-radius: 50%;
-		    border-style: dashed;
-		    border-color: white;
-		    background-color: blue;
-		    box-shadow: 4px -4px 8px rgba(0, 0, 0, 0.3);
-		    position: absolute;
-		    top: 0;
-		    left: 0;
-		    display: flex;
-		    align-items: center;
-		    justify-content: center;
-		    font-size: 1.5em;
-		    cursor: pointer;
-		    color: white;
-		    transition: transform 0.1s ease, top 1s ease;
-		    -webkit-user-select: none; /* Safari */        
-			-moz-user-select: none; /* Firefox */
-			-ms-user-select: none; /* IE10+/Edge */
-			user-select: none; /* Standard */
-		}
-		</style>
-	</head>
+  .form-container {
+    width: 80%;
+    max-width: 600px;
+    height: 300px;
+    overflow: hidden;
+    position: relative;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  .question {
+    width: 100%;
+    height: 100%;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    text-align: center;
+    background-color: white;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+  }
+
+  .question.active {
+    display: flex;
+    opacity: 1;
+  }
+
+  .options {
+    margin-top: 20px;
+  }
+
+  .option {
+    padding: 10px 20px;
+    margin: 10px;
+    border: none;
+    border-radius: 8px;
+    background-color: #4caf50;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+
+  .option:hover {
+    background-color: #45a049;
+  }
+
+  </style>
+</head>
 <body>
-<div class="dropzone">Antwoord 1</div>
-<div class="dropzone">Antwoord 2</div>
-<!-- Fichestapel -->
-<div id="chipContainer">
-  <div class="chip" data-value="1">1</div>
-  <div class="chip" data-value="1">1</div>
-  <div class="chip" data-value="1">1</div>
-  <div class="chip" data-value="1">1</div>
-  <div class="chip" data-value="1">1</div>
-  <div class="chip" data-value="1">1</div>
-  <div class="chip" data-value="1">1</div>
-  <div class="chip" data-value="1">1</div>
-  <div class="chip" data-value="1">1</div>
-  <div class="chip" data-value="1">1</div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
-<script>
-  // Zorg ervoor dat elke fiche boven de vorige wordt weergegeven door ze in een stapel te positioneren
-  const chips = document.querySelectorAll('.chip');
-  chips.forEach((chip, index) => {
-    chip.style.top = `${index * 5}px`; // Zorg voor lichte overlap
-    chip.style.zIndex = 10 - index;    // Zorg dat de onderste fiches onderop liggen
-  });
+  <script type="text/javascript">
 
-  // Gebruik Interact.js om de fiches draggable te maken
-  interact('.chip').draggable({
-    inertia: true,
-    listeners: {
-      start (event) {
-        // Selecteer alle chips boven de huidige en beweeg ze mee
-        const currentIndex = Array.from(chips).indexOf(event.target);
-        console.log(currentIndex);
-        for (let i = currentIndex; i >= 0; i--) {
-          chips[i].classList.add('dragging');
-        }
-      },
-      move (event) {
-        // Beweeg alle geselecteerde chips
-        let x = (parseFloat(event.target.getAttribute('data-x')) || 0) + event.dx;
-        let y = (parseFloat(event.target.getAttribute('data-y')) || 0) + event.dy;
 
-        // Verplaats alle geselecteerde fiches (bovenste meegaan met onderste)
-        document.querySelectorAll('.dragging').forEach(chip => {
-          chip.style.transform = `translate(${x}px, ${y}px)`;
-          chip.setAttribute('data-x', x);
-          chip.setAttribute('data-y', y);
-        });
-      },
-      end (event) {
-        // Verwijder 'dragging' klasse wanneer de drag eindigt
-        document.querySelectorAll('.dragging').forEach(chip => chip.classList.remove('dragging'));
-      }
+  </script>
+  <div class="form-container">
+    <div class="question active">
+      <h2>Question 1: What is your favorite color?</h2>
+      <div class="options">
+        <button class="option" data-next="1" id="red">Red</button>
+        <button class="option" data-next="1">Blue</button>
+        <button class="option" data-next="1">Green</button>
+      </div>
+    </div>
+    <div class="question">
+      <h2>Question 2: What is your favorite animal?</h2>
+      <div class="options">
+        <button class="option" data-next="2">Cat</button>
+        <button class="option" data-next="2">Dog</button>
+        <button class="option" data-next="2">Bird</button>
+      </div>
+    </div>
+    <div class="question">
+      <h2>Question 3: What is your favorite season?</h2>
+      <div class="options">
+        <button class="option" data-next="3">Spring</button>
+        <button class="option" data-next="3">Summer</button>
+        <button class="option" data-next="3">Winter</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    // script.js
+const questions = document.querySelectorAll('.question');
+const options = document.querySelectorAll('.option');
+let currentIndex = 0;
+
+// Handle clicking an option
+options.forEach(option => {
+  option.addEventListener('click', (event) => {
+    // Move to the next question
+    const currentQuestion = questions[currentIndex];
+    currentQuestion.classList.remove('active');
+
+    console.log('vraag '+currentIndex);
+    console.log('antwoord:' + event.target.id);
+    currentIndex++;
+    if (currentIndex < questions.length) {
+      const nextQuestion = questions[currentIndex];
+      setTimeout(() => {
+        nextQuestion.classList.add('active');
+      }, 500); // Delay to allow fade-out effect to complete
+    } else {
+      console.log('start spel')
     }
   });
-
-  // Dropzone logica
-  interact('.dropzone').dropzone({
-    accept: '.chip',
-    ondrop: function (event) {
-      console.log('Fiche geplaatst op:', event.target);
-    }
-  });
-</script>
-
+});
+  </script>
 </body>
 </html>

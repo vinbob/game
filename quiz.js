@@ -1,5 +1,5 @@
 var states = {START:0,TEST_QUESTION:1,STARTING:2,SHOW_QUESTION:3,SHOW_VIDEO:4,SHOW_ANSWER:5,START_ENDGAME:6,  PRESCENARIO:7, BALLROLLING:8, POSTSCENARIO:9, END:10};
-var startingscore = 15;
+var startingscore = 30;
 
 function Quizzes(){
 	var quizzes = {};
@@ -563,17 +563,24 @@ function RealParticipant(pSocket,pTeamname){
 	this.setResponse = function(answerId, betValue, quizmeasures){
 		if (typeof answerId === 'object' && answerId !== null) {
 			var betsum = 0;
+			var maxbet = Math.ceil(score / 2);
 			for (a in answerId){
 				var measurename = answerId[a].name;
 				if(measurename !== 'rood' && measurename !== 'zwart'){
 					if(quizmeasures[measurename].unlocked == false){
 						betsum += answerId[a].betval;
-						if (betsum > score){
-							answerId[a].betval -= betsum - score;
-							betsum = score;
+						if (betsum > maxbet){
+							answerId[a].betval -= betsum - maxbet;
+							betsum = maxbet;
 						}
 					} else {
 						answerId[a].betval = 0;
+					}
+				} else {
+					betsum += answerId[a].betval;
+					if (betsum > maxbet){
+						answerId[a].betval -= betsum - maxbet;
+						betsum = maxbet;
 					}
 				}
 			}
@@ -581,6 +588,9 @@ function RealParticipant(pSocket,pTeamname){
 		} else {
 			response = answerId;
 			bet = parseInt(betValue);
+			if (bet > maxbet){
+				bet = maxbet;
+			}
 			if(!(answerId == false && betValue == 0 ) && sleeping == true){
 				sleeping = false;
 			}

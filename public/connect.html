@@ -21,24 +21,18 @@
 		
 		<div>
 			<form>		
-				<div id="player">
-				<!--
-					<h3>Vul je naam in en klik op 'Start'</h3>
-					<div>
-						<label for="unofficial_team_name">Team name</label>
-						<input type="text" id="unofficial_team_name"  style="text-transform:uppercase"/>
-					</div>
-					<div>
-						<button id="btn_connect_unofficial" class="btn btn-default">Start</button>
-					</div>
-					-->
+				<div id="player" style="width: 100%;">
+					<!--<h2 id="signuptext">Vul je naam in:</h2>
+					<input type="text" id="official_team_name" /><br />
+					<button id="btn_naam" class="btn btn-default">Verder</button>-->
+					<label for="official_team_code">Quiz Code</label>
 					<h3>Vul je naam in en klik op 'Start'</h3>
 					<div>
 						<label for="official_team_name">Naam</label>
 						<input type="text" id="official_team_name"  style="text-transform:uppercase"/>	
 					</div>
 					<div>
-						1. Ik werk het liefst met.. .
+						1. Ik werk het liefst met...
 						<input type="radio" name="q1" value="0" checked> mensen <input type="radio" name="q1" value="1"> dingen<br />
 						2. Ik vind het leukste om...
 						<input type="radio" name="q2" value="0" checked> nieuwe ideeën te bedenken <input type="radio" name="q2" value="1"> een idee helemaal uit te werken en werkelijkheid te maken<br />
@@ -48,7 +42,7 @@
 						<input type="radio" name="q4" value="0" checked> bedenken <input type="radio" name="q4" value="1"> bouwen<br />
 						5. Ik haal voldoening uit...
 						<input type="radio" name="q5" value="0" checked>iemand te kunnen helpen <input type="radio" name="q5" value="1"> iets helemaal te snappen
-						<!--<label for="official_team_code">Quiz Code</label>-->
+						
 						<input type="password" id="official_quiz_code" maxlength="20" size="20" value="test" style="display: none;" />
 					</div>
 					<button id="btn_connect_official" class="btn btn-default">Start</button>
