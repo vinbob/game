@@ -13,8 +13,127 @@
 		<script src="https://cdn.socket.io/socket.io-2.3.1.js"></script>
 		<script src="js/qrcode.min.js"></script>
 		<script src="js/game/quiz.js"></script>
+		<style type="text/css">
+		.oval {
+            width: 100%;   /* Adjust width */
+            height: 400px;  /* Adjust height */
+            background-color: #21C400;
+            border: 1px solid black; /* Thin black edge */
+            border-radius: 50%; /* Makes it an oval */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+
+        .fiche {
+        	width: 23px;   /* Adjust width */
+            height: 9px;  /* Adjust height */
+            border: 1px solid black; /* Thin black edge */
+            border-radius: 50%; /* Makes it an oval */
+            display: flex;
+            position: absolute;
+            z-index: 1;
+            font-size: 13px;
+            font-weight: bold;
+            color:#000;
+        }
+        .fiche.fiche1 {
+        	background-color: #FFFF00;
+        }
+        .fiche.fiche5 {
+        	background-color: #ECA627;
+        	left: 25px;
+        }
+        .fiche.fiche20 {
+        	background-color: #00A2B7;
+        	left: 50px;
+        }
+        .fiche.fiche100 {
+        	background-color: #B70003;
+        	left: 75px;
+        }
+        .q_area {
+        	width: 50vw;
+        	min-height: 400px;
+        	background-color: #1B1513;
+        	position: absolute;
+        	left: 30vw;
+        	top:40px;
+        	z-index: 3;
+        }
+        .player {
+        	font-size: 32px;
+        	text-align: center;
+        	z-index: 1;
+        }
+        .fichebox, .cardbox, .player {
+        	position: absolute;
+        }
+        .player.player1{
+        	left: 10vw; top:200px;
+        }
+        .fichebox.player1{
+			left: 17vw; top: 300px;
+        }
+        .cardbox.player1{
+        	left: 125px; top:-10px;
+        }
+        .icon.player1{
+        	position: absolute; left: 50px;
+        }
+        .player.player2{
+        	left: 2vw; top:350px;
+        	text-align: left;
+        }
+        .icon.player2{
+        	position: absolute; left: 50px;
+        }
+        .fichebox.player2{
+			left: 13vw; top: 430px;
+        }
+        .cardbox.player2{
+        	left: 125px; top:-30px;
+        }
+        .player.player3{
+        	left: 14vw; top:550px;
+        }
+        .fichebox.player3{
+			left: 22vw; top: 520px;
+        }
+        .cardbox.player3{
+        	left: 100px; top:-60px;
+        }
+        .player.player4{
+        	left: 36vw; top:600px;
+        }
+        .fichebox.player4{
+			left: 37vw; top: 560px;
+        }
+        .cardbox.player4{
+        	left: 40px; top:-70px;
+        }
+        .player.player5{
+        	left: 52vw; top:610px;
+        }
+        .fichebox.player5{
+			left: 53vw; top: 560px;
+        }
+        .cardbox.player5{
+        	left: 30px; top:-70px;
+        }
+        .player.player6{
+        	left: 68vw; top:590px;
+        }
+        .fichebox.player6{
+			left: 68vw; top: 540px;
+        }
+        .cardbox.player6{
+        	left: 20px; top:-70px;
+        }
+		</style>
 	</head>
-<body style="background-color:green; color: white;">
+<body style="background-color:#A1CC3A; color: white;">
 <!--
 <div class="element" id="timer_area" style="position: fixed; top:0px; height: 70px; width:100%; background-color: rgb(126, 197, 104); font-size: 2em; color:#fff; padding: 5px;">
 	<div align="center">
@@ -23,6 +142,124 @@
 	</div>
 </div>
 -->
+<div id="table_area" style="display:none; padding-left: 150px; padding-right: 150px;">
+<div class="q_area" id="q_area">
+	<div id="questiontext" class="questiontext" style="padding:40px; padding-left: 120px; font-size: 24px;">
+		
+	</div>
+	<div id="qr_area" style="padding-left:120px; padding-top:0px;">
+
+	</div>
+	<div class="answrs" style="font-size: 24px; padding-left: 30px; padding-right: 20px; padding-bottom:20px;">
+	</div>
+
+
+</div>
+
+
+
+<div class="player player1" id="playerinfo1"></div>
+<div class="fichebox player1" id="fichebox1">
+	<div class="cardbox player1">
+	</div>
+</div>
+<div class="player player2" id="playerinfo2"></div>
+<div class="fichebox player2" id="fichebox2">
+	<div class="cardbox player2">
+	</div>
+</div>
+<div class="player player3" id="playerinfo3"></div>
+<div class="fichebox player3" id="fichebox3">
+	<div class="cardbox player3">
+	</div>
+</div>
+<div class="player player4" id="playerinfo4"></div>
+<div class="fichebox player4" id="fichebox4">
+	<div class="cardbox player4">
+	</div>
+</div>
+<div class="player player5" id="playerinfo5"></div>
+<div class="fichebox player5" id="fichebox5">
+	<div class="cardbox player5">
+	</div>
+</div>
+<div class="player player6" id="playerinfo6"></div>
+<div class="fichebox player6" id="fichebox6">
+	<div class="cardbox player6">
+	</div>
+</div>
+<!--
+<div class="player player2" id="playerinfo2"><br /><img src="content/bouwer.png" width="50" class="icon player2" /></div>
+<div class="fichebox player2" id="fichebox2">
+	<div class="fiche fiche1"></div><div class="fiche fiche1" style="top:-4px;"></div>
+	<div class="fiche fiche5"></div> <div class="fiche fiche5" style="top:-4px;"></div> <div class="fiche fiche5" style="top:-8px;"></div>
+	<div class="fiche fiche20"></div>
+	<div class="fiche fiche100"></div> <div class="fiche fiche100" style="top:-4px;"></div> <div class="fiche fiche100" style="top:-8px;"></div>
+	<div class="cardbox player2">
+		<img src="content/KlimaatCasino/card.png" width="30" />
+		<div style="position: absolute; left: 35px; top:10px;">114</div>
+	</div>
+</div>
+
+<div class="player player3" id="playerinfo3"><br /><img src="content/bouwer.png" width="50" class="icon player3" /></div>
+<div class="fichebox player3" id="fichebox3">
+	<div class="fiche fiche1"></div><div class="fiche fiche1" style="top:-4px;"></div>
+	<div class="fiche fiche5"></div> <div class="fiche fiche5" style="top:-4px;"></div> <div class="fiche fiche5" style="top:-8px;"></div>
+	<div class="fiche fiche20"></div>
+	<div class="fiche fiche100"></div> <div class="fiche fiche100" style="top:-4px;"></div> <div class="fiche fiche100" style="top:-8px;"></div>
+	<div class="cardbox player3">
+		<img src="content/KlimaatCasino/card.png" width="30" />
+		<div style="position: absolute; left: 35px; top:10px;">114</div>
+	</div>
+</div>
+
+<div class="player player4" id="playerinfo4">YOEP<br /><img src="content/bouwer.png" width="50" class="icon player4" /></div>
+<div class="fichebox player4" id="fichebox4">
+	<div class="fiche fiche1"></div><div class="fiche fiche1" style="top:-4px;"></div>
+	<div class="fiche fiche5"></div> <div class="fiche fiche5" style="top:-4px;"></div> <div class="fiche fiche5" style="top:-8px;"></div>
+	<div class="fiche fiche20"></div>
+	<div class="fiche fiche100"></div> <div class="fiche fiche100" style="top:-4px;"></div> <div class="fiche fiche100" style="top:-8px;"></div>
+	<div class="cardbox player4">
+		<img src="content/KlimaatCasino/card.png" width="30" />
+		<div style="position: absolute; left: 35px; top:10px;">114</div>
+	</div>
+</div>
+
+<div class="player player5" id="playerinfo5">YOEP<br /><img src="content/bouwer.png" width="50" class="icon player5" /></div>
+<div class="fichebox player5" id="fichebox5">
+	<div class="fiche fiche1"></div><div class="fiche fiche1" style="top:-4px;"></div>
+	<div class="fiche fiche5"></div> <div class="fiche fiche5" style="top:-4px;"></div> <div class="fiche fiche5" style="top:-8px;"></div>
+	<div class="fiche fiche20"></div>
+	<div class="fiche fiche100"></div> <div class="fiche fiche100" style="top:-4px;"></div> <div class="fiche fiche100" style="top:-8px;"></div>
+	<div class="cardbox player5">
+		<img src="content/KlimaatCasino/card.png" width="30" />
+		<div style="position: absolute; left: 35px; top:10px;">114</div>
+	</div>
+</div>
+
+<div class="player player6" id="playerinfo6">YOEP<br /><img src="content/bouwer.png" width="50" class="icon player6" /></div>
+<div class="fichebox player6" id="fichebox6">
+	<div class="fiche fiche1"></div><div class="fiche fiche1" style="top:-4px;"></div>
+	<div class="fiche fiche5"></div> <div class="fiche fiche5" style="top:-4px;"></div> <div class="fiche fiche5" style="top:-8px;"></div>
+	<div class="fiche fiche20"></div>
+	<div class="fiche fiche100"></div> <div class="fiche fiche100" style="top:-4px;"></div> <div class="fiche fiche100" style="top:-8px;"></div>
+	<div class="cardbox player6">
+		<img src="content/KlimaatCasino/card.png" width="30" />
+		<div style="position: absolute; left: 35px; top:10px;">114</div>
+	</div>
+</div>
+-->
+
+<div style="height:200px;"></div>
+<div class="oval"></div>
+
+<div style="height: 100px;"></div>
+
+</div>
+
+
+<div style="display:none; padding:20px;" id="qr_wrapper"><div id="qr_zone"></div><div id="qr_text" style="font-size:18px; padding-left: 15px;"></div></div>
+
 
 <div class="element" id="wait_area" style="display: table; width:100%; overflow: hidden;">
 	<div style="display: table-cell; vertical-align: middle;">
@@ -39,10 +276,23 @@
 	</div>
 </div>
 
-<div id="qr" align="center" style="font-size:1.5em;">
+<!--<div id="qr" align="center" style="font-size:1.5em;">
 	
+</div>-->
+<!--<div id="qrcode"  align="center"></div>-->
+<div id="player_console" style="display:none; text-align:center; font-size: 32px;">
+	<div style="padding:15px;">
+	Sleep je inzet naar het juiste antwoord!
+	<div id="player_answers" style="padding-left:20px; padding-right: 20px;"></div>
+	</div>
+
+	<div id="fiche_area" style="background-color:#83A92E; display: flex; padding-top: 50px; padding-bottom: 20px;">
+		<div style="display:flex; padding-left: 40px; padding-top: 20px; width: 70%; position:relative;" id="fiches_inhand">
+			<!--<div class="fiche fiche1" style="width: 40px; height: 20px;"><div style="width:100%; padding:0px;">1</div></div>-->
+		</div>
+		<div style="display:flex;">=&nbsp;<span id="amount_inhand">30</span></div>
+	</div>
 </div>
-<div id="qrcode"  align="center"></div>
 
 <div class="element" align="center" id="question_area" style="width: 100%; padding-top: 80px; padding-bottom: 80px; padding-left:8px; padding-right: 8px">
 	<div class="pic">
@@ -72,7 +322,7 @@
 <div id="scores" align="center">
 </div>
 
-<div class="element" id="controlpanel_area" style="width:100%; position: fixed; bottom: 0px; height: 60px; background-color: rgb(108, 108, 108); font-size: 2em; color:#000; padding-top: 7px; padding-right: 10px; padding-left: 10px;">
+<div class="element" id="controlpanel_area" style="width:100%; position: fixed; bottom: 0px; height: 60px; background-color: rgb(108, 108, 108); font-size: 2em; color:#000; padding-top: 7px; padding-right: 10px; padding-left: 10px; z-index: 20;">
 	<div style="float:left">
 		<span class="element" id="generic_options_area">
 			<button class="btn btn-default" id="btn_leave_quiz">Leave</button>

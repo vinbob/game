@@ -788,4 +788,5 @@ var questions = {
 
     
     var rolenames = {1:"Bouwer",2:"Ondernemer",3:"Uitvinder",4:"Coach",5:"Designer",6:"Hulpverlener"};
+    var roledescriptions = {1:"Je houdt ervan dingen te maken, en met je handen te werken.",2:"Je houdt ervan om nieuwe ideeën uit te werken.",3:"Je houdt ervan om iets nieuws te maken.",4:"Je houdt ervan om de leiding te nemen.",5:"Je houdt ervan om iets te ontwerpen.",6:"Je houdt ervan om anderen te helpen."};
 

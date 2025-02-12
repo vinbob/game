@@ -239,6 +239,11 @@ function Quizzes(){
 			return quizzes[quizId].getCurAnswers();
 	}
 
+	this.getCurQuestion = function(quizId){
+		if(quizId in quizzes)
+			return quizzes[quizId].getCurQuestion();
+	}
+
 	this.getCurVid = function(quizId){
 		if(quizId in quizzes)
 			return quizzes[quizId].getCurVid();
@@ -275,6 +280,9 @@ function Participants(){
 		if(typeof uniqueId === 'undefined' || !uniqueId) return;
 
 		participants[uniqueId] = participant;
+		/*for(var i = 0; i < 8;i++){
+			participants[uniqueId+i] = participant;
+		}*/
 
 		if(participant.isRealParticipant){
 			teamnames[participant.getTeamname()] = true;
@@ -295,11 +303,11 @@ function Participants(){
 			this.updateRanks();
 	}
 
-	this.isValidTeamname = function(teamname){
+	/*this.isValidTeamname = function(teamname){
 		if(teamname.length<=1) return false;
 		if(teamname in teamnames) return false;
 		return true;
-	}
+	}*/
 
 	this.getAll = function(){
 		return participants;
@@ -484,6 +492,7 @@ function Participant(){
 			quizState.stateParams.savedanswers = quizzes.getSavedAnswers(this.getQuizId());
 			quizState.stateParams.type = quizzes.getQuestionType(this.getQuizId());
 			quizState.stateParams.answers = quizzes.getCurAnswers(this.getQuizId());
+			quizState.stateParams.question = quizzes.getCurQuestion(this.getQuizId());
 			quizState.stateParams.vid = quizzes.getCurVid(this.getQuizId());
 			quizState.stateParams.pic = quizzes.getCurPic(this.getQuizId());
 		}
@@ -1078,6 +1087,7 @@ function Quiz(pQuizId){
 	var savedanswers = [0,0];
 	var questiontype = 'mc';
 	var curanswers = [];
+	var curquestion = '';
 	var curvid = '';
 	var curpic = '';
 	var showedanswer = false;
@@ -1266,6 +1276,7 @@ function Quiz(pQuizId){
 	this.showQuestion = function(question){
 		participants.resetResponses();
 		curanswers = question.getAnswers();
+		curquestion = question.getQuestionOnly().question;
 		curvid = question.getVid();
 		quizState.setShowQuestion(question.getQuestionOnly());
 		quizState.setHiddenParams({answerId: question.getAnswerId(),marks: question.getMarks(),bonusrole: question.getBonus(), type: question.getType()});
@@ -1512,6 +1523,10 @@ function Quiz(pQuizId){
 
 	this.getCurAnswers = function(){
 		return curanswers;
+	}
+
+	this.getCurQuestion = function(){
+		return curquestion;
 	}
 
 	this.getCurVid = function(){

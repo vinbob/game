@@ -1,3 +1,8 @@
+body {
+    font-size: 16px;
+    background-color: #A1CC3A;
+}
+
 :root {
     --custom-green: #64ce64;
     --custom-red: #FF6347;

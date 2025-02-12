@@ -5,10 +5,40 @@
 		<meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, width=device-width">	
 		<link rel="stylesheet" href="css/bootstrap.min.css">
 		<link rel="stylesheet" href="css/bootstrap-theme.min.css">
+		<link rel="stylesheet" href="styles.css">
 		<script src="js/jquery.min.js"></script>
 		<script src="socket.io/socket.io.js"></script>
 		<script src="content/questions.js"></script>
 		<script src="js/game/connect.js"></script>
+		<style type="text/css">
+			body{
+				background-color: white;
+			}
+			.options {
+			    display: flex;
+			    justify-content: center;
+			    gap: 20px;
+			    width: 100%;
+			}
+
+			.option {
+				flex: 1;
+			    padding: 20px 20px;
+			    border: none;
+			    cursor: pointer;
+			    border-radius: 8px;
+			    color: #000;
+			    display: none;
+			}
+
+			.option.left {
+			    background-color: #c8e6c9; /* Lichtgroen */
+			}
+
+			.option.right {
+			    background-color: #ffd54f; /* Geel */
+			}
+		</style>
 	</head>
 <body>
 	<div align="center">
@@ -20,33 +50,19 @@
 		</div>
 		
 		<div>
-			<form>		
-				<div id="player" style="width: 100%;">
-					<!--<h2 id="signuptext">Vul je naam in:</h2>
-					<input type="text" id="official_team_name" /><br />
-					<button id="btn_naam" class="btn btn-default">Verder</button>-->
-					<label for="official_team_code">Quiz Code</label>
-					<h3>Vul je naam in en klik op 'Start'</h3>
-					<div>
-						<label for="official_team_name">Naam</label>
-						<input type="text" id="official_team_name"  style="text-transform:uppercase"/>	
+				
+				<div id="player" style="width: 100%; padding-top:100px; padding-right: 20px; padding-left: 20px;">
+					<div id="signuptext" style="padding-bottom: 20px;">Wat is je naam?</div>
+					<input type="text" id="official_team_name" value="john" />
+					<div style="width:100%; padding-top: 40px; text-align: right;" id="pijl">
+						<img src="content/pijl.png" width="40" id="pijlimg" />
 					</div>
-					<div>
-						1. Ik werk het liefst met...
-						<input type="radio" name="q1" value="0" checked> mensen <input type="radio" name="q1" value="1"> dingen<br />
-						2. Ik vind het leukste om...
-						<input type="radio" name="q2" value="0" checked> nieuwe ideeën te bedenken <input type="radio" name="q2" value="1"> een idee helemaal uit te werken en werkelijkheid te maken<br />
-						3. Ik...
-						<input type="radio" name="q3" value="0" checked> neem graag de leiding <input type="radio" name="q3" value="1"> ben liever onderdeel van een team<br />
-						4. Ik wil het liefst dingen...
-						<input type="radio" name="q4" value="0" checked> bedenken <input type="radio" name="q4" value="1"> bouwen<br />
-						5. Ik haal voldoening uit...
-						<input type="radio" name="q5" value="0" checked>iemand te kunnen helpen <input type="radio" name="q5" value="1"> iets helemaal te snappen
-						
-						<input type="password" id="official_quiz_code" maxlength="20" size="20" value="test" style="display: none;" />
-					</div>
-					<button id="btn_connect_official" class="btn btn-default">Start</button>
+					<div class="options">
+			            <button class="option left" id="btn_links"></button>
+			            <button class="option right"  id="btn_rechts"></button>
+			        </div>
 				</div>			
+			<form>	
 				<div id="admin">
 					<h3>Connect as administrator</h3>
 					<div>

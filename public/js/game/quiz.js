@@ -6,7 +6,6 @@ var measures = [];
 var updateAnswerList = function(){};
 var receivedanswers = [];
 var answerMaker = function(){};
-console.log(localStorage.getItem('uniqueId'));
 
 function toUpdateAns(ans, dir){
 	updateAnswerList(ans, dir);
@@ -21,6 +20,221 @@ function GameWorld(){
 	let selectedMeasure = '';
 	var curState = false;
 	var savedState = false;
+
+	function getUrlWithoutLastPart(url) {
+		// Verwijder het protocol (http:// of https://)
+		let urlWithoutProtocol = url.replace(/^https?:\/\//, '');
+
+		// Verwijder www. als het aanwezig is
+		urlWithoutProtocol = urlWithoutProtocol.replace(/^www\./, '');
+	
+		// Verwijder alles na de laatste slash
+		return urlWithoutProtocol.substring(0, urlWithoutProtocol.lastIndexOf('/'));
+	}
+
+	//constants
+	const chipvalues = [1,5,25,100];
+	const dist = 6;
+	const minstackheight = 10;
+
+	//variables
+	let yourstack;
+	var stackobj = {yours: {}};
+	var chipID = 0;
+	let answercount = 4;
+	var inHand = [];
+	var offsetX;
+	var offsetY;
+
+	for(let i = 0; i < answercount; i++){
+	stackobj[i] = {};
+	}
+	for (const [key, value] of Object.entries(stackobj)) {
+		for (let i = 0; i < chipvalues.length; i++){
+			stackobj[key][chipvalues[i]] = [];
+		}
+	}
+
+	function stacksCalculator(score){
+		var stack = [0,0,0,0];
+		for (let s = 0; s < score; s++){
+			stack[0]++;
+			for(let i = 0; i < chipvalues.length - 1; i++){
+				if(stack[i] - minstackheight >= chipvalues[i+1] / chipvalues[i]){
+					stack[i] -= chipvalues[i+1] / chipvalues[i];
+					stack[i+1]++;
+				}
+			}
+		}
+		return stack;
+	}
+
+	function ChipInitiator(counter,divid,type){
+		var stack = stacksCalculator(counter);
+		for (var s in stack){
+			for (var k = 0; k < stack[s]; k++){
+				ChipAdder(s,divid,k,type);
+			}
+		}
+	}
+
+	function ChipAdder(i_value, divid,position,type){
+		const chip = document.createElement("div");
+		chip.className = "fiche fiche"+chipvalues[i_value];
+		if(type == 'player'){
+			chip.style = 'top:'+(position*-dist+20)+'px; width: 40px; height: 20px; left:'+(i_value*45+40)+'px;';
+			chip.innerHTML = '<div style="width:100%; padding:0px;">'+chipvalues[i_value]+'</div>';
+			let curid = chipID;
+			chip.addEventListener("mousedown", function (e) {
+			    // Prevent default touch behavior
+			    e.preventDefault();
+			    Grab(curid, e);
+			});
+			chip.addEventListener("touchstart", function (e) {
+			    // Prevent default touch behavior
+			    e.preventDefault();
+			    Grab(curid, e.touches[0]);
+			});
+			stackobj['yours'][chipvalues[i_value]].push({chip: chip, chipID: chipID, val: chipvalues[i_value]});
+			chipID++;
+		} else {
+			chip.style = 'top:'+position*-4+'px;';
+		}
+		$('#'+divid).append(chip);
+	}
+
+	function Grab(cID, e){
+		let curstack;
+		let thisChip;
+		let curpos;
+		for (const [key, value] of Object.entries(stackobj)) {
+		  for (const [k, val] of Object.entries(value)) {
+		  	for(let i = 0; i < val.length; i++){
+			  	if (val[i].chipID == cID){
+			  		curstack = key;
+			  		thisChip = val[i];
+			  		curpos = i;
+			  	}
+			  }
+		  }
+		}
+
+		if(thisChip == undefined){
+			console.log('chip undefined');
+			return;
+		}
+
+		offsetX = e.clientX - thisChip.chip.getBoundingClientRect().left;
+	    offsetY = e.clientY - thisChip.chip.getBoundingClientRect().top;
+	    //offsetY = thisChip.chip.getBoundingClientRect().top;
+	    console.log(offsetY);
+
+		for (let i = 0; i < stackobj[curstack][thisChip.val].length; i++) {
+			if(i >= curpos){
+				let stackChip = stackobj[curstack][thisChip.val][i];
+				stackChip.chip.style.boxShadow = "8px -8px 8px rgba(0, 0, 0, 0.3)";
+		   		stackChip.chip.style.width = "60px";
+		   		stackChip.chip.style.height = "30px";
+		   		stackChip.chip.style.zIndex = String(i+1000);
+		   		inHand.push(stackChip);
+		   		delete stackobj[curstack][thisChip.val][i];
+			}
+		}
+		stackobj[curstack][thisChip.val] = stackobj[curstack][thisChip.val].filter(n => n);
+	}
+
+	function Drag(element, x, y){
+		element.style.left = `${x}px`;
+		element.style.top = `${y}px`;
+	}
+
+	document.addEventListener("mousemove", function (e) {
+		if (inHand.length < 1) return;
+	    e.preventDefault();
+	    for (let k = 0; k < inHand.length; k++){
+	    	let x = e.clientX - offsetX
+	    	//let y = e.clientY - offsetY - k*dist;
+	    	let y = e.clientY - offsetY - k*dist - 405 + window.scrollY;
+	    	console.log(window.scrollY);
+	    	//inHand[k].chip.style.position = "absolute";
+	    	inHand[k].chip.style.transition = "transform 0.1s ease, top 0.1s ease";
+	    	Drag(inHand[k].chip, x, y);
+	    }
+	});
+
+	document.addEventListener("touchmove", function (e) {
+		if (inHand.length < 1) return;
+	    e.preventDefault(); // Prevent scrolling
+	    const touch = e.touches[0];
+
+		for (let k = 0; k < inHand.length; k++){
+	    	// Verplaats het element op basis van de touch-coördinaten en offset
+	    	let x = touch.clientX - offsetX;
+	    	let y = touch.clientY - offsetY - k*dist - 445 + window.scrollY;
+	    	inHand[k].chip.style.transition = "transform 0.1s ease, top 0.1s ease";
+	    	Drag(inHand[k].chip, x, y);
+	    }
+	}, { passive: false });
+
+	/*document.addEventListener("touchmove", function (e) {
+		if (inHand.length < 1) return;
+		console.log('move');
+	    /*e.preventDefault();
+	    for (let k = 0; k < inHand.length; k++){
+	    	let x = e.clientX - offsetX
+	    	//let y = e.clientY - offsetY - k*dist;
+	    	let y = e.clientY - offsetY - k*dist - 405 + window.scrollY;
+	    	console.log(window.scrollY);
+	    	//inHand[k].chip.style.position = "absolute";
+	    	inHand[k].chip.style.transition = "transform 0.1s ease, top 0.1s ease";
+	    	Drag(inHand[k].chip, x, y);
+	    }
+	});
+	*/
+
+	function CheckExchange(droploc){
+		console.log(stackobj[droploc]);
+		let tofill = 0;
+		let nextval = 0;
+		let j = 0;
+		for (const [key, value] of Object.entries(stackobj[droploc])) {
+			let color = "";
+			j = 0;
+			console.log("tofill: "+tofill)
+			for (let i = 0; i < fiches.length; i++){
+				if(fiches[i][0] == tofill){
+					j = i;
+					console.log(j);
+					color = fiches[i][1];
+				}
+			}
+			if (tofill > 0){
+				if (value.length > 0){
+					console.log("Een "+key+" inwisselen voor "+key/tofill+" van "+tofill);
+					stackobj[droploc][key][stackobj[droploc][key].length - 1].chip.remove();
+					stackobj[droploc][key].pop();
+
+					for (let k = 0; k < key/tofill; k++){
+						AddChip(tofill, droploc);
+					}
+				}
+			}
+			tofill = 0;
+			if (j < fiches.length){
+				nextval = fiches[j+1][0];
+			}
+			if (value.length < minstackheight){
+				tofill = key;
+			} else if (value.length - (nextval / fiches[j][0]) > minstackheight && j < fiches.length){
+				for (let k = 0; k < (nextval / fiches[j][0]); k++){
+					stackobj[droploc][key][stackobj[droploc][key].length - 1].chip.remove();
+					stackobj[droploc][key].pop();
+				}
+				AddChip(nextval, droploc);
+				console.log(nextval);
+			} 
+		}
+	}
 	
 	this.init = function(){
 		this.initSocket();
@@ -79,6 +293,9 @@ function GameWorld(){
 		if(userType=='official_participant' || userType=='unofficial_participant'){
 			/*All states*/
 			$('#participant_area').show();
+			var score = stateParams.score;
+			ChipInitiator(score,'fiches_inhand','player');
+			console.log(stackobj);
 		}
 		else if(userType=='admin'){
 			/*Before start*/
@@ -107,22 +324,13 @@ function GameWorld(){
 				}
 			}
 		} else if(userType=='spectator' && showedqr == false && state!==states.START_ENDGAME && state!==states.PRESCENARIO && state!==states.POSTSCENARIO && state!==states.BALLROLLING){
-			function getUrlWithoutLastPart(url) {
-				// Verwijder het protocol (http:// of https://)
-				let urlWithoutProtocol = url.replace(/^https?:\/\//, '');
-		
-				// Verwijder www. als het aanwezig is
-				urlWithoutProtocol = urlWithoutProtocol.replace(/^www\./, '');
-			
-				// Verwijder alles na de laatste slash
-				return urlWithoutProtocol.substring(0, urlWithoutProtocol.lastIndexOf('/'));
-			}
-
-			$('#qr').html("Scan de QR of ga naar "+getUrlWithoutLastPart(window.location.href)+"/join/"+quizId+" en speel mee!");
-			var qrcode = new QRCode(document.getElementById("qrcode"), {
+			$('#table_area').show();
+			$('#qr_wrapper').css('display','flex');
+			$('#qr_text').html("Scan de QR of ga naar <br />"+getUrlWithoutLastPart(window.location.href)+"/join/"+quizId);
+			var qrcode = new QRCode(document.getElementById("qr_zone"), {
 				text: getUrlWithoutLastPart(window.location.href)+"/join/"+quizId,
-				width: 128,
-				height: 128
+				width: 100,
+				height: 100
 			});
 			showedqr = true;
 		}
@@ -249,7 +457,6 @@ function GameWorld(){
 		});*/
 
 		socket.on('connect', () => {
-			console.log('Connected to server');
 			clearTimeout(connectionLostTimeout); // Clear any previous timeout when reconnected
 		});
 
@@ -317,6 +524,7 @@ function GameWorld(){
 					gameWorld.showQuestion(stateParams);
 				}
 				else if(state == states.SHOW_ANSWER){
+					gameWorld.showQuestion(stateParams);
 					gameWorld.showAnswer(stateParams);
 				}
 				else if(state == states.END){
@@ -348,13 +556,11 @@ function GameWorld(){
 		socket.on('new_leaderboard',function(gameWorld){
 			return function(data){
 				if (userType == 'spectator'){
-					console.log(data);
 					measures = data[1];
 					var measurebets = [];
 					for (m in measures){
 						measurebets.push(0);
 					}
-					console.log(measurebets);
 					var html = "";
 					html += "<div>";
 					
@@ -391,8 +597,14 @@ function GameWorld(){
 						
 						html += "<tbody>";
 						
+						for(var j = 1; j < 7; j++){ //spelers leeg maken
+							$('#playerinfo'+j).html('');
+							$('#fichebox'+j).html('');
+						}
+						var j = 0;
 						for(var elem in elements){
 							var p = elements[elem];
+							j++;
 							if (p.issleeping == false){
 								var colorStyle = "background-color: green";
 								if(p.isLastCorrect === true){
@@ -416,6 +628,20 @@ function GameWorld(){
 									betv = p.betValue;
 								}
 								html += "<td>" + p.rank + "</td>" + "<td>" + p.team + "</td>" + "<td>" + p.score + "</td>";
+								if (j < 7){
+									$('#playerinfo'+j).html(p.team+'<br /><img src="content/bouwer.png" width="50" class="icon player'+j+'" />');
+									var counter = p.score;
+									ChipInitiator(counter,'fichebox'+j);
+									
+									if(p.response){
+										const chip = document.createElement("div");
+										chip.className = 'cardbox player'+j;
+										chip.innerHTML = '<img src="content/KlimaatCasino/card.png" width="30" /><div style="position: absolute; left: 35px; top:10px; z-index:5;">'+p.betValue+'</div>';
+										$('#fichebox'+j).append(chip);
+									}
+								} else {
+									$('#playerinfo6').html('+ en nog '+(j-5)+' anderen');
+								}
 								if(curState==states.PRESCENARIO || curState==states.POSTSCENARIO || curState==states.BALLROLLING){
 									var i = 0;
 									for (m in measures){
@@ -516,8 +742,20 @@ function GameWorld(){
 		$('#wait_status').html(text);
 	}
 	
-	this.start = function(stateParams){		
+	this.start = function(stateParams){	
+		$("#q_area .answrs").html('');	
 		this.setWaitStatus('Get ready!');
+		if(userType === 'official_participant'){
+			this.setWaitStatus('<div style="color:black; padding-top:100px;">We wachten even tot iedereen klaar is.<div>');
+			document.body.style.backgroundColor = "white";
+		} else if (userType === 'spectator'){
+			$('#questiontext').html('Scan de code of ga naar '+getUrlWithoutLastPart(window.location.href)+"/join/"+quizId);
+			var qrcode = new QRCode(document.getElementById("qr_area"), {
+				text: getUrlWithoutLastPart(window.location.href)+"/join/"+quizId,
+				width: 200,
+				height: 200
+			});
+		}
 		/*this.setWaitStatus('Get ready! <div id="destroysession">DESTROY!</div>');
 		$('#destroysession').click(function(e){
 			socket.emit('refresh_me', localStorage.getItem('uniqueId'));
@@ -532,9 +770,12 @@ function GameWorld(){
 	this.starting = function(stateParams){
 		this.setWaitStatus('Starting... Good luck and have fun!');
 		$('#endgame').html('');
+		$('#qr_area').html('');
+		$('#questiontext').html('');
 	}
 	
 	setBetarea = function(score){
+		$('#player_console').show();
 		var maxbet = Math.ceil(score / 2);
 		var myanstot = 0; //the total betvalue, in case of refresh
 		if(userType === 'official_participant' && curState === states.PRESCENARIO){
@@ -659,7 +900,9 @@ function GameWorld(){
 	var vidlink = '';
 	var temp_role = "";
 	let score = 0;
-	this.showQuestion = function(stateParams){	
+	var answercolors = {0:'#F2EB17',1:'#B9519F',2:'#64CDF5',3:'#017591'};
+	this.showQuestion = function(stateParams){
+		document.body.style.backgroundColor = "";	
 		receivedanswers = [];
 		openquestion = false;	
 		$('#answer_status').html("");
@@ -717,6 +960,7 @@ function GameWorld(){
 			}
     	} else { //the user is the admin or spectator
     	   $('#question_area .question').html('(Vraag '+stateParams.curq+' van de '+stateParams.totalqs+')<br />'+stateParams.question);
+    	   $('#q_area .questiontext').html('Vraag '+stateParams.curq+'/'+stateParams.totalqs+' - '+stateParams.question);
 		   if (userType=='spectator'){
 			    if (curState==states.SHOW_VIDEO){
 					$('#question_area .bet').html('<video width="640" height="480" controls><source src="content/KlimaatCasino/'+ vidlink + '" type="video/mp4">Your browser does not support the video tag.</video>');
@@ -725,53 +969,7 @@ function GameWorld(){
 				}
 			}
     	}
-    			
-    	/*$('#bet1').click(function() {
-			if(curState == states.SHOW_QUESTION){
-				// Get the value of 'bet' input field
-				//var betValue = $(this).val();
-				betValue += 1;
-				if (betValue >= score){
-				$(this).css('display', 'none');
-				}
-				if (betValue >= (score - 9)){
-				$('#bet10').css('display', 'none');
-				}
-				if(betValue > score){
-					betValue = score;
-				}
-				$('#totalbet').html(betValue); //update betted value displayed
-				// Check if user is an official_participant or unofficial_participant and if the current state is SHOW_QUESTION or TEST_QUESTION
-				if (userType === 'official_participant' && curState === states.SHOW_QUESTION) {
-					// Send socket event with answerId and betValue
-					socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
-					socket.emit('update_leaderboard');
-				}
-			}
-		});
-     $('#bet10').click(function() {
-		if(curState == states.SHOW_QUESTION){
-			// Get the value of 'bet' input field
-			//var betValue = $(this).val();
-			betValue += 10;
-			if (betValue >= score){
-			$('#bet1').css('display', 'none');
-			}
-			if (betValue >= (score - 9)){
-			$(this).css('display', 'none');
-			}
-			if(betValue > score){
-				betValue = score;
-			}
-			$('#totalbet').html(betValue); //update betted value displayed
-			// Check if user is an official_participant or unofficial_participant and if the current state is SHOW_QUESTION or TEST_QUESTION
-			if (userType === 'official_participant' && curState === states.SHOW_QUESTION) {
-				// Send socket event with answerId and betValue
-				socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
-				socket.emit('update_leaderboard');
-			}
-		}
-    });*/
+
      $('#min1').click(function() {
 		if(curState == states.SHOW_QUESTION){
 			if (betValue > 0){
@@ -802,6 +1000,7 @@ function GameWorld(){
 		answers = stateParams.answers;		
 		var type = stateParams.type;	
 		$('#question_area .answers').html("");
+		$('#q_area .answrs').html("");
 		
 	 	if (type == 'open'){
 			openquestion = true;
@@ -887,7 +1086,7 @@ function GameWorld(){
 				
 				if(userType=='official_participant' && (curState==states.SHOW_QUESTION || curState==states.SHOW_VIDEO)){
 					var $div = $("<div>", { answer_id:answerId })
-					.attr("style","font-size:2em; padding-top: 10px; border: 1px solid; margin-top: 2px; overflow:hidden; cursor: pointer; cursor: hand; ")
+					.attr("style","color:#000; background-color: "+answercolors[i]+"; padding: 5px; align-items:center; text-align:center; margin:10px;")
 					.addClass("answer_"+answerId)
 					.append("<span/>")
 					.text(curLetter);
@@ -908,15 +1107,30 @@ function GameWorld(){
 							$(this).css("background-color","rgb(255, 255, 162)");
 						}
 					});
+					$("#player_answers").append($div);
 				} else if (userType == 'spectator') {
-					var $div = $("<div>", { answer_id:answerId })
-					.attr("style","font-size:2em; padding-top: 10px; border: 1px solid; margin-top: 2px; overflow:hidden;")
+					var $letter = $("<div>", { id:'answer_'+answerId })
+					.attr("style","color:#000; background-color: "+answercolors[i]+"; padding: 3px; padding-left:15px; padding-right:15px; display:flex; align-items:center; height:41px;")
 					.addClass("answer_"+answerId)
 					.append("<span/>")
-					.text(curLetter+'. '+answers[i]);
+					.text(curLetter);
+
+					var $div = $("<div>", { answer_id:answerId })
+					.attr("style","padding: 3px; padding-left: 40px;")
+					.addClass("answer_"+answerId)
+					.append("<span/>")
+					.text(answers[i]);
+
+					var $answerWrapper = $("<div>", { 
+				        answer_id: answerId 
+				    }).addClass("answer_wrapper")
+				    .attr("style","display: flex; padding-top:10px; align-items:center;")
+				      .append($letter)
+				      .append($div);
+				    $("#q_area .answrs").append($answerWrapper);
 				}
 				
-				$("#question_area .answers").append($div);			
+				//$("#question_area .answers").append($div);				
 			}
 		}
 		
@@ -946,6 +1160,7 @@ function GameWorld(){
 	
 		var correctAnswerId = stateParams.answerId;
 		var isTest = stateParams.test;
+		var answers = stateParams.answers;
 		if (stateParams.type == 'open' && userType == 'official_participant'){
 			$('#verzenden').prop('disabled', true);
 			$('#openanswer').prop('disabled', true);
@@ -960,22 +1175,25 @@ function GameWorld(){
 			$('#question_area .answer_'+selectedAnswerId).css("background-color","rgb(255, 162, 162)");	
 		}
 
-		$('#question_area .answer_'+correctAnswerId).css("background-color","rgb(133, 255, 135)");
+		for(i=0;i<answers.length;i++){
+			$('#answer_'+i).css("opacity","0.3");
+		}
+		$('#answer_'+correctAnswerId).css("border","2px #fff solid").css("opacity","1").css("padding","1px").css("padding-left","13px").css("padding-right","13px");
+
 		if(userType=='official_participant' || userType=='unofficial_participant'){
-			if(correctAnswer){
+			/*if(correctAnswer){
 				$('#answer_status').html("Correct answer!");
 			}
 			else{
 				$('#answer_status').html("<span style='color:#f00'>Incorrect answer!</span>");
-			}
+			}*/
 		} else if (userType == 'spectator' && openquestion == true){
-			var html = '<h2> Goede antwoorden: ';
+			var html = 'Goede antwoorden: ';
 			const allgood = stateParams.savedanswers[0];
 			for(var i=0;i<allgood.length;i++){
 				html += allgood[i] + ', ';
 			}
-			html += '</h2>';
-			$("#question_area .answers").html(html);
+			$("#q_area .answrs").html(html.substring(0,html.length-2));
 		}
 		else{
 			$('#answer_status').html("<span style='color:#f00'>Time over!</span>");
@@ -1062,7 +1280,6 @@ function GameWorld(){
 			$('#endgame').html("<h2>Laat spelers inzetten op maatregelen om de kans op klimaatrampen te verminderen. Als er niet meer ingezet wordt, roep 'rien ne va plus' en klik op draaien!</h2>");
 		} else if(userType == 'spectator'){
 			$('#qr').html("");
-			$('#qrcode').html("");
 			showedqr = false;
 			scenario = data.stateParams.scenario;
 			var html = '<h2>Scenario '+(scenario[0]+1)+': het is het jaar '+scenario[1]+'</h2><table style="margin:10px;"><tr><td><h2>Rampen:</h2>';
