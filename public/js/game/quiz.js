@@ -12,6 +12,7 @@ function toUpdateAns(ans, dir){
 }
 function GameWorld(){
 	var states = {START:0,TEST_QUESTION:1,STARTING:2,SHOW_QUESTION:3,SHOW_VIDEO:4,SHOW_ANSWER:5,START_ENDGAME:6, PRESCENARIO:7, BALLROLLING:8, POSTSCENARIO:9, END:10};
+	const maxbetfraction = 0.5;
 	var socket = false;
 	
 	var userType = false;
@@ -36,28 +37,27 @@ function GameWorld(){
 	const chipvalues = [1,5,25,100];
 	const dist = 6;
 	const minstackheight = 10;
+	const maxstackheight = 20;
 
 	//variables
 	let yourstack;
 	var stackobj = {yours: {}};
 	var chipID = 0;
-	let answercount = 4;
+	let answercount;
 	var inHand = [];
 	var offsetX;
 	var offsetY;
+	var added_chips = false;
 
-	for(let i = 0; i < answercount; i++){
-	stackobj[i] = {};
-	}
 	for (const [key, value] of Object.entries(stackobj)) {
 		for (let i = 0; i < chipvalues.length; i++){
 			stackobj[key][chipvalues[i]] = [];
 		}
 	}
 
-	function stacksCalculator(score){
+	function stacksCalculator(amount){
 		var stack = [0,0,0,0];
-		for (let s = 0; s < score; s++){
+		for (let s = 0; s < amount; s++){
 			stack[0]++;
 			for(let i = 0; i < chipvalues.length - 1; i++){
 				if(stack[i] - minstackheight >= chipvalues[i+1] / chipvalues[i]){
@@ -69,172 +69,311 @@ function GameWorld(){
 		return stack;
 	}
 
-	function ChipInitiator(counter,divid,type){
-		var stack = stacksCalculator(counter);
+	function ChipAdder(stack, divid,type,droploc){
 		for (var s in stack){
 			for (var k = 0; k < stack[s]; k++){
-				ChipAdder(s,divid,k,type);
+				const chip = document.createElement("div");
+				chip.className = "fiche fiche"+chipvalues[s];
+				if(type == 'player'){
+					chip.style = 'top:'+(k*-dist+30)+'px; width: 40px; height: 20px; left:'+(s*45+40)+'px;';
+					chip.innerHTML = '<div style="width:100%; padding:0px;">'+chipvalues[s]+'</div>';
+					chip.id = 'chip'+chipID;
+					let curid = chipID;
+					chip.addEventListener("mousedown", function (e) {
+					    // Prevent default touch behavior
+					    e.preventDefault();
+					    Grab(curid, e);
+					});
+					chip.addEventListener("touchstart", function (e) {
+					    // Prevent default touch behavior
+					    e.preventDefault();
+					    Grab(curid, e.touches[0]);
+					});
+					stackobj[droploc][chipvalues[s]].push({chip: chip, chipID: chipID, val: chipvalues[s]});
+					chipID++;
+				} else {
+					chip.style = 'top:'+k*-4+'px;';
+				}
+				$('#'+divid).append(chip);
 			}
 		}
+		added_chips = true;
 	}
 
-	function ChipAdder(i_value, divid,position,type){
-		const chip = document.createElement("div");
-		chip.className = "fiche fiche"+chipvalues[i_value];
-		if(type == 'player'){
-			chip.style = 'top:'+(position*-dist+20)+'px; width: 40px; height: 20px; left:'+(i_value*45+40)+'px;';
-			chip.innerHTML = '<div style="width:100%; padding:0px;">'+chipvalues[i_value]+'</div>';
-			let curid = chipID;
-			chip.addEventListener("mousedown", function (e) {
-			    // Prevent default touch behavior
-			    e.preventDefault();
-			    Grab(curid, e);
-			});
-			chip.addEventListener("touchstart", function (e) {
-			    // Prevent default touch behavior
-			    e.preventDefault();
-			    Grab(curid, e.touches[0]);
-			});
-			stackobj['yours'][chipvalues[i_value]].push({chip: chip, chipID: chipID, val: chipvalues[i_value]});
-			chipID++;
-		} else {
-			chip.style = 'top:'+position*-4+'px;';
+	function ChipRemover(){
+		for(let a in stackobj){
+			for (let value in stackobj[a]){
+				for (let m in stackobj[a][value]){
+					delete stackobj[a][value][m];
+				}
+				stackobj[a][value] = stackobj[a][value].filter(n => n);
+			}
 		}
-		$('#'+divid).append(chip);
+		for(let a in answercount){
+			$('#chipcontainer'+a).html('');
+		}
+		$('#fiches_inhand').html('');
 	}
 
 	function Grab(cID, e){
-		let curstack;
-		let thisChip;
-		let curpos;
-		for (const [key, value] of Object.entries(stackobj)) {
-		  for (const [k, val] of Object.entries(value)) {
-		  	for(let i = 0; i < val.length; i++){
-			  	if (val[i].chipID == cID){
-			  		curstack = key;
-			  		thisChip = val[i];
-			  		curpos = i;
-			  	}
+		if(curState == states.SHOW_QUESTION){
+			let curstack;
+			let thisChip;
+			let curpos;
+			for (const [key, value] of Object.entries(stackobj)) {
+			  for (const [k, val] of Object.entries(value)) {
+			  	for(let i = 0; i < val.length; i++){
+				  	if (val[i].chipID == cID){
+				  		curstack = key;
+				  		thisChip = val[i];
+				  		curpos = i;
+				  	}
+				  }
 			  }
-		  }
-		}
-
-		if(thisChip == undefined){
-			console.log('chip undefined');
-			return;
-		}
-
-		offsetX = e.clientX - thisChip.chip.getBoundingClientRect().left;
-	    offsetY = e.clientY - thisChip.chip.getBoundingClientRect().top;
-	    //offsetY = thisChip.chip.getBoundingClientRect().top;
-	    console.log(offsetY);
-
-		for (let i = 0; i < stackobj[curstack][thisChip.val].length; i++) {
-			if(i >= curpos){
-				let stackChip = stackobj[curstack][thisChip.val][i];
-				stackChip.chip.style.boxShadow = "8px -8px 8px rgba(0, 0, 0, 0.3)";
-		   		stackChip.chip.style.width = "60px";
-		   		stackChip.chip.style.height = "30px";
-		   		stackChip.chip.style.zIndex = String(i+1000);
-		   		inHand.push(stackChip);
-		   		delete stackobj[curstack][thisChip.val][i];
 			}
+
+			if(stackCounter(stackobj['yours']) <= Math.ceil(score * maxbetfraction) && curstack == 'yours'){
+				return false;
+			}
+
+			if(thisChip == undefined){
+				console.log('chip undefined');
+				return;
+			}
+
+			offsetX = e.clientX - thisChip.chip.getBoundingClientRect().left;
+		    offsetY = e.clientY - thisChip.chip.getBoundingClientRect().top;
+
+			for (let i = 0; i < stackobj[curstack][thisChip.val].length; i++) {
+				if(i >= curpos){
+					let stackChip = stackobj[curstack][thisChip.val][i];
+					stackChip.chip.style.boxShadow = "8px -8px 8px rgba(0, 0, 0, 0.3)";
+			   		stackChip.chip.style.width = "60px";
+			   		stackChip.chip.style.height = "30px";
+			   		stackChip.chip.style.fontSize = "18px";
+			   		stackChip.chip.style.zIndex = String(i+1000);
+			   		document.body.appendChild(stackChip.chip);
+			   		inHand.push(stackChip);
+			   		Drag(stackChip.chip, e.clientX, e.clientY, i - curpos);
+			   		delete stackobj[curstack][thisChip.val][i];
+				}
+			}
+			stackobj[curstack][thisChip.val] = stackobj[curstack][thisChip.val].filter(n => n);
 		}
-		stackobj[curstack][thisChip.val] = stackobj[curstack][thisChip.val].filter(n => n);
 	}
 
-	function Drag(element, x, y){
+	function Drag(element, clientX, clientY, k){
+		let x = clientX - offsetX
+    	let y = clientY - offsetY - k*dist + window.scrollY;
 		element.style.left = `${x}px`;
 		element.style.top = `${y}px`;
+		if(k==0){ //check if bottom chip is inside dropzone
+			var droploc = CheckIfInside();
+			for(let i = 0; i < answercount; i++){
+				$('#answer'+i).css('opacity','0.5');
+			}
+			if (droploc !== 'yours'){
+				$('#answer'+droploc).css('opacity','1');
+			} else {
+				var nobet = true;
+				for(let i in stackobj){
+					if(i !== 'yours'){
+						if (stackCounter(stackobj[i],false) > 0){
+							$('#answer'+i).css('opacity','1');
+							nobet = false;
+						}
+					}
+				}
+				if(nobet == true){
+					for(let i = 0; i < answercount; i++){
+						$('#answer'+i).css('opacity','1');
+					}
+				}
+			}
+		}
 	}
 
 	document.addEventListener("mousemove", function (e) {
 		if (inHand.length < 1) return;
 	    e.preventDefault();
 	    for (let k = 0; k < inHand.length; k++){
-	    	let x = e.clientX - offsetX
-	    	//let y = e.clientY - offsetY - k*dist;
-	    	let y = e.clientY - offsetY - k*dist - 405 + window.scrollY;
-	    	console.log(window.scrollY);
-	    	//inHand[k].chip.style.position = "absolute";
-	    	inHand[k].chip.style.transition = "transform 0.1s ease, top 0.1s ease";
-	    	Drag(inHand[k].chip, x, y);
+	    	Drag(inHand[k].chip, e.clientX, e.clientY, k);
 	    }
 	});
 
 	document.addEventListener("touchmove", function (e) {
 		if (inHand.length < 1) return;
 	    e.preventDefault(); // Prevent scrolling
-	    const touch = e.touches[0];
-
 		for (let k = 0; k < inHand.length; k++){
-	    	// Verplaats het element op basis van de touch-coördinaten en offset
-	    	let x = touch.clientX - offsetX;
-	    	let y = touch.clientY - offsetY - k*dist - 445 + window.scrollY;
-	    	inHand[k].chip.style.transition = "transform 0.1s ease, top 0.1s ease";
-	    	Drag(inHand[k].chip, x, y);
+	    	Drag(inHand[k].chip, e.touches[0].clientX, e.touches[0].clientY, k);
 	    }
 	}, { passive: false });
 
-	/*document.addEventListener("touchmove", function (e) {
-		if (inHand.length < 1) return;
-		console.log('move');
-	    /*e.preventDefault();
-	    for (let k = 0; k < inHand.length; k++){
-	    	let x = e.clientX - offsetX
-	    	//let y = e.clientY - offsetY - k*dist;
-	    	let y = e.clientY - offsetY - k*dist - 405 + window.scrollY;
-	    	console.log(window.scrollY);
-	    	//inHand[k].chip.style.position = "absolute";
-	    	inHand[k].chip.style.transition = "transform 0.1s ease, top 0.1s ease";
-	    	Drag(inHand[k].chip, x, y);
+	var gamestadium = 'main'; //to do: change to endgame if endgame, so that you can bet on multiple
+
+	function CheckIfInside(){
+		// Haal de coördinaten van het draggable-element op
+	    const draggableRect = inHand[0].chip.getBoundingClientRect();
+	    
+	    // Controleer of draggable binnen dropzone1 valt
+	    let droploc = 'yours';
+	    for (let i = 0; i < answercount; i++){
+	    	let checkzone = $('#answer'+i)[0].getBoundingClientRect();
+	        if (draggableRect.left < checkzone.right && draggableRect.right > checkzone.left && draggableRect.top < checkzone.bottom && draggableRect.bottom > checkzone.top){
+	        	droploc = i;
+	        }
 	    }
-	});
-	*/
+	    return droploc;
+	}
 
-	function CheckExchange(droploc){
-		console.log(stackobj[droploc]);
-		let tofill = 0;
-		let nextval = 0;
-		let j = 0;
-		for (const [key, value] of Object.entries(stackobj[droploc])) {
-			let color = "";
-			j = 0;
-			console.log("tofill: "+tofill)
-			for (let i = 0; i < fiches.length; i++){
-				if(fiches[i][0] == tofill){
-					j = i;
-					console.log(j);
-					color = fiches[i][1];
-				}
-			}
-			if (tofill > 0){
-				if (value.length > 0){
-					console.log("Een "+key+" inwisselen voor "+key/tofill+" van "+tofill);
-					stackobj[droploc][key][stackobj[droploc][key].length - 1].chip.remove();
-					stackobj[droploc][key].pop();
+	function stackCounter(stack,withremoval){
+		var total = 0;
+    	for (let value in stack){
+    		for (let i in stack[value]){
+    			total += Number(value);
+    			if(withremoval == true){
+    				document.getElementById('chip'+stack[value][i].chipID).remove();
+    			}
+    		}
+    	}
+    	return total;
+	}
 
-					for (let k = 0; k < key/tofill; k++){
-						AddChip(tofill, droploc);
+	function Drop(){
+		if(inHand.length > 0){
+		    let droploc = CheckIfInside();
+		    
+		    if (gamestadium == 'main' && droploc !== 'yours'){ // move all betted coins to the hand so that it can be place on the new answer
+	        	for(let a = 0; a < answercount; a++){
+	        		for (let value in stackobj[a]){
+	        			for (let m in stackobj[a][value]){
+	        				inHand.push(stackobj[a][value][m]);
+	        				delete stackobj[a][value][m];
+	        			}
+	        			stackobj[a][value] = stackobj[a][value].filter(n => n);
+	        		}
+	        		$('#answer'+a).css('border','0px #fff solid');
+	        	}
+	        	$('#answer'+droploc).css('border','2px #fff solid');
+	        } else {
+				for(let i in stackobj){
+					if(i !== 'yours'){
+						if (stackCounter(stackobj[i],false) == 0){
+							$('#answer'+i).css('border','0px #fff solid');
+						}
 					}
 				}
-			}
-			tofill = 0;
-			if (j < fiches.length){
-				nextval = fiches[j+1][0];
-			}
-			if (value.length < minstackheight){
-				tofill = key;
-			} else if (value.length - (nextval / fiches[j][0]) > minstackheight && j < fiches.length){
-				for (let k = 0; k < (nextval / fiches[j][0]); k++){
-					stackobj[droploc][key][stackobj[droploc][key].length - 1].chip.remove();
-					stackobj[droploc][key].pop();
+	        }
+
+			for (let k = 0; k < inHand.length; k++){
+				inHand[k].chip.style = 'width: 40px; height: 20px;';
+				let stackplace = 0;
+				let i = 0;
+				for (const [key, value] of Object.entries(stackobj[droploc])) {
+					if (key == inHand[k].val){
+						stackplace = i;
+					}
+					i++
 				}
-				AddChip(nextval, droploc);
-				console.log(nextval);
-			} 
+				inHand[k].chip.style.zIndex = String(stackobj[droploc][inHand[k].val].length);
+
+				if(droploc !== 'yours'){
+					document.getElementById('chipcontainer'+droploc).appendChild(inHand[k].chip);
+					inHand[k].chip.style.top = `${30 - stackobj[droploc][inHand[k].val].length * dist}px`;
+			        inHand[k].chip.style.left = `${stackplace*45 + 40}px`;
+			    } else {
+			    	// Zet de positie terug als het niet boven de dropzone is
+			    	document.getElementById('fiches_inhand').appendChild(inHand[k].chip);
+		    		inHand[k].chip.style.top = (stackobj[droploc][inHand[k].val].length*-dist+30)+'px';  
+		    		inHand[k].chip.style.left = (stackplace*45+40)+'px';
+		    		$('#fiches_inhand').css('opacity','1');
+			    }
+		        stackobj[droploc][inHand[k].val].push(inHand[k]);
+		    }
+
+		    var betOverflow = stackCounter(stackobj[droploc]) - Math.ceil(score * maxbetfraction);
+		    if(betOverflow >= 0 && droploc !== 'yours'){
+		    	for(var i = 0; i < betOverflow; i++){
+		    		const chip = document.createElement("div");
+		    		chip.id = 'chip'+chipID;
+		    		stackobj['yours'][1].push({chip:chip,chipID:chipID,val: 1});//add fake chip to put the amount of point in hand back to the max
+		    		$('#fiches_inhand').append(chip);
+		    		chipID++;
+		    	}
+		    	var reversechipvalues = [...chipvalues].reverse();
+		    	for(let c in reversechipvalues){
+		    		var reversechips = [...stackobj[droploc][reversechipvalues[c]]].reverse();
+		    		for (let ic in reversechips){
+		    			if(reversechipvalues[c] <= betOverflow){
+		    				betOverflow -= reversechipvalues[c];
+		    				document.getElementById('chip'+reversechips[ic].chipID).remove();
+		    				for(let cid in stackobj[droploc][reversechipvalues[c]]){
+		    					if(stackobj[droploc][reversechipvalues[c]][cid].chipID == reversechips[ic].chipID){
+		    						delete stackobj[droploc][reversechipvalues[c]][cid];
+		    					}
+		    				}
+		    			}
+		    		}
+		    		stackobj[droploc][reversechipvalues[c]] = stackobj[droploc][reversechipvalues[c]].filter(n => n);
+		    	}
+	        	$('#fiches_inhand').css('opacity','0.5');
+	        }
+
+
+	    	var total = stackCounter(stackobj['yours'], true); //count total value and remove chips
+	    	$('#amount_inhand').html(total);
+
+	    	for (let value in stackobj['yours']){
+	    		stackobj['yours'][value].length = 0;
+	    	}
+
+	    	ChipAdder(stacksCalculator(total),'fiches_inhand', 'player','yours');
+
+	    	restack = '';
+		    for(let loc in stackobj){
+		    	for(let value in stackobj[loc]){
+		    		if(stackobj[loc][value].length > maxstackheight){
+		    			restack = loc;
+		    		}
+		    	}
+		    }
+
+		    if(restack !== ''){
+		    	var total = stackCounter(stackobj[restack], true);
+
+		    	for (let value in stackobj[restack]){
+		    		stackobj[restack][value].length = 0;
+		    	}
+
+		    	ChipAdder(stacksCalculator(total),'answer'+restack, 'player',restack);
+		    }
+
+		    droploc = undefined; //assume all chips were removed from the answers
+		    for(let i = 0; i < answercount; i++){
+		    	var total = stackCounter(stackobj[i]);
+		    	if(total > 0){
+		    		droploc = i; //if there is still a chip on the answer, make the new droploc to be sent by quiz_send_answer
+		    		$('#answernumber'+i).html('= '+total);
+		    	} else {
+		    		$('#answernumber'+i).html('');
+		    	}
+		    }
+
+		    temp_answer = droploc+1;
+		    temp_bet = stackCounter(stackobj[droploc]);
+		    socket.emit('quiz_send_answer', { answerId: String(temp_answer), bet: temp_bet });
+			socket.emit('update_leaderboard');
+			inHand = [];
 		}
 	}
+
+	document.addEventListener("mouseup", function (e) {
+		Drop();
+	});
+
+	document.addEventListener("touchend", function (e) {
+		Drop();
+	});
 	
 	this.init = function(){
 		this.initSocket();
@@ -269,12 +408,14 @@ function GameWorld(){
 		
 		/*All users, some states*/
 		if(state==null && stateParams.leaderboard && $('#btn_show_leaderboard').attr('show_leaderboard')){
-				$('#leaderboard_area').show();
+				$('#leaderboard_area').hide();
 				savedState = curState;
 		}
 		else if(state==states.TEST_QUESTION || state==states.SHOW_QUESTION || state==states.SHOW_ANSWER || state==states.SHOW_VIDEO || state==states.PRESCENARIO || state==states.POSTSCENARIO){
 			$('#timer_area').show();
-			$('#question_area').show();
+			if(userType == 'admin'){
+				$('#question_area').show();
+			}
 			if(state==states.PRESCENARIO){
 				$('#question_area .question').html('');
 				$('#question_area .answers').html('');
@@ -282,7 +423,7 @@ function GameWorld(){
 		}
 		else if(state==states.START || state==states.STARTING || state==states.END || state==states.START_ENDGAME || state==states.BALLROLLING){
 			if(state==states.BALLROLLING && userType=='official_participant'){
-				$('#question_area').show();
+				//$('#question_area').show();
 			} else {
 				$('#wait_area').show();
 			}
@@ -291,25 +432,99 @@ function GameWorld(){
 
 		
 		if(userType=='official_participant' || userType=='unofficial_participant'){
+			// preparing for the draggable chips
+			if (stateParams != undefined){
+				if (stateParams.answers){
+					answercount = stateParams.answers.length;
+					if (!added_chips){
+						for(let i = 0; i < answercount; i++){
+							stackobj[i] = {};
+						}
+						for (const [key, value] of Object.entries(stackobj)) {
+							for (let i = 0; i < chipvalues.length; i++){
+								stackobj[key][chipvalues[i]] = [];
+							}
+						}
+					}
+				}
+
+				if(stateParams.myans !== undefined){
+					temp_answer = stateParams.myans;
+					temp_bet = stateParams.mybet;
+				}
+				var score = stateParams.score;
+				$('#amount_inhand').html(score - temp_bet);
+				if (state==states.SHOW_ANSWER){
+					if (temp_answer != stateParams.answerId){
+						$('#amount_inhand').html(score);
+					}
+				} 
+				if(!added_chips && score !== undefined && stateParams.answers){
+					if(stateParams.answers.length > 0){
+						if (state==states.SHOW_QUESTION){
+							temp_bet = 0;
+							$('#amount_inhand').html(score);
+						}
+						ChipAdder(stacksCalculator(score - temp_bet),'fiches_inhand','player','yours');
+						if(state == states.SHOW_ANSWER || state == states.SHOW_VIDEO){
+							$('#fiches_inhand').css("opacity","0.5");
+						}
+					}
+				}
+			}
 			/*All states*/
 			$('#participant_area').show();
-			var score = stateParams.score;
-			ChipInitiator(score,'fiches_inhand','player');
-			console.log(stackobj);
+			$('#player_console').hide();
+			if (state!=states.START && state!=states.STARTING){
+				$('#player_console').show();
+			}
+			$('#btn_leave_quiz').css('display','flex');
+			$('#participant_rank').css('display','flex');
 		}
 		else if(userType=='admin'){
 			/*Before start*/
+			$('#btn_admin_end_quiz').css('display','flex');
+			$('#spelerslijst').css('display','flex');
+			$('#btn_leave_quiz').hide();
+			$('#btn_admin_start_quiz').hide();
+			$('#btn_admin_bekijk_toelichting').hide();
+			$('#btn_admin_show_video').hide();
+			$('#btn_admin_reveal_answer').hide();
+			$('#btn_admin_next_question').hide();
+			$('#stoplicht').hide();
+			//$('#btn_admin_starting_quiz').hide();
+			if(state==states.START){
+				$('#btn_admin_end_quiz').hide();
+				$('#btn_admin_start_quiz').css('display','flex');
+				$('#btn_leave_quiz').css('display','flex');
+			}/* else if (state==states.STARTING){
+				//$('#btn_admin_end_quiz').hide();
+				
+				//$('#btn_admin_starting_quiz').css('display','flex');
+			}*/
 			if(state==states.SHOW_QUESTION){
 				$('#admin_area_after_start').show();
+				if(stateParams.vid != ''){
+					$('#btn_admin_show_video').css('display','flex');
+				} else {
+					$('#btn_admin_reveal_answer').css('display','flex');
+					$('#btn_admin_reveal_answer').html('antwoord tonen');
+				}
+				$('#btn_admin_bekijk_toelichting').css('display','flex');
+				$('#stoplicht').css('display','flex');
 			}
 			else if(state==states.START || state==states.STARTING || state==states.END || state==states.TEST_QUESTION){
 				$('#admin_area_before_start').show();
 			}
-			else if(state==states.SHOW_ANSWER || state==states.SHOW_VIDEO){
-				$('#admin_area_show_answer').show();
+			else if(state==states.SHOW_VIDEO){
+				//$('#admin_area_show_answer').show();
 			
 				if(stateParams && stateParams.test) $('#admin_area_before_start').show();
 				else $('#admin_area_after_start').show();
+				$('#btn_admin_reveal_answer').css('display','flex');
+				$('#btn_admin_reveal_answer').html('sluit video en toon antwoord');
+			} else if(state==states.SHOW_ANSWER){
+				$('#btn_admin_next_question').css('display','flex');
 			} else if(state==states.START_ENDGAME || state==states.PRESCENARIO || state==states.POSTSCENARIO){
 				$('#admin_area_endgame').show();
 				$('#btn_admin_start_endgame').hide();
@@ -326,6 +541,8 @@ function GameWorld(){
 		} else if(userType=='spectator' && showedqr == false && state!==states.START_ENDGAME && state!==states.PRESCENARIO && state!==states.POSTSCENARIO && state!==states.BALLROLLING){
 			$('#table_area').show();
 			$('#qr_wrapper').css('display','flex');
+			$('#btn_leave_quiz').css('display', 'flex');
+			$('#btn_leave_quiz').css('width','200px');
 			$('#qr_text').html("Scan de QR of ga naar <br />"+getUrlWithoutLastPart(window.location.href)+"/join/"+quizId);
 			var qrcode = new QRCode(document.getElementById("qr_zone"), {
 				text: getUrlWithoutLastPart(window.location.href)+"/join/"+quizId,
@@ -341,6 +558,11 @@ function GameWorld(){
 			socket.emit('quiz_admin_test_question');
 			return false;
 		});
+
+		/*$('#destroy').click(function(e){
+			socket.emit('destroy');
+			return false;
+		});*/
 		
 		$('#btn_admin_start_quiz').click(function(e){
 			socket.emit('quiz_admin_start_quiz');
@@ -412,6 +634,18 @@ function GameWorld(){
 					socket.emit('quiz_leave_quiz');
 					socket.emit('update_leaderboard');
 				}
+			}
+			
+			return false;
+		});
+
+		$('#spelerslijst').click(function(e){
+			if($('#spelerslijst_area').is(':hidden')){
+				$('#spelerslijst_area').show();
+				$('#spelerslijst').text('<- terug');
+			} else {
+				$('#spelerslijst_area').hide();
+				$('#spelerslijst').text('spelerslijst');
 			}
 			
 			return false;
@@ -631,8 +865,8 @@ function GameWorld(){
 								if (j < 7){
 									$('#playerinfo'+j).html(p.team+'<br /><img src="content/bouwer.png" width="50" class="icon player'+j+'" />');
 									var counter = p.score;
-									ChipInitiator(counter,'fichebox'+j);
-									
+									ChipAdder(stacksCalculator(counter), 'fichebox'+j);
+
 									if(p.response){
 										const chip = document.createElement("div");
 										chip.className = 'cardbox player'+j;
@@ -695,9 +929,12 @@ function GameWorld(){
 						html += "</table><br /><br /><br />";
 					}
 					
-					$('#scores').html(html);
+					//$('#scores').html(html);
 				} else if (userType == 'admin'){
 					var curreceived = [];
+					var bettedplayerIDs = [];
+					var totalplayers = data[0]['official'].length + 0.000001;
+					var answercollect = [];
 					for(var elem in data[0]['official']){
 						var receivedanswer = data[0]['official'][elem].response;
 						if (typeof receivedanswer === 'string'){
@@ -705,6 +942,11 @@ function GameWorld(){
 							const lallans = allans.map(ans => ans.toLowerCase());
 							if (!(lallans.includes(receivedanswer.toLowerCase()))){
 								receivedanswers.push(receivedanswer);
+							}
+
+							if(receivedanswer != 'NaN'){
+								bettedplayerIDs.push(data[0]['official'][elem].unique_id);
+								answercollect.push(receivedanswer);
 							}
 						}
 						curreceived.push(receivedanswer);
@@ -716,17 +958,90 @@ function GameWorld(){
 							receivedanswers = receivedanswers.filter(item => item !== ans);//remove from received list
 						}
 					}
-					console.log(receivedanswers);
+
 					var html = '';
 					for(var a in receivedanswers){
 						var ans = receivedanswers[a];
 						if (ans){
 							html += answerMaker('pending', ans);
-							console.log(ans);
 						}
 					}
 					
 					$('#pending').html(html);
+
+					var stillneedbettingNames = [];
+					for(var i in data[0]['official']){
+						if (!(bettedplayerIDs.includes(data[0]['official'][i].unique_id))){
+							stillneedbettingNames.push(data[0]['official'][i].team);
+						}
+					}
+					
+					var stillneedbettingText = '';
+					for(var i in stillneedbettingNames){
+						if(i == 0){
+							stillneedbettingText+= stillneedbettingNames[i];
+						}
+						if (i == 1){
+							if(stillneedbettingNames.length < 3){
+								stillneedbettingText+=' en ';
+							} else {
+								stillneedbettingText+=', ';
+							}
+							stillneedbettingText+= stillneedbettingNames[i];
+						}
+						if (i == 2){
+							if(stillneedbettingNames.length == 3){
+								stillneedbettingText+=' en ';
+							} else {
+								stillneedbettingText+=' en '+(stillneedbettingNames.length - i)+' anderen';
+								break;	
+							}
+							stillneedbettingText+= stillneedbettingNames[i];
+						}					
+					}
+					stillneedbettingText += ' moet';
+					if(stillneedbettingNames.length > 1){
+						stillneedbettingText += 'en';
+					}
+					stillneedbettingText += ' nog inzetten';
+					$('#stoplicht_image').attr('src', '../content/stoplicht_rood.png');
+					if(stillneedbettingNames.length == 0){
+						stillneedbettingText = 'Iedereen heeft ingezet';
+						$('#stoplicht_image').attr('src', '../content/stoplicht_groen.png');
+					} 
+					$('#stoplicht_text').html(stillneedbettingText);
+
+					$("#results").html('');
+					if(curState==states.SHOW_ANSWER){
+						console.log(correctAnswerId);
+						for(var i=0;i<answers.length;i++){
+							var $letter = $("<div>")
+							.attr("style","color:#000; background-color: "+answercolors[i]+"; padding: 3px; padding-left:15px; padding-right:15px; display:flex; align-items:center; height:41px;")
+							.text(String.fromCharCode(65 + i));
+
+							var bettedthisone = 0;
+							var balkcolor = 'red';
+							if(correctAnswerId == i+1){
+								balkcolor = 'green';
+							}
+							for(var j in answercollect){
+								if(answercollect[j] == String(i+1)){
+									bettedthisone++;
+								}
+							}
+							console.log(bettedthisone);
+							var $div = $("<div>")
+							.attr("style","padding: 3px; padding-left: 20px; width:100%;")
+							.html('<div style="width:'+Math.ceil(bettedthisone / totalplayers)*100+'%; min-width:45px; padding:10px; background-color:'+balkcolor+'; white-space:nowrap;">'+Math.ceil(bettedthisone / totalplayers)*100+' %</div>');
+
+							var $answerWrapper = $("<div>")
+						    .attr("style","display: flex; padding-top:10px; align-items:center; width:100%;")
+						      .append($letter)
+						      .append($div);
+						    $("#results").append($answerWrapper);
+						}
+					    $("#results").show();
+					}
 				} else if (userType == 'official'){
 					if(curState==states.PRESCENARIO || curState==states.POSTSCENARIO){
 						//check unlocks?
@@ -776,7 +1091,7 @@ function GameWorld(){
 	
 	setBetarea = function(score){
 		$('#player_console').show();
-		var maxbet = Math.ceil(score / 2);
+		var maxbet = Math.ceil(score * maxbetfraction);
 		var myanstot = 0; //the total betvalue, in case of refresh
 		if(userType === 'official_participant' && curState === states.PRESCENARIO){
 			for (let i in selectedAnswerId){
@@ -897,11 +1212,18 @@ function GameWorld(){
 	}
 	let betValue = 0;
 	var temp_answer = 404;
+	var temp_bet = 0;
 	var vidlink = '';
 	var temp_role = "";
 	let score = 0;
 	var answercolors = {0:'#F2EB17',1:'#B9519F',2:'#64CDF5',3:'#017591'};
 	this.showQuestion = function(stateParams){
+		if(curState == states.SHOW_QUESTION){
+			$('#fiches_inhand').css("opacity","1");
+			temp_bet = 0;
+		} else {
+			$('#fiches_inhand').css("opacity","0.5");
+		}
 		document.body.style.backgroundColor = "";	
 		receivedanswers = [];
 		openquestion = false;	
@@ -910,10 +1232,10 @@ function GameWorld(){
 		else $('#question_area .pic').html('');
 		
 		vidlink = '';
-		$('#btn_admin_show_video').hide();
+		//$('#btn_admin_show_video').hide();
 		if(stateParams.vid!==''){
 			vidlink = stateParams.vid;
-			$('#btn_admin_show_video').show();
+			//$('#btn_admin_show_video').show();
 		}
 
 		if(stateParams){
@@ -926,6 +1248,7 @@ function GameWorld(){
         		//when the new question is loaded, reset all values
         		betValue = 0;
         		temp_answer = 404;
+        		temp_bet = 0;
     		     selectedAnswerId = false;
     		     socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
     		     
@@ -954,18 +1277,26 @@ function GameWorld(){
             		$('#question_area .question').html("Bonusvraag! Dubbele punten verdienen.");
         		}
 			} else { //this means the state must be show video
-			$('#question_area .betted').html("Je inzet is "+betValue);
+				$('#question_area .betted').html("Je inzet is "+betValue);
 				$('#question_area .question').html("");
 				$('#question_area .bet').html("");
 			}
     	} else { //the user is the admin or spectator
-    	   $('#question_area .question').html('(Vraag '+stateParams.curq+' van de '+stateParams.totalqs+')<br />'+stateParams.question);
+    	   $('#question_area .question').html('Vraag '+stateParams.curq+'/'+stateParams.totalqs+' - '+stateParams.question);
     	   $('#q_area .questiontext').html('Vraag '+stateParams.curq+'/'+stateParams.totalqs+' - '+stateParams.question);
+    	   $('#video_area').hide();
 		   if (userType=='spectator'){
 			    if (curState==states.SHOW_VIDEO){
-					$('#question_area .bet').html('<video width="640" height="480" controls><source src="content/KlimaatCasino/'+ vidlink + '" type="video/mp4">Your browser does not support the video tag.</video>');
+			    	console.log(vidlink);
+					$('#myVideo').html('<video style="height: 100%;" controls id="videotag" ><source src="content/KlimaatCasino/'+ vidlink + '" type="video/mp4">Your browser does not support the video tag.</video>');
+					$('#vidvraagnummer').html('Vraag '+stateParams.curq+'/'+stateParams.totalqs+' - ');
+    	   			$('#vidvraag').html('"'+stateParams.question+'"');
+    	   			$('#video_area').css('display','flex');
 				}else{
 					$('#question_area .bet').html('');
+					if(document.getElementById('videotag')!==null){
+						document.getElementById('videotag').pause();
+					}
 				}
 			}
     	}
@@ -999,8 +1330,8 @@ function GameWorld(){
 		
 		answers = stateParams.answers;		
 		var type = stateParams.type;	
-		$('#question_area .answers').html("");
 		$('#q_area .answrs').html("");
+		$('#player_answers').html("");
 		
 	 	if (type == 'open'){
 			openquestion = true;
@@ -1080,22 +1411,19 @@ function GameWorld(){
 				createAnswerList('wrong', [], wronganswers); // insert standard wrong answers
 			} 
 		} else {
+			$('#question_area .answers').html('');
 			for(var i=0;i<answers.length;i++){
 				var curLetter = String.fromCharCode(65 + i);
 				var answerId = (i+1);
 				
-				if(userType=='official_participant' && (curState==states.SHOW_QUESTION || curState==states.SHOW_VIDEO)){
-					var $div = $("<div>", { answer_id:answerId })
-					.attr("style","color:#000; background-color: "+answercolors[i]+"; padding: 5px; align-items:center; text-align:center; margin:10px;")
+				if(userType=='official_participant' && (curState==states.SHOW_QUESTION || curState==states.SHOW_VIDEO || curState==states.SHOW_ANSWER)){
+					var $div = $("<div>", { id:'answer'+i, answer_id:answerId })
+					.attr("style","color:#000; background-color: "+answercolors[i]+"; box-sizing:border-box; height:66px; padding: 10px; align-items:center; text-align:center; margin:10px; position:relative; display:flex;")
 					.addClass("answer_"+answerId)
 					.append("<span/>")
-					.text(curLetter);
+					.html('<div style="display:flex;">'+curLetter+'</div><div style="display:flex; width:100%;" id="chipcontainer'+i+'"></div><div style="display:flex; font-size:18px; color:#fff; white-space:nowrap;" id="answernumber'+i+'"></div>');
 					
-					if(curState==states.SHOW_VIDEO && temp_answer==answerId){
-						$div.css("background-color","rgb(255, 255, 162)");
-					}
-					
-					$div.click(function(){
+					/*$div.click(function(){
 						if((userType=='official_participant' || userType=='unofficial_participant') && (curState==states.SHOW_QUESTION || curState==states.TEST_QUESTION)){
 							selectedAnswerId = $(this).attr("answer_id");
 							//var betValue = $('#bet').val(); // Get the value of 'bet' input field
@@ -1106,8 +1434,29 @@ function GameWorld(){
 							$('#question_area .answers div').css("background-color","inherit");			
 							$(this).css("background-color","rgb(255, 255, 162)");
 						}
-					});
+					});*/
 					$("#player_answers").append($div);
+					if(curState==states.SHOW_VIDEO || curState==states.SHOW_ANSWER){
+						$('#answer'+i).css('border','0px #fff solid');
+						$('#answer'+i).css('opacity','0.5');
+						if (temp_answer==answerId){
+							$('#answer'+i).css('border','2px #fff solid');
+							if (curState==states.SHOW_ANSWER){
+								$('#answer'+i).css('border','2px red solid');
+							}
+							$('#answer'+i).css('opacity','1');
+							ChipAdder(stacksCalculator(temp_bet),'answer'+i,'player',i);
+							if(temp_bet > 0){
+								$('#answernumber'+i).html('= '+temp_bet);
+							}
+						}
+						if (curState==states.SHOW_ANSWER){
+							if (stateParams.answerId == i + 1){
+								$('#answer'+i).css('border','2px #0f0 solid');
+								$('#answer'+i).css('opacity','1');
+							}
+						}
+					}
 				} else if (userType == 'spectator') {
 					var $letter = $("<div>", { id:'answer_'+answerId })
 					.attr("style","color:#000; background-color: "+answercolors[i]+"; padding: 3px; padding-left:15px; padding-right:15px; display:flex; align-items:center; height:41px;")
@@ -1129,8 +1478,7 @@ function GameWorld(){
 				      .append($div);
 				    $("#q_area .answrs").append($answerWrapper);
 				}
-				
-				//$("#question_area .answers").append($div);				
+							
 			}
 		}
 		
@@ -1154,11 +1502,12 @@ function GameWorld(){
 		});
 	}
 
+	var correctAnswerId = 345543523;
 	this.showAnswer = function(stateParams){
 		this.setWaitStatus('Waiting for next question...');
 		$('#timer').countdown('destroy');
 	
-		var correctAnswerId = stateParams.answerId;
+		correctAnswerId = stateParams.answerId;
 		var isTest = stateParams.test;
 		var answers = stateParams.answers;
 		if (stateParams.type == 'open' && userType == 'official_participant'){
@@ -1181,12 +1530,8 @@ function GameWorld(){
 		$('#answer_'+correctAnswerId).css("border","2px #fff solid").css("opacity","1").css("padding","1px").css("padding-left","13px").css("padding-right","13px");
 
 		if(userType=='official_participant' || userType=='unofficial_participant'){
-			/*if(correctAnswer){
-				$('#answer_status').html("Correct answer!");
-			}
-			else{
-				$('#answer_status').html("<span style='color:#f00'>Incorrect answer!</span>");
-			}*/
+			ChipRemover();
+			ChipAdder(stacksCalculator(score),'fiches_inhand','player','yours');
 		} else if (userType == 'spectator' && openquestion == true){
 			var html = 'Goede antwoorden: ';
 			const allgood = stateParams.savedanswers[0];

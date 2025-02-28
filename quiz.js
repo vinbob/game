@@ -190,6 +190,7 @@ function Quizzes(){
 	}
 
 	this.collectResponse = function(quizId,participant,response){
+		console.log('in quizzes collectresponse:'+response.answerId);
 		if(quizId in quizzes)
 		quizzes[quizId].collectResponse(participant,response);
 	}
@@ -450,6 +451,7 @@ function Participant(){
 		if(socket && socket.handshake && socket.handshake.session && socket.handshake.session.quiz_id){
 			return socket.handshake.session.quiz_id;
 		}
+		console.log('incorrect socket, so no quizid at getquizid: '+socket.handshake);
 
 		return false;
 	}
@@ -463,6 +465,7 @@ function Participant(){
 			quizState.stateParams.score = this.getScore();
 			quizState.stateParams.role = this.getRole();
 			quizState.stateParams.myans = this.getResponse();
+			quizState.stateParams.mybet = this.betValue();
 		}
 		if(typeof params!=='undefined' && typeof params.fields!=='undefined'){
 			var fields = params.fields;
@@ -502,6 +505,7 @@ function Participant(){
 
 	this.leaderboardUpdates = function(quizState,leaderboard){
 		socket.emit('new_leaderboard',leaderboard);
+		console.log('via deze');
 	}
 }
 
@@ -596,6 +600,7 @@ function RealParticipant(pSocket,pTeamname){
 			response = answerId;
 		} else {
 			response = answerId;
+			console.log('set response to: '+response)
 			bet = parseInt(betValue);
 			if (bet > maxbet){
 				bet = maxbet;
@@ -617,13 +622,14 @@ function RealParticipant(pSocket,pTeamname){
 	}
 
 	this.updateScore = function(answerId,marks,bonusrl, data){
+		console.log('goede antwoord: '+answerId+', jij '+response);
 		var checkcorrect = answerId == response;
 		if (data && response){
 			const ldata = data.map(ans => ans.toLowerCase());
 			checkcorrect = ldata.includes(response.toLowerCase());
 		}
 		if(checkcorrect){
-			score += bet + 5;
+			score += bet;
 			if(bonusrl.includes(role)){score += bet;}
 			this.setLastCorrect(true);
 		}
@@ -869,7 +875,7 @@ function Leaderboard(){
 
 		for(var i=0;i<official_participants.length;i++){
 			var p = official_participants[i];
-			leaderboard['official'].push({team: entities.encode(p.getTeamname()), score: p.getScore(), rank: p.getRank(), isLastCorrect: p.isLastCorrect(), response: p.getResponse(), betValue: p.betValue(), issleeping: p.isSleeping()});
+			leaderboard['official'].push({team: entities.encode(p.getTeamname()), score: p.getScore(), rank: p.getRank(), isLastCorrect: p.isLastCorrect(), response: p.getResponse(), betValue: p.betValue(), issleeping: p.isSleeping(), unique_id: p.getUniqueId()});
 		}
 
 		/*for(var i=0;i<unofficial_participants.length;i++){
@@ -1297,6 +1303,7 @@ function Quiz(pQuizId){
 
 		var submittedAnswerId = response.answerId;
 		var betValue = response.bet;
+		console.log('in collectResponse:'+submittedAnswerId);
 		participant.setResponse(submittedAnswerId, betValue, quizmeasures);
 		if(curState == states.PRESCENARIO){
 			var curmeasures = quizmeasures;

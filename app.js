@@ -103,6 +103,7 @@ io.on('connection', function(socket){
 	try{
 		socket.on('disconnect', (reason) => {
 			console.log(`${socket.handshake.session.participantName} (${socket.handshake.session.unique_id} | ${socket.handshake.session.browser}) disconnected. Reason: ${reason}`);
+			//tryReconnect(socket.handshake.session.unique_id, socket);
 		});
 
 		socket.on('connect',function(data){
@@ -119,19 +120,38 @@ io.on('connection', function(socket){
 				for (cq in currentquizzes){
 					var participants = currentquizzes[cq].getParticipants();
 					for (cp in participants){
-						if(uniqueId == participants[cp].getUniqueId()){ //maak nog werkend voor spectator en admin!
+						console.log(participants[cp].getUserType());
+						if(uniqueId == participants[cp].getUniqueId()){ 
 							if (socketquiz_id == currentquizzes[cq].getId()){
 								socket.emit('redirect_to_quiz'); 
 								console.log('haha i still had a socket');
 							} else {
-								var oldpart = participants[cp];
-								var participant = new OfficialParticipant(socket,oldpart.getTeamname(),oldpart.getRole(), 'auto-reconnected');
-								participant.setScore(oldpart.getScore());
-								currentquizzes[cq].removeParticipant(uniqueId);
-								currentquizzes[cq].addParticipant(participant);
-								quizzes.updateLeaderboard(currentquizzes[cq].getId(), quizzes.getLeaderboard(currentquizzes[cq].getId()));
-								socket.emit('connect_connect_ok', uniqueId);
-								console.log('reconnected lost client:'+oldpart.getTeamname());
+								if (participants[cp].getUserType() == 'official_participant'){
+									console.log('reconnecting lost client:'+oldpart.getTeamname());
+									var oldpart = participants[cp];
+									var participant = new OfficialParticipant(socket,oldpart.getTeamname(),oldpart.getRole(), 'auto-reconnected');
+									participant.setScore(oldpart.getScore());
+									currentquizzes[cq].removeParticipant(uniqueId);
+									currentquizzes[cq].addParticipant(participant);
+									quizzes.updateLeaderboard(currentquizzes[cq].getId(), quizzes.getLeaderboard(currentquizzes[cq].getId()));
+									socket.emit('connect_connect_ok', uniqueId);
+									console.log('reconnected lost client:'+oldpart.getTeamname());
+								} else if (participants[cp].getUserType() == 'spectator'){
+									console.log('reconnecting lost client: spectator');
+									participant = new Spectator(socket, 'auto-reconnected');
+									currentquizzes[cq].removeParticipant(uniqueId);
+									currentquizzes[cq].addParticipant(participant);
+									socket.emit('connect_connect_ok', uniqueId);
+									console.log('reconnected lost client: spectator');
+								} else {
+									console.log('reconnecting lost client: admin');
+									participant = new Administrator(socket, 'auto-reconnected');
+									currentquizzes[cq].removeParticipant(uniqueId);
+									currentquizzes[cq].addParticipant(participant);
+									//quizzes.updateLeaderboard(currentquizzes[cq].getId(), quizzes.getLeaderboard(currentquizzes[cq].getId()));
+									socket.emit('connect_connect_ok', uniqueId);
+									console.log('reconnected lost client: admin');
+								}
 							}
 						}
 					}
@@ -272,6 +292,7 @@ io.on('connection', function(socket){
 			var participant = quizzes.getParticipant(session.quiz_id,participantId);
 			
 			if(participant.isRealParticipant){
+				console.log('in app.js '+data.answerId);
 				quizzes.collectResponse(session.quiz_id,participant,data);
 			}
 		});

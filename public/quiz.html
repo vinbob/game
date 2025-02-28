@@ -14,6 +14,15 @@
 		<script src="js/qrcode.min.js"></script>
 		<script src="js/game/quiz.js"></script>
 		<style type="text/css">
+		.plusmin {
+			min-width: 30px;
+			height: 30px;
+			color:#fff;
+			background-color: #000;
+			border-radius: 50%;
+			text-align: center;
+			padding-bottom: 35px;
+		}
 		.oval {
             width: 100%;   /* Adjust width */
             height: 400px;  /* Adjust height */
@@ -37,6 +46,7 @@
             font-size: 13px;
             font-weight: bold;
             color:#000;
+            text-align: center;
         }
         .fiche.fiche1 {
         	background-color: #FFFF00;
@@ -45,7 +55,7 @@
         	background-color: #ECA627;
         	left: 25px;
         }
-        .fiche.fiche20 {
+        .fiche.fiche25 {
         	background-color: #00A2B7;
         	left: 50px;
         }
@@ -135,6 +145,8 @@
 	</head>
 <body style="background-color:#A1CC3A; color: white;">
 <!--
+<div id="destroy">Destroy socket</div>
+
 <div class="element" id="timer_area" style="position: fixed; top:0px; height: 70px; width:100%; background-color: rgb(126, 197, 104); font-size: 2em; color:#fff; padding: 5px;">
 	<div align="center">
 		<div id="timer" style="font-size:1.5em"></div>
@@ -142,6 +154,38 @@
 	</div>
 </div>
 -->
+<div id="video_area" style="width:100vw; height: 100vh; position: absolute; padding: 40px; padding-bottom: 120px; display: none; z-index: 19;">
+	<div id="myVideo">
+		<video style="height: 100%;" controls ><source src="content/KlimaatCasino/frankrijk.mp4" type="video/mp4">Your browser does not support the video tag.</video>
+	</div>
+	<div style="background-color:#fff; color:#000; width: 100%; padding:20px; padding-bottom: 120px; font-size:20px; ">
+		<div style="height:100%">
+			<div style="padding-bottom:50px;" id="vidvraagnummer">Vraag 1/8 -</div>
+			<div style="font-size:36px; height:100%;" id="vidvraag">“Welke stelling is waar?”</div>
+		</div>
+		<div><b>Joeri Reinders</b><br />
+			hoogleraar oceanografie<br/>
+			Leiden Universiteit</div>
+	</div>
+</div>
+
+<div id="spelerslijst_area" style="width:100vw; height: 100vh; padding:30px; position: absolute; background-color: inherit; z-index: 19; display: none;">
+<div style="font-size:24px; width:100%; text-align: center;">Spelerslijst<br/><br /></div>
+<div id="spelerslijst_area_list" style="width:100%;">
+	<div style="align-items:center; display: flex; font-size:24px; padding-bottom: 15px;"><img src="../content/poppetje.png" /><div style="width:100%; overflow:hidden;">HANS</div><div class="plusmin">-</div><div style="padding:10px; min-width: 70px;">113</div><div class="plusmin">+</div></div>
+	<div style="align-items:center; display: flex; font-size:24px; padding-bottom: 15px;"><img src="../content/poppetje.png" /><div style="width:100%; overflow:hidden;">HANS</div><div class="plusmin">-</div><div style="padding:10px; min-width: 70px;">113</div><div class="plusmin">+</div></div>
+	<div style="align-items:center; display: flex; font-size:24px; padding-bottom: 15px;"><img src="../content/poppetje.png" /><div style="width:100%; overflow:hidden;">HANS</div><div class="plusmin">-</div><div style="padding:10px; min-width: 70px;">113</div><div class="plusmin">+</div></div>
+	<div style="align-items:center; display: flex; font-size:24px; padding-bottom: 15px;"><img src="../content/poppetje.png" /><div style="width:100%; overflow:hidden;">HANS</div><div class="plusmin">-</div><div style="padding:10px; min-width: 70px;">113</div><div class="plusmin">+</div></div>
+	<div style="align-items:center; display: flex; font-size:24px; padding-bottom: 15px;"><img src="../content/poppetje.png" /><div style="width:100%; overflow:hidden;">HANS</div><div class="plusmin">-</div><div style="padding:10px; min-width: 70px;">113</div><div class="plusmin">+</div></div>
+	<div style="align-items:center; display: flex; font-size:24px; padding-bottom: 15px;"><img src="../content/poppetje.png" /><div style="width:100%; overflow:hidden;">HANS</div><div class="plusmin">-</div><div style="padding:10px; min-width: 70px;">113</div><div class="plusmin">+</div></div>
+	<div style="align-items:center; display: flex; font-size:24px; padding-bottom: 15px;"><img src="../content/poppetje.png" /><div style="width:100%; overflow:hidden;">HANS</div><div class="plusmin">-</div><div style="padding:10px; min-width: 70px;">113</div><div class="plusmin">+</div></div>
+	<div style="align-items:center; display: flex; font-size:24px; padding-bottom: 15px;"><img src="../content/poppetje.png" /><div style="width:100%; overflow:hidden;">HANS</div><div class="plusmin">-</div><div style="padding:10px; min-width: 70px;">113</div><div class="plusmin">+</div></div>
+	<div style="align-items:center; display: flex; font-size:24px; padding-bottom: 15px;"><img src="../content/poppetje.png" /><div style="width:100%; overflow:hidden;">HANS</div><div class="plusmin">-</div><div style="padding:10px; min-width: 70px;">113</div><div class="plusmin">+</div></div>
+	<div style="align-items:center; display: flex; font-size:24px; padding-bottom: 15px;"><img src="../content/poppetje.png" /><div style="width:100%; overflow:hidden;">HANS</div><div class="plusmin">-</div><div style="padding:10px; min-width: 70px;">113</div><div class="plusmin">+</div></div>
+	<div style="height:100px;"></div>
+</div>
+</div>
+
 <div id="table_area" style="display:none; padding-left: 150px; padding-right: 150px;">
 <div class="q_area" id="q_area">
 	<div id="questiontext" class="questiontext" style="padding:40px; padding-left: 120px; font-size: 24px;">
@@ -188,67 +232,6 @@
 	<div class="cardbox player6">
 	</div>
 </div>
-<!--
-<div class="player player2" id="playerinfo2"><br /><img src="content/bouwer.png" width="50" class="icon player2" /></div>
-<div class="fichebox player2" id="fichebox2">
-	<div class="fiche fiche1"></div><div class="fiche fiche1" style="top:-4px;"></div>
-	<div class="fiche fiche5"></div> <div class="fiche fiche5" style="top:-4px;"></div> <div class="fiche fiche5" style="top:-8px;"></div>
-	<div class="fiche fiche20"></div>
-	<div class="fiche fiche100"></div> <div class="fiche fiche100" style="top:-4px;"></div> <div class="fiche fiche100" style="top:-8px;"></div>
-	<div class="cardbox player2">
-		<img src="content/KlimaatCasino/card.png" width="30" />
-		<div style="position: absolute; left: 35px; top:10px;">114</div>
-	</div>
-</div>
-
-<div class="player player3" id="playerinfo3"><br /><img src="content/bouwer.png" width="50" class="icon player3" /></div>
-<div class="fichebox player3" id="fichebox3">
-	<div class="fiche fiche1"></div><div class="fiche fiche1" style="top:-4px;"></div>
-	<div class="fiche fiche5"></div> <div class="fiche fiche5" style="top:-4px;"></div> <div class="fiche fiche5" style="top:-8px;"></div>
-	<div class="fiche fiche20"></div>
-	<div class="fiche fiche100"></div> <div class="fiche fiche100" style="top:-4px;"></div> <div class="fiche fiche100" style="top:-8px;"></div>
-	<div class="cardbox player3">
-		<img src="content/KlimaatCasino/card.png" width="30" />
-		<div style="position: absolute; left: 35px; top:10px;">114</div>
-	</div>
-</div>
-
-<div class="player player4" id="playerinfo4">YOEP<br /><img src="content/bouwer.png" width="50" class="icon player4" /></div>
-<div class="fichebox player4" id="fichebox4">
-	<div class="fiche fiche1"></div><div class="fiche fiche1" style="top:-4px;"></div>
-	<div class="fiche fiche5"></div> <div class="fiche fiche5" style="top:-4px;"></div> <div class="fiche fiche5" style="top:-8px;"></div>
-	<div class="fiche fiche20"></div>
-	<div class="fiche fiche100"></div> <div class="fiche fiche100" style="top:-4px;"></div> <div class="fiche fiche100" style="top:-8px;"></div>
-	<div class="cardbox player4">
-		<img src="content/KlimaatCasino/card.png" width="30" />
-		<div style="position: absolute; left: 35px; top:10px;">114</div>
-	</div>
-</div>
-
-<div class="player player5" id="playerinfo5">YOEP<br /><img src="content/bouwer.png" width="50" class="icon player5" /></div>
-<div class="fichebox player5" id="fichebox5">
-	<div class="fiche fiche1"></div><div class="fiche fiche1" style="top:-4px;"></div>
-	<div class="fiche fiche5"></div> <div class="fiche fiche5" style="top:-4px;"></div> <div class="fiche fiche5" style="top:-8px;"></div>
-	<div class="fiche fiche20"></div>
-	<div class="fiche fiche100"></div> <div class="fiche fiche100" style="top:-4px;"></div> <div class="fiche fiche100" style="top:-8px;"></div>
-	<div class="cardbox player5">
-		<img src="content/KlimaatCasino/card.png" width="30" />
-		<div style="position: absolute; left: 35px; top:10px;">114</div>
-	</div>
-</div>
-
-<div class="player player6" id="playerinfo6">YOEP<br /><img src="content/bouwer.png" width="50" class="icon player6" /></div>
-<div class="fichebox player6" id="fichebox6">
-	<div class="fiche fiche1"></div><div class="fiche fiche1" style="top:-4px;"></div>
-	<div class="fiche fiche5"></div> <div class="fiche fiche5" style="top:-4px;"></div> <div class="fiche fiche5" style="top:-8px;"></div>
-	<div class="fiche fiche20"></div>
-	<div class="fiche fiche100"></div> <div class="fiche fiche100" style="top:-4px;"></div> <div class="fiche fiche100" style="top:-8px;"></div>
-	<div class="cardbox player6">
-		<img src="content/KlimaatCasino/card.png" width="30" />
-		<div style="position: absolute; left: 35px; top:10px;">114</div>
-	</div>
-</div>
--->
 
 <div style="height:200px;"></div>
 <div class="oval"></div>
@@ -258,7 +241,7 @@
 </div>
 
 
-<div style="display:none; padding:20px;" id="qr_wrapper"><div id="qr_zone"></div><div id="qr_text" style="font-size:18px; padding-left: 15px;"></div></div>
+<!--<div style="display:none; padding:20px;" id="qr_wrapper"><div id="qr_zone"></div><div id="qr_text" style="font-size:18px; padding-left: 15px;"></div></div>-->
 
 
 <div class="element" id="wait_area" style="display: table; width:100%; overflow: hidden;">
@@ -282,22 +265,23 @@
 <!--<div id="qrcode"  align="center"></div>-->
 <div id="player_console" style="display:none; text-align:center; font-size: 32px;">
 	<div style="padding:15px;">
-	Sleep je inzet naar het juiste antwoord!
-	<div id="player_answers" style="padding-left:20px; padding-right: 20px;"></div>
+		Sleep je inzet naar het juiste antwoord!
+		<div id="player_answers" style="padding-left:20px; padding-right: 20px;"></div>
 	</div>
 
-	<div id="fiche_area" style="background-color:#83A92E; display: flex; padding-top: 50px; padding-bottom: 20px;">
-		<div style="display:flex; padding-left: 40px; padding-top: 20px; width: 70%; position:relative;" id="fiches_inhand">
-			<!--<div class="fiche fiche1" style="width: 40px; height: 20px;"><div style="width:100%; padding:0px;">1</div></div>-->
+	<div style="padding-left:20px; background-color:#83A92E;">
+		<div id="fiche_area" style="display: flex; padding-top: 50px; padding-bottom: 20px;">
+			<div style="display:flex; padding-left: 40px; padding-top: 20px; width: 70%; position:relative;" id="fiches_inhand">
+			</div>
+			<div style="display:flex;">=&nbsp;<span id="amount_inhand">30</span></div>
 		</div>
-		<div style="display:flex;">=&nbsp;<span id="amount_inhand">30</span></div>
 	</div>
 </div>
 
-<div class="element" align="center" id="question_area" style="width: 100%; padding-top: 80px; padding-bottom: 80px; padding-left:8px; padding-right: 8px">
-	<div class="pic">
-	</div>
-	<div class="question" style="font-size: 2.5em">
+<div class="element" align="center" id="question_area" style="width: 100%; padding-top: 30px; padding-left:8px; padding-right: 8px">
+	<!--<div class="pic">
+	</div>-->
+	<div class="question" style="font-size: 28px; overflow: hidden; max-height: 200px;">
 	</div>
 	<table>
 	<tr>
@@ -322,30 +306,49 @@
 <div id="scores" align="center">
 </div>
 
-<div class="element" id="controlpanel_area" style="width:100%; position: fixed; bottom: 0px; height: 60px; background-color: rgb(108, 108, 108); font-size: 2em; color:#000; padding-top: 7px; padding-right: 10px; padding-left: 10px; z-index: 20;">
-	<div style="float:left">
+
+<div id="btn_admin_start_quiz" style="height:100px; margin: 100px; background-color: #BFBFBF; border:1px #000 solid; display: none; align-items:center; text-align:center; justify-content:center; color:#000;">Start</div>
+
+<div id="btn_admin_bekijk_toelichting" style="height:100px; margin-left: 100px; margin-right: 100px; background-color: #BFBFBF; border:1px #000 solid; display: none; align-items:center; text-align:center; justify-content:center; color:#000;">bekijk toelichting</div>
+
+<div id="stoplicht" style="display:none; padding: 30px; padding-left: 45px; padding-right: 45px;">
+	<div style="display:flex;">
+		<img id="stoplicht_image" src="../content/stoplicht_rood.png" width="30" height="88" />
+	</div>
+	<div id="stoplicht_text" style="display:flex; padding: 10px; font-size: 24px;">
+	</div>
+</div>
+
+<div id="btn_admin_show_video" style="height:100px; margin-left: 100px; margin-right: 100px; background-color: #BFBFBF; border:1px #000 solid; display: none; align-items:center; text-align:center; justify-content:center; color:#000;">toon video</div>
+
+<div id="btn_admin_reveal_answer" style="height:100px; margin-left: 100px; margin-right: 100px; background-color: #fff; border:1px #000 solid; display: none; align-items:center; text-align:center; justify-content:center; color:#000;">toon antwoord</div>
+
+<div id="results" style="display:none; padding:50px; padding-top: 0px; padding-bottom: 20px;">
+
+</div>
+
+<div id="btn_admin_next_question" style="height:70px; margin-left: 100px; margin-right: 100px; background-color: #fff; border:1px #000 solid; display: none; align-items:center; text-align:center; justify-content:center; color:#000;">volgende vraag</div>
+
+<div style="float:left">
 		<span class="element" id="generic_options_area">
-			<button class="btn btn-default" id="btn_leave_quiz">Leave</button>
-			<!--
-			<button class="btn btn-default" id="btn_show_leaderboard">Scores</button>
-		-->
+			<!--<button class="btn btn-default" id="btn_leave_quiz">Leave</button>-->
 		</span>
 	</div>
 	<div style="float:right">
 		<span class="element" id="participant_area">
-			<span id="participant_rank" style="color:#fff; font-size:16px;"></span>
+			<!--<span id="participant_rank" style="color:#fff; font-size:16px;"></span>-->
 		</span>
 		<span class="element" id="admin_area_before_start">
 			<!--
 			<button class="btn btn-default" id="btn_admin_test_question">Test Question</button>
 			-->
-			<button class="btn btn-default" id="btn_admin_start_quiz">Start Quiz</button>
+			<!--<button class="btn btn-default" id="btn_admin_start_quiz">Start Quiz</button>-->
 		</span>			
 		<span class="element" id="admin_area_after_start">
-    		<button class="btn btn-default" id="btn_admin_show_video">Video tonen</button>
-    		<button class="btn btn-default" id="btn_admin_reveal_answer">Antwoord tonen</button>
-			<button class="btn btn-default" id="btn_admin_next_question">Next Question</button>
-			<button class="btn btn-default" id="btn_admin_end_quiz">End Quiz</button>
+    		<!--<button class="btn btn-default" id="btn_admin_show_video">Video tonen</button>-->
+    		<!--<button class="btn btn-default" id="btn_admin_reveal_answer">Antwoord tonen</button>-->
+			<!--<button class="btn btn-default" id="btn_admin_next_question">Next Question</button>-->
+			<!--<button class="btn btn-default" id="btn_admin_end_quiz">End Quiz</button>-->
 		</span>
 		<span class="element" id="admin_area_endgame">
     		<button class="btn btn-default" id="btn_admin_start_endgame">Start Eindspel</button>
@@ -354,6 +357,27 @@
 		</span>
 	</div>
 	<div style="clear:both"></div>
+
+<div class="element" id="controlpanel_area" style="width:100%; position: fixed; bottom: 0px; height: 60px; z-index: 20; color:#000; display: flex;">
+	<div id="spelerslijst" style="height:100%; background-color: #BFBFBF; border:1px #000 solid; display: none; width:50%; align-items:center; text-align:center; justify-content:center;">spelerslijst</div>
+	<div id="participant_rank" style="height:100%; background-color: #BFBFBF; border:1px #000 solid; display: none; width:50%; align-items:center; text-align:center; justify-content:center;"></div>
+	<div id="btn_admin_end_quiz" style="height:100%; background-color:#FF8080; border:1px #000 solid; width:50%; align-items:center; text-align:center; justify-content:center; display:none;">X beëindig spel</div>
+	<div id="btn_leave_quiz" style="cursor:pointer; height:100%; background-color:#FF8080; border:1px #000 solid; width:50%; align-items:center; text-align:center; justify-content:center; display: none;">verlaat spel</div>
+	<div style="display:none; position:absolute; top:-50px;" id="qr_wrapper">
+		<div style="width: 100vw; display:flex;">
+			<div style="width: 99%; display:flex;"></div>
+			<div style="display:flex; width: 500px;">
+				<div id="qr_text" style="font-size:18px; padding-right: 15px;"></div><div id="qr_zone"></div>
+			</div>
+		</div>
+	</div>
+	<!--<div id="btn_admin_starting_quiz" style="height:100%; background-color:#0f0; border:1px #000 solid; width:50%; align-items:center; text-align:center; justify-content:center; display: none;"><div class="spinner"  align="center">
+		  <div class="rect1"></div>
+		  <div class="rect2"></div>
+		  <div class="rect3"></div>
+		  <div class="rect4"></div>
+		  <div class="rect5"></div>
+		</div></div>-->
 </div>
 <div class="element" align="center" id="leaderboard_area" style="width: 100%; padding-top: 80px; padding-bottom: 80px; padding-left:8px; padding-right: 8px">
 	
