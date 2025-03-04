@@ -292,7 +292,6 @@ io.on('connection', function(socket){
 			var participant = quizzes.getParticipant(session.quiz_id,participantId);
 			
 			if(participant.isRealParticipant){
-				console.log('in app.js '+data.answerId);
 				quizzes.collectResponse(session.quiz_id,participant,data);
 			}
 		});

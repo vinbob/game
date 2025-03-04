@@ -190,7 +190,6 @@ function Quizzes(){
 	}
 
 	this.collectResponse = function(quizId,participant,response){
-		console.log('in quizzes collectresponse:'+response.answerId);
 		if(quizId in quizzes)
 		quizzes[quizId].collectResponse(participant,response);
 	}
@@ -505,7 +504,6 @@ function Participant(){
 
 	this.leaderboardUpdates = function(quizState,leaderboard){
 		socket.emit('new_leaderboard',leaderboard);
-		console.log('via deze');
 	}
 }
 
@@ -600,7 +598,6 @@ function RealParticipant(pSocket,pTeamname){
 			response = answerId;
 		} else {
 			response = answerId;
-			console.log('set response to: '+response)
 			bet = parseInt(betValue);
 			if (bet > maxbet){
 				bet = maxbet;

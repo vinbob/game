@@ -35,6 +35,10 @@ function GameWorld(){
 
 	//constants
 	const chipvalues = [1,5,25,100];
+	let unitstack = [1];
+	for (let i = 1; i < chipvalues.length; i++){
+		unitstack.push(0);
+	}
 	const dist = 6;
 	const minstackheight = 10;
 	const maxstackheight = 20;
@@ -69,13 +73,13 @@ function GameWorld(){
 		return stack;
 	}
 
-	function ChipAdder(stack, divid,type,droploc){
+	function ChipAdder(stack, divid,type,droploc, height=0){
 		for (var s in stack){
 			for (var k = 0; k < stack[s]; k++){
 				const chip = document.createElement("div");
 				chip.className = "fiche fiche"+chipvalues[s];
 				if(type == 'player'){
-					chip.style = 'top:'+(k*-dist+30)+'px; width: 40px; height: 20px; left:'+(s*45+40)+'px;';
+					chip.style = 'top:'+((k+height)*-dist+30)+'px; width: 40px; height: 20px; left:'+(s*45+40)+'px; z-index:'+1+k+height+';';
 					chip.innerHTML = '<div style="width:100%; padding:0px;">'+chipvalues[s]+'</div>';
 					chip.id = 'chip'+chipID;
 					let curid = chipID;
@@ -132,7 +136,7 @@ function GameWorld(){
 			  }
 			}
 
-			if(stackCounter(stackobj['yours']) <= Math.ceil(score * maxbetfraction) && curstack == 'yours'){
+			if(stackCounter(stackobj['yours']) < Math.ceil(score * maxbetfraction) && curstack == 'yours'){
 				return false;
 			}
 
@@ -292,7 +296,10 @@ function GameWorld(){
 		    }
 
 		    var betOverflow = stackCounter(stackobj[droploc]) - Math.ceil(score * maxbetfraction);
-		    if(betOverflow >= 0 && droploc !== 'yours'){
+		    if(betOverflow >= 0 && droploc != 'yours'){
+	        	$('#fiches_inhand').css('opacity','0.5');
+	        }
+		    if(betOverflow > 0 && droploc !== 'yours'){
 		    	for(var i = 0; i < betOverflow; i++){
 		    		const chip = document.createElement("div");
 		    		chip.id = 'chip'+chipID;
@@ -301,22 +308,36 @@ function GameWorld(){
 		    		chipID++;
 		    	}
 		    	var reversechipvalues = [...chipvalues].reverse();
+		    	var added_overflow = false;
 		    	for(let c in reversechipvalues){
 		    		var reversechips = [...stackobj[droploc][reversechipvalues[c]]].reverse();
 		    		for (let ic in reversechips){
-		    			if(reversechipvalues[c] <= betOverflow){
-		    				betOverflow -= reversechipvalues[c];
-		    				document.getElementById('chip'+reversechips[ic].chipID).remove();
+		    			if(added_overflow == false){
+			    			document.getElementById('chip'+reversechips[ic].chipID).remove();
 		    				for(let cid in stackobj[droploc][reversechipvalues[c]]){
-		    					if(stackobj[droploc][reversechipvalues[c]][cid].chipID == reversechips[ic].chipID){
+		    					if(stackobj[droploc][reversechipvalues[c]][cid].chipID == reversechips[ic].chipID){ // remove the chip of this ID from original stackobj
 		    						delete stackobj[droploc][reversechipvalues[c]][cid];
+		    						stackobj[droploc][reversechipvalues[c]] = stackobj[droploc][reversechipvalues[c]].filter(n => n);
 		    					}
 		    				}
-		    			}
+		    				betOverflow -= reversechipvalues[c];
+		    				if (betOverflow < 0){ //add as many chips of 1 as necessary after removing higher value chips
+			    				for(let b = 0; b < -betOverflow; b++){
+			    					ChipAdder(unitstack,'chipcontainer'+droploc, 'player',droploc, stackobj[droploc][1].length);
+			    				}
+			    				console.log(stackobj[droploc]);
+			    				added_overflow = true;
+			    			} 
+			    		}
 		    		}
-		    		stackobj[droploc][reversechipvalues[c]] = stackobj[droploc][reversechipvalues[c]].filter(n => n);
 		    	}
-	        	$('#fiches_inhand').css('opacity','0.5');
+		    	/*for (let value in stackobj[droploc]){
+
+		    		stackobj[droploc][value].length = 0;
+		    	}
+
+		    	ChipAdder(stacksCalculator(Math.ceil(score * maxbetfraction)),'answer'+droploc, 'player',droploc);*/
+		    			    		console.log(stackCounter(stackobj[droploc]));
 	        }
 
 
@@ -360,6 +381,9 @@ function GameWorld(){
 		    }
 
 		    temp_answer = droploc+1;
+		    if(openquestion == true){
+		    	temp_answer = $('#openanswer2').val();
+		    }
 		    temp_bet = stackCounter(stackobj[droploc]);
 		    socket.emit('quiz_send_answer', { answerId: String(temp_answer), bet: temp_bet });
 			socket.emit('update_leaderboard');
@@ -401,6 +425,7 @@ function GameWorld(){
 		/*All users, all states*/
 		$('#controlpanel_area').show();
 		$('#generic_options_area').show();
+		$('#admin_open_question').hide();
 		
 		if(state==null && stateParams.leaderboard && $('#btn_show_leaderboard').attr('show_leaderboard')==null){				
 				state = savedState;
@@ -415,6 +440,9 @@ function GameWorld(){
 			$('#timer_area').show();
 			if(userType == 'admin'){
 				$('#question_area').show();
+				if(state==states.SHOW_QUESTION && stateParams.type == 'open'){
+					$('#admin_open_question').css('display','flex');
+				}
 			}
 			if(state==states.PRESCENARIO){
 				$('#question_area .question').html('');
@@ -436,6 +464,14 @@ function GameWorld(){
 			if (stateParams != undefined){
 				if (stateParams.answers){
 					answercount = stateParams.answers.length;
+					if(stateParams.type == 'open'){
+						answercount = 1;
+						$('#player_console_text').html('Voer één antwoord in en plaats je inzet');
+						$('#open_player_console').show();
+					} else {
+						$('#player_console_text').html('Sleep je inzet naar het juiste antwoord!');
+						$('#open_player_console').hide();
+					}
 					if (!added_chips){
 						for(let i = 0; i < answercount; i++){
 							stackobj[i] = {};
@@ -1014,31 +1050,35 @@ function GameWorld(){
 					$("#results").html('');
 					if(curState==states.SHOW_ANSWER){
 						console.log(correctAnswerId);
-						for(var i=0;i<answers.length;i++){
-							var $letter = $("<div>")
-							.attr("style","color:#000; background-color: "+answercolors[i]+"; padding: 3px; padding-left:15px; padding-right:15px; display:flex; align-items:center; height:41px;")
-							.text(String.fromCharCode(65 + i));
+						if(openquestion == true){
+							//show the results of open questions to the admin...
+						} else {
+							for(var i=0;i<answers.length;i++){
+								var $letter = $("<div>")
+								.attr("style","color:#000; background-color: "+answercolors[i]+"; padding: 3px; padding-left:15px; padding-right:15px; display:flex; align-items:center; height:41px;")
+								.text(String.fromCharCode(65 + i));
 
-							var bettedthisone = 0;
-							var balkcolor = 'red';
-							if(correctAnswerId == i+1){
-								balkcolor = 'green';
-							}
-							for(var j in answercollect){
-								if(answercollect[j] == String(i+1)){
-									bettedthisone++;
+								var bettedthisone = 0;
+								var balkcolor = 'red';
+								if(correctAnswerId == i+1){
+									balkcolor = 'green';
 								}
-							}
-							console.log(bettedthisone);
-							var $div = $("<div>")
-							.attr("style","padding: 3px; padding-left: 20px; width:100%;")
-							.html('<div style="width:'+Math.ceil(bettedthisone / totalplayers)*100+'%; min-width:45px; padding:10px; background-color:'+balkcolor+'; white-space:nowrap;">'+Math.ceil(bettedthisone / totalplayers)*100+' %</div>');
+								for(var j in answercollect){
+									if(answercollect[j] == String(i+1)){
+										bettedthisone++;
+									}
+								}
+								console.log(bettedthisone);
+								var $div = $("<div>")
+								.attr("style","padding: 3px; padding-left: 20px; width:100%;")
+								.html('<div style="width:'+Math.round(bettedthisone / totalplayers *100)+'%; min-width:45px; padding:10px; background-color:'+balkcolor+'; white-space:nowrap;">'+Math.round(bettedthisone / totalplayers *100)+' %</div>');
 
-							var $answerWrapper = $("<div>")
-						    .attr("style","display: flex; padding-top:10px; align-items:center; width:100%;")
-						      .append($letter)
-						      .append($div);
-						    $("#results").append($answerWrapper);
+								var $answerWrapper = $("<div>")
+							    .attr("style","display: flex; padding-top:10px; align-items:center; width:100%;")
+							      .append($letter)
+							      .append($div);
+							    $("#results").append($answerWrapper);
+							}
 						}
 					    $("#results").show();
 					}
@@ -1336,7 +1376,6 @@ function GameWorld(){
 	 	if (type == 'open'){
 			openquestion = true;
 			if(userType=='official_participant' && (curState==states.SHOW_QUESTION || curState==states.SHOW_VIDEO  || curState==states.SHOW_ANSWER)){
-				console.log('show_answer');
 				var html = '<div style="color:black;"><input type="text" id="openanswer" maxlength="40"';
 				if (curState==states.SHOW_VIDEO || curState==states.SHOW_ANSWER){
 					html += 'value="'+stateParams.myans+'" disabled';
@@ -1358,13 +1397,13 @@ function GameWorld(){
 					var html = '';
 					if (curloc == 'wrong' || curloc == 'pending'){
 						if (curState!=states.SHOW_VIDEO){
-							html += '<span style="cursor: pointer;" onclick="toUpdateAns(\''+ans+'\',\'left\')"><--</span>';
+							html += '<span style="cursor: pointer;" onclick="toUpdateAns(\''+ans+'\',\'left\')">&larr;</span>';
 						}
 					}
 					html += ans;
 					if (curloc == 'good' || curloc == 'pending'){
 						if (curState!=states.SHOW_VIDEO){
-							html += '<span style="cursor: pointer;" onclick="toUpdateAns(\''+ans+'\',\'right\')">--></span>';
+							html += '<span style="cursor: pointer;" onclick="toUpdateAns(\''+ans+'\',\'right\')">&rarr;</span>';
 						}
 					}
 					html += '<br />';
@@ -1406,7 +1445,7 @@ function GameWorld(){
 				}
 				var html = '<br /><table style="font-size: 18px;"><tr><td><b>Goed</b></td><td><b>Ingestuurde antwoorden</b></td><td width="150"><b>Fout</b></td></tr>';
 				html += '<tr><td><div id="good"></div></td><td style="border-left:1px white solid;border-right:1px white solid;"><div id="pending"></div></td><td><div id="wrong"></div></td></tr></table>';
-				$('#question_area .answers').html(html);
+				//$('#question_area .answers').html(html);
 				createAnswerList('good', answers, goodanswers);
 				createAnswerList('wrong', [], wronganswers); // insert standard wrong answers
 			} 
@@ -1423,18 +1462,6 @@ function GameWorld(){
 					.append("<span/>")
 					.html('<div style="display:flex;">'+curLetter+'</div><div style="display:flex; width:100%;" id="chipcontainer'+i+'"></div><div style="display:flex; font-size:18px; color:#fff; white-space:nowrap;" id="answernumber'+i+'"></div>');
 					
-					/*$div.click(function(){
-						if((userType=='official_participant' || userType=='unofficial_participant') && (curState==states.SHOW_QUESTION || curState==states.TEST_QUESTION)){
-							selectedAnswerId = $(this).attr("answer_id");
-							//var betValue = $('#bet').val(); // Get the value of 'bet' input field
-							socket.emit('quiz_send_answer',{answerId:selectedAnswerId, bet: betValue });
-							socket.emit('update_leaderboard');
-							temp_answer = selectedAnswerId;
-							
-							$('#question_area .answers div').css("background-color","inherit");			
-							$(this).css("background-color","rgb(255, 255, 162)");
-						}
-					});*/
 					$("#player_answers").append($div);
 					if(curState==states.SHOW_VIDEO || curState==states.SHOW_ANSWER){
 						$('#answer'+i).css('border','0px #fff solid');
@@ -1482,10 +1509,18 @@ function GameWorld(){
 			}
 		}
 		
-		$('#verzenden').click(function(){
-			selectedAnswerId = $('#openanswer').val();
+		$('#verzenden2').click(function(){
+			selectedAnswerId = $('#openanswer2').val();
+			betValue = stackCounter(stackobj[0]);
+			$('#verzenden2').css('background-color','#555');
+			$('#verzenden2').html('verzonden');
 			socket.emit('quiz_send_answer',{answerId:selectedAnswerId, bet: betValue });
 			socket.emit('update_leaderboard');
+		});
+
+		$('#openanswer2').click(function(){
+			$('#verzenden2').css('background-color','blue');
+			$('#verzenden2').html('verzenden');
 		});
 
 		var d = new Date();

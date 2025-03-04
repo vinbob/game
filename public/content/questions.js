@@ -715,13 +715,14 @@ var questions = {
         video: "", 
         bonusrole: [5,3,1,6,2,4], 
         answers: [
-            "1 tot 2 graden Celcius",  //
-            "2 tot 4 graden Celcius", 
-            "!5 tot 10 graden Celcius"
+            "voorbeeld",  //
+            "antwoord", 
+            "wortels"
         ],
         category: "Test", 
-        question: "Met hoeveel graden kan de gevoelstemperatuur afnemen in een tuin met veel bomen ten opzichte van een tuin met alleen tegels?",
-        source: "https://www.klimaathelpdesk.org/answers/wat-zijn-de-klimaateffecten-van-een-betegelde-of-groene-tuin/"},
+        type: "open",
+        question: "Vul een open antwoord in?",
+        source: ""},
     62:{ 
          
         video: "frankrijk.mp4", 

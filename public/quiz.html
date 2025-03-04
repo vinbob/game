@@ -264,9 +264,23 @@
 </div>-->
 <!--<div id="qrcode"  align="center"></div>-->
 <div id="player_console" style="display:none; text-align:center; font-size: 32px;">
-	<div style="padding:15px;">
-		Sleep je inzet naar het juiste antwoord!
+	<div style="padding:15px; overflow:hidden;">
+		<span id="player_console_text"></span>
 		<div id="player_answers" style="padding-left:20px; padding-right: 20px;"></div>
+	</div>
+	<div style="width:100%; background-color: #fff;" id="open_player_console">
+		<div style="padding:20px; display:flex; text-align: left;">
+			<input type="text" id="openanswer2" style="width:80px; height:100%; font-size: 24px; color:#000; z-index: 100;" maxlength="20">
+			<div id="answer0" style="width:90%; margin-left: -30px;">
+				<div id="chipcontainer0" style="display:flex; position:relative;"></div>
+			</div>
+			<div id="answernumber0" style="color:#000; white-space: nowrap; padding: 5px; font-size: 24px;">
+
+			</div>
+			<div style="font-size: 20px; justify-content: center;">
+				<div style="padding:5px; padding-top:8px; background-color: blue;" id="verzenden2">verzenden</div>
+			</div>
+		</div>
 	</div>
 
 	<div style="padding-left:20px; background-color:#83A92E;">
@@ -306,7 +320,6 @@
 <div id="scores" align="center">
 </div>
 
-
 <div id="btn_admin_start_quiz" style="height:100px; margin: 100px; background-color: #BFBFBF; border:1px #000 solid; display: none; align-items:center; text-align:center; justify-content:center; color:#000;">Start</div>
 
 <div id="btn_admin_bekijk_toelichting" style="height:100px; margin-left: 100px; margin-right: 100px; background-color: #BFBFBF; border:1px #000 solid; display: none; align-items:center; text-align:center; justify-content:center; color:#000;">bekijk toelichting</div>
@@ -316,6 +329,22 @@
 		<img id="stoplicht_image" src="../content/stoplicht_rood.png" width="30" height="88" />
 	</div>
 	<div id="stoplicht_text" style="display:flex; padding: 10px; font-size: 24px;">
+	</div>
+</div>
+
+<div style="display:none; width: 100%; color: #000; padding:10px;" id="admin_open_question">
+	<div style="width:33%; text-align:center;">
+		<img src="../content/KlimaatCasino/check.png" height="20" />
+		<div style="border:1px #000 solid; text-align:left; padding: 5px; min-height:120px;" id="good">
+			<span>Lijst</span><br/><span>Goede</span><br/><span>Antwoorden</span>
+		</div>
+	</div>
+	<div style="width:33%;"> <br/><div id="pending" style="text-align: center;"><span>Lijst</span><br/><span>Ingezonden</span><br/><span>Antwoorden</span><br/></div></div>
+	<div style="width:34%; text-align:center; padding-left: 5px;">
+		<img src="../content/KlimaatCasino/cross.png" height="20" />
+		<div style="border:1px #000 solid; text-align:left; padding: 5px; min-height:120px;" id="wrong">
+			<span>Lijst</span><br/><span>Foute</span><br/><span>Antwoorden</span>
+		</div>
 	</div>
 </div>
 
@@ -358,6 +387,8 @@
 	</div>
 	<div style="clear:both"></div>
 
+<div style="height:60px;">
+	</div>
 <div class="element" id="controlpanel_area" style="width:100%; position: fixed; bottom: 0px; height: 60px; z-index: 20; color:#000; display: flex;">
 	<div id="spelerslijst" style="height:100%; background-color: #BFBFBF; border:1px #000 solid; display: none; width:50%; align-items:center; text-align:center; justify-content:center;">spelerslijst</div>
 	<div id="participant_rank" style="height:100%; background-color: #BFBFBF; border:1px #000 solid; display: none; width:50%; align-items:center; text-align:center; justify-content:center;"></div>
