@@ -2,7 +2,6 @@ var answers = [];
 var openquestion = false;
 var goodanswers = [];
 var wronganswers = [];
-var measures = [];
 var updateAnswerList = function(){};
 var receivedanswers = [];
 var answerMaker = function(){};
