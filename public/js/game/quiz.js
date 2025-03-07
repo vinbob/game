@@ -1,23 +1,30 @@
-var answers = [];
-var openquestion = false;
-var goodanswers = [];
-var wronganswers = [];
-var updateAnswerList = function(){};
-var receivedanswers = [];
-var answerMaker = function(){};
+/* the javascript for quiz.html
 
-function toUpdateAns(ans, dir){
+- shows the html elements based on the type of player and the state of the game
+- handles inputs from the admin and players, such as next question and answer selection
+*/
+
+var answers = [];
+var openquestion = false; // if false, it means it is currently a multiple choiche question
+var goodanswers = []; // to store the correct answers to an open question
+var wronganswers = []; // to store the wrong answers to an open question
+var updateAnswerList = function(){}; //to be used for open question to update the list of answers viewed by the admin
+var receivedanswers = []; // to store the incoming answers to an open question
+var answerMaker = function(){}; //to be used for open question to update the list of answers viewed by the admin
+
+function toUpdateAns(ans, dir){ //to be used for open question to update the list of answers viewed by the admin
 	updateAnswerList(ans, dir);
 }
-function GameWorld(){
-	var states = {START:0,TEST_QUESTION:1,STARTING:2,SHOW_QUESTION:3,SHOW_VIDEO:4,SHOW_ANSWER:5,START_ENDGAME:6, PRESCENARIO:7, BALLROLLING:8, POSTSCENARIO:9, END:10};
-	const maxbetfraction = 0.5;
+
+function GameWorld(){ //when quiz.html is loaded, this function is used.
+	var states = {START:0,STARTING:1,SHOW_QUESTION:2,SHOW_VIDEO:3,SHOW_ANSWER:4,END:5}; // the 5 possible states of the game
+	const maxbetfraction = 0.5; // maximum allowed fraction of a player's score that can be used as a bet
 	var socket = false;
 	
+	//initiate general variables
 	var userType = false;
 	var quizId = '';
 	let selectedAnswerId = false;
-	let selectedMeasure = '';
 	var curState = false;
 	var savedState = false;
 
@@ -32,33 +39,31 @@ function GameWorld(){
 		return urlWithoutProtocol.substring(0, urlWithoutProtocol.lastIndexOf('/'));
 	}
 
-	//constants
-	const chipvalues = [1,5,25,100];
-	let unitstack = [1];
+	//constants of the chip handling
+	const chipvalues = [1,5,25,100]; // IMPORTANT: the values of chips need to be multiples of each other (due to automatic exchange functionality)
+	let unitstack = [1]; // create an object that signifies a stack of only one chip of value 1
 	for (let i = 1; i < chipvalues.length; i++){
 		unitstack.push(0);
 	}
-	const dist = 6;
-	const minstackheight = 10;
-	const maxstackheight = 20;
+	const dist = 6; //the distance in px between to chips stacked on top of each other
+	const minstackheight = 10; //the minium height of a stack of chips, if the stack is higher, and chips will be exchanged for chips of higher value if the leftover stack remains equal to or higher than the minimum stack height
+	const maxstackheight = 20; //the maximum height of a stack, after which the chips will be exchanged for those of higher value
 
-	//variables
-	let yourstack;
-	var stackobj = {yours: {}};
-	var chipID = 0;
-	let answercount;
-	var inHand = [];
-	var offsetX;
-	var offsetY;
-	var added_chips = false;
-
-	for (const [key, value] of Object.entries(stackobj)) {
+	//variables of the chip handling
+	var stackobj = {yours: {}}; // the object that stores the chips of the players hand (and those that are betted on an answer, entries are added later depending on the amount of possible answers)
+	for (const [key, value] of Object.entries(stackobj)) { // create an entry for each possible chip value
 		for (let i = 0; i < chipvalues.length; i++){
 			stackobj[key][chipvalues[i]] = [];
 		}
 	}
+	var chipID = 0; //each chip has a unique ID
+	let answercount; //amount of possible answers, depending on the question
+	var inHand = []; //will hold the chips that are being grabbed by the player
+	var offsetX; //offset between where the player taps on the chip and the chip's left X coordinate
+	var offsetY; //offset between where the player taps on the chip and the chip's top Y coordinate
+	var added_chips = false; //keep track if the chips have been added to the html already
 
-	function stacksCalculator(amount){
+	function stacksCalculator(amount){ //calculates how many chips of each value is needed to represent the amount, based on the minimum stack height
 		var stack = [0,0,0,0];
 		for (let s = 0; s < amount; s++){
 			stack[0]++;
@@ -72,7 +77,13 @@ function GameWorld(){
 		return stack;
 	}
 
-	function ChipAdder(stack, divid,type,droploc, height=0){
+	function ChipAdder(stack, divid,type,droploc, height=0){ 
+		/* Adds the chips to the element (divid)
+		- stack is an object with 4 entries representing the amount of chips of each value
+		- when type is 'player', the chips are larger. If not, the chips will be added to the digiboard and will be smaller and without number
+		- droploc holds the location where the chip is added (yours = the players hand, 0 = answer1, 1 = answer2, etc.)
+		- when the height is given, it means the chips are added to an already existing stack of height = height, so the position of that chip can be adjusted accordingly.
+		*/
 		for (var s in stack){
 			for (var k = 0; k < stack[s]; k++){
 				const chip = document.createElement("div");
@@ -83,14 +94,14 @@ function GameWorld(){
 					chip.id = 'chip'+chipID;
 					let curid = chipID;
 					chip.addEventListener("mousedown", function (e) {
-					    // Prevent default touch behavior
+					    // Prevent default mousedown behavior
 					    e.preventDefault();
-					    Grab(curid, e);
+					    Grab(curid, e); //grab the chip on mousedown (for desktop)
 					});
 					chip.addEventListener("touchstart", function (e) {
-					    // Prevent default touch behavior
+					    // Prevent default touch behavior (scrolling)
 					    e.preventDefault();
-					    Grab(curid, e.touches[0]);
+					    Grab(curid, e.touches[0]); //grab the chip on touchstart (for touch devices)
 					});
 					stackobj[droploc][chipvalues[s]].push({chip: chip, chipID: chipID, val: chipvalues[s]});
 					chipID++;
@@ -103,7 +114,7 @@ function GameWorld(){
 		added_chips = true;
 	}
 
-	function ChipRemover(){
+	function ChipRemover(){ //removes all chips from the page and the stackobj
 		for(let a in stackobj){
 			for (let value in stackobj[a]){
 				for (let m in stackobj[a][value]){
@@ -118,27 +129,28 @@ function GameWorld(){
 		$('#fiches_inhand').html('');
 	}
 
-	function Grab(cID, e){
-		if(curState == states.SHOW_QUESTION){
+	function Grab(cID, e){ //grab a chip with ID = cID and all the chips that are stacked on top of it
+		if(curState == states.SHOW_QUESTION){ // only allow grabbing (thus changing one's bet) when the state is show question
 			let curstack;
 			let thisChip;
 			let curpos;
+			let totalbet = 0;
 			for (const [key, value] of Object.entries(stackobj)) {
 			  for (const [k, val] of Object.entries(value)) {
 			  	for(let i = 0; i < val.length; i++){
 				  	if (val[i].chipID == cID){
 				  		curstack = key;
 				  		thisChip = val[i];
-				  		curpos = i;
+				  		curpos = i; //determine how high the chip is in it's stack
 				  	}
 				  }
 			  }
 			}
 
-			if(stackCounter(stackobj['yours']) < Math.ceil(score * maxbetfraction) && curstack == 'yours'){
+			if(stackCounter(stackobj['yours']) <= Math.ceil(score * maxbetfraction) && curstack == 'yours'){ // only allow grabbing (thus changing one's bet) when the maximum allowed betting amount has not been reached
+				console.log(stackobj['yours']);
 				return false;
 			}
-
 			if(thisChip == undefined){
 				console.log('chip undefined');
 				return;
@@ -148,7 +160,7 @@ function GameWorld(){
 		    offsetY = e.clientY - thisChip.chip.getBoundingClientRect().top;
 
 			for (let i = 0; i < stackobj[curstack][thisChip.val].length; i++) {
-				if(i >= curpos){
+				if(i >= curpos){ //move all chips that are the current chip or stacked on top of it into the inHand object
 					let stackChip = stackobj[curstack][thisChip.val][i];
 					stackChip.chip.style.boxShadow = "8px -8px 8px rgba(0, 0, 0, 0.3)";
 			   		stackChip.chip.style.width = "60px";
@@ -165,29 +177,29 @@ function GameWorld(){
 		}
 	}
 
-	function Drag(element, clientX, clientY, k){
+	function Drag(element, clientX, clientY, k){ //move a chip around on the screen
 		let x = clientX - offsetX
     	let y = clientY - offsetY - k*dist + window.scrollY;
 		element.style.left = `${x}px`;
 		element.style.top = `${y}px`;
 		if(k==0){ //check if bottom chip is inside dropzone
 			var droploc = CheckIfInside();
-			for(let i = 0; i < answercount; i++){
+			for(let i = 0; i < answercount; i++){ //make all answers transparent
 				$('#answer'+i).css('opacity','0.5');
 			}
 			if (droploc !== 'yours'){
-				$('#answer'+droploc).css('opacity','1');
-			} else {
+				$('#answer'+droploc).css('opacity','1'); //make the answer that the chip is currently hovering over opaque
+			} else { //if the chip is not hovering over any answer...
 				var nobet = true;
 				for(let i in stackobj){
 					if(i !== 'yours'){
-						if (stackCounter(stackobj[i],false) > 0){
+						if (stackCounter(stackobj[i],false) > 0){ //make only the answer that still has chips on it opaque
 							$('#answer'+i).css('opacity','1');
 							nobet = false;
 						}
 					}
 				}
-				if(nobet == true){
+				if(nobet == true){ //none of the answers have any bet on them, so make them all opaque
 					for(let i = 0; i < answercount; i++){
 						$('#answer'+i).css('opacity','1');
 					}
@@ -196,15 +208,15 @@ function GameWorld(){
 		}
 	}
 
-	document.addEventListener("mousemove", function (e) {
-		if (inHand.length < 1) return;
+	document.addEventListener("mousemove", function (e) { //when the mouse moves...
+		if (inHand.length < 1) return; // ... and there have been chips grabbed...
 	    e.preventDefault();
 	    for (let k = 0; k < inHand.length; k++){
-	    	Drag(inHand[k].chip, e.clientX, e.clientY, k);
+	    	Drag(inHand[k].chip, e.clientX, e.clientY, k); // ...move the chips along with the cursor / finger
 	    }
 	});
 
-	document.addEventListener("touchmove", function (e) {
+	document.addEventListener("touchmove", function (e) { //same functionality as mousemove, but for touchscreens
 		if (inHand.length < 1) return;
 	    e.preventDefault(); // Prevent scrolling
 		for (let k = 0; k < inHand.length; k++){
@@ -212,13 +224,13 @@ function GameWorld(){
 	    }
 	}, { passive: false });
 
-	var gamestadium = 'main'; //to do: change to endgame if endgame, so that you can bet on multiple
+	var gamestadium = 'main'; //to do: change to endgame if endgame, so that you can bet on multiple answers / measures
 
 	function CheckIfInside(){
 		// Haal de coördinaten van het draggable-element op
 	    const draggableRect = inHand[0].chip.getBoundingClientRect();
 	    
-	    // Controleer of draggable binnen dropzone1 valt
+	    // Controleer of draggable binnen #answer valt
 	    let droploc = 'yours';
 	    for (let i = 0; i < answercount; i++){
 	    	let checkzone = $('#answer'+i)[0].getBoundingClientRect();
@@ -229,7 +241,7 @@ function GameWorld(){
 	    return droploc;
 	}
 
-	function stackCounter(stack,withremoval){
+	function stackCounter(stack,withremoval){ //counts the total value of a stack object, and potentially also removes the chips of that stack from the html
 		var total = 0;
     	for (let value in stack){
     		for (let i in stack[value]){
@@ -243,10 +255,16 @@ function GameWorld(){
 	}
 
 	function Drop(){
+		/*
+		Handles dropping the chips on top of an answer (droploc)
+		- if not on top of an answer, the chips will be moved back to the players total stack (yours)
+		- chips in the 'yours' stack will also be exchanged so that there are always at least the minimum amount of chips with value 1
+		- a chipstack that is higher than the maximum stack height will also be exchanged
+		*/
 		if(inHand.length > 0){
 		    let droploc = CheckIfInside();
 		    
-		    if (gamestadium == 'main' && droploc !== 'yours'){ // move all betted coins to the hand so that it can be place on the new answer
+		    if (gamestadium == 'main' && droploc !== 'yours'){ // move all already betted coins to the hand so that it can be placed on the new answer
 	        	for(let a = 0; a < answercount; a++){
 	        		for (let value in stackobj[a]){
 	        			for (let m in stackobj[a][value]){
@@ -255,14 +273,14 @@ function GameWorld(){
 	        			}
 	        			stackobj[a][value] = stackobj[a][value].filter(n => n);
 	        		}
-	        		$('#answer'+a).css('border','0px #fff solid');
+	        		$('#answer'+a).css('border','0px #fff solid'); //remove the border from the answers
 	        	}
-	        	$('#answer'+droploc).css('border','2px #fff solid');
+	        	$('#answer'+droploc).css('border','2px #fff solid'); //add a border to the answer that the chips are dropped on
 	        } else {
 				for(let i in stackobj){
 					if(i !== 'yours'){
 						if (stackCounter(stackobj[i],false) == 0){
-							$('#answer'+i).css('border','0px #fff solid');
+							$('#answer'+i).css('border','0px #fff solid'); //if all chips are removed from the answer, remove its border
 						}
 					}
 				}
@@ -280,7 +298,7 @@ function GameWorld(){
 				}
 				inHand[k].chip.style.zIndex = String(stackobj[droploc][inHand[k].val].length);
 
-				if(droploc !== 'yours'){
+				if(droploc !== 'yours'){ //place the chips in fixed locations inside the answer element
 					document.getElementById('chipcontainer'+droploc).appendChild(inHand[k].chip);
 					inHand[k].chip.style.top = `${30 - stackobj[droploc][inHand[k].val].length * dist}px`;
 			        inHand[k].chip.style.left = `${stackplace*45 + 40}px`;
@@ -291,7 +309,7 @@ function GameWorld(){
 		    		inHand[k].chip.style.left = (stackplace*45+40)+'px';
 		    		$('#fiches_inhand').css('opacity','1');
 			    }
-		        stackobj[droploc][inHand[k].val].push(inHand[k]);
+		        stackobj[droploc][inHand[k].val].push(inHand[k]); //store the chips in the stackobj element
 		    }
 
 		    var betOverflow = stackCounter(stackobj[droploc]) - Math.ceil(score * maxbetfraction);
@@ -324,19 +342,11 @@ function GameWorld(){
 			    				for(let b = 0; b < -betOverflow; b++){
 			    					ChipAdder(unitstack,'chipcontainer'+droploc, 'player',droploc, stackobj[droploc][1].length);
 			    				}
-			    				console.log(stackobj[droploc]);
 			    				added_overflow = true;
 			    			} 
 			    		}
 		    		}
 		    	}
-		    	/*for (let value in stackobj[droploc]){
-
-		    		stackobj[droploc][value].length = 0;
-		    	}
-
-		    	ChipAdder(stacksCalculator(Math.ceil(score * maxbetfraction)),'answer'+droploc, 'player',droploc);*/
-		    			    		console.log(stackCounter(stackobj[droploc]));
 	        }
 
 
@@ -412,19 +422,18 @@ function GameWorld(){
 	}
 	
 	this.initializeView = function(){
-		$('#timer_area').hide();
-		$('#question_area').hide();
-		$('#admin_area').hide();
+		//$('#question_area').hide();
+		//$('#admin_area').hide();
 	}
 	
 	var showedqr = false;
 	this.showAreasBasedOnRoleAndState = function(state,stateParams){
-		$('.element').hide();
+		//$('.element').hide();
 
 		/*All users, all states*/
 		$('#controlpanel_area').show();
-		$('#generic_options_area').show();
 		$('#admin_open_question').hide();
+		$('#question_area').hide();
 		
 		if(state==null && stateParams.leaderboard && $('#btn_show_leaderboard').attr('show_leaderboard')==null){				
 				state = savedState;
@@ -432,28 +441,18 @@ function GameWorld(){
 		
 		/*All users, some states*/
 		if(state==null && stateParams.leaderboard && $('#btn_show_leaderboard').attr('show_leaderboard')){
-				$('#leaderboard_area').hide();
 				savedState = curState;
 		}
-		else if(state==states.TEST_QUESTION || state==states.SHOW_QUESTION || state==states.SHOW_ANSWER || state==states.SHOW_VIDEO || state==states.PRESCENARIO || state==states.POSTSCENARIO){
-			$('#timer_area').show();
+		else if(state==states.SHOW_QUESTION || state==states.SHOW_ANSWER || state==states.SHOW_VIDEO){
 			if(userType == 'admin'){
 				$('#question_area').show();
 				if(state==states.SHOW_QUESTION && stateParams.type == 'open'){
 					$('#admin_open_question').css('display','flex');
 				}
 			}
-			if(state==states.PRESCENARIO){
-				$('#question_area .question').html('');
-				$('#question_area .answers').html('');
-			}
 		}
-		else if(state==states.START || state==states.STARTING || state==states.END || state==states.START_ENDGAME || state==states.BALLROLLING){
-			if(state==states.BALLROLLING && userType=='official_participant'){
-				//$('#question_area').show();
-			} else {
-				$('#wait_area').show();
-			}
+		else if(state==states.START || state==states.STARTING || state==states.END || state==states.START_ENDGAME){
+			$('#wait_area').show();
 		}
 		
 
@@ -494,12 +493,15 @@ function GameWorld(){
 						$('#amount_inhand').html(score);
 					}
 				} 
+				console.log('hier');
 				if(!added_chips && score !== undefined && stateParams.answers){
+					console.log('hier2');
 					if(stateParams.answers.length > 0){
-						if (state==states.SHOW_QUESTION){
+						if (state==states.SHOW_QUESTION || state==states.STARTING){
 							temp_bet = 0;
 							$('#amount_inhand').html(score);
 						}
+						console.log(score);
 						ChipAdder(stacksCalculator(score - temp_bet),'fiches_inhand','player','yours');
 						if(state == states.SHOW_ANSWER || state == states.SHOW_VIDEO){
 							$('#fiches_inhand').css("opacity","0.5");
@@ -508,7 +510,6 @@ function GameWorld(){
 				}
 			}
 			/*All states*/
-			$('#participant_area').show();
 			$('#player_console').hide();
 			if (state!=states.START && state!=states.STARTING){
 				$('#player_console').show();
@@ -527,16 +528,12 @@ function GameWorld(){
 			$('#btn_admin_reveal_answer').hide();
 			$('#btn_admin_next_question').hide();
 			$('#stoplicht').hide();
-			//$('#btn_admin_starting_quiz').hide();
+
 			if(state==states.START){
 				$('#btn_admin_end_quiz').hide();
 				$('#btn_admin_start_quiz').css('display','flex');
 				$('#btn_leave_quiz').css('display','flex');
-			}/* else if (state==states.STARTING){
-				//$('#btn_admin_end_quiz').hide();
-				
-				//$('#btn_admin_starting_quiz').css('display','flex');
-			}*/
+			}
 			if(state==states.SHOW_QUESTION){
 				$('#admin_area_after_start').show();
 				if(stateParams.vid != ''){
@@ -548,32 +545,13 @@ function GameWorld(){
 				$('#btn_admin_bekijk_toelichting').css('display','flex');
 				$('#stoplicht').css('display','flex');
 			}
-			else if(state==states.START || state==states.STARTING || state==states.END || state==states.TEST_QUESTION){
-				$('#admin_area_before_start').show();
-			}
 			else if(state==states.SHOW_VIDEO){
-				//$('#admin_area_show_answer').show();
-			
-				if(stateParams && stateParams.test) $('#admin_area_before_start').show();
-				else $('#admin_area_after_start').show();
 				$('#btn_admin_reveal_answer').css('display','flex');
 				$('#btn_admin_reveal_answer').html('sluit video en toon antwoord');
 			} else if(state==states.SHOW_ANSWER){
 				$('#btn_admin_next_question').css('display','flex');
-			} else if(state==states.START_ENDGAME || state==states.PRESCENARIO || state==states.POSTSCENARIO){
-				$('#admin_area_endgame').show();
-				$('#btn_admin_start_endgame').hide();
-				$('#btn_admin_spin').hide();
-				$('#btn_admin_next_scenario').hide();
-				if(state==states.START_ENDGAME){
-					$('#btn_admin_start_endgame').show();
-				} else if(state==states.POSTSCENARIO){
-					$('#btn_admin_next_scenario').show();
-				} else {
-					$('#btn_admin_spin').show();
-				}
 			}
-		} else if(userType=='spectator' && showedqr == false && state!==states.START_ENDGAME && state!==states.PRESCENARIO && state!==states.POSTSCENARIO && state!==states.BALLROLLING){
+		} else if(userType=='spectator' && showedqr == false){
 			$('#table_area').show();
 			$('#qr_wrapper').css('display','flex');
 			$('#btn_leave_quiz').css('display', 'flex');
@@ -589,16 +567,6 @@ function GameWorld(){
 	}
 	
 	this.bindViewEvents = function(){
-		$('#btn_admin_test_question').click(function(e){
-			socket.emit('quiz_admin_test_question');
-			return false;
-		});
-
-		/*$('#destroy').click(function(e){
-			socket.emit('destroy');
-			return false;
-		});*/
-		
 		$('#btn_admin_start_quiz').click(function(e){
 			socket.emit('quiz_admin_start_quiz');
 			return false;
@@ -638,21 +606,6 @@ function GameWorld(){
 			return false;
 		});
 
-		$('#btn_admin_start_endgame').click(function(e){
-			socket.emit('start_endgame');
-			return false;
-		});
-
-		$('#btn_admin_spin').click(function(e){
-			socket.emit('spin_endgame');
-			return false;
-		});
-
-		$('#btn_admin_next_scenario').click(function(e){
-			socket.emit('next_scenario');
-			return false;
-		});
-
 		$('#btn_admin_end_quiz').click(function(e){
 			if(confirm("Are you sure you want to end the quiz?")){
 				if(confirm("Are you really sure?")){
@@ -686,44 +639,10 @@ function GameWorld(){
 			return false;
 		});
 		
-		$('#btn_show_leaderboard').click(function(gameWorld){
-			return function(e){
-				var show = $('#btn_show_leaderboard').attr("show_leaderboard");
-
-				if(show!=null){
-					$('#leaderboard_area').hide();
-					$('#btn_show_leaderboard').attr("show_leaderboard",null);
-					$('#btn_show_leaderboard').html('scores');
-				}
-				else{
-					//socket.emit('quiz_get_leaderboard');
-					socket.emit('update_leaderboard');
-					$('#btn_show_leaderboard').attr("show_leaderboard",true);
-					$('#btn_show_leaderboard').html('Hide scores');				
-				}
-				
-				//gameWorld.showAreasBasedOnRoleAndState(null,{leaderboard:true});
-			};
-		}(this)
-		);
-		
 	}
 	
 	this.bindSocketEvents = function(){
 		let connectionLostTimeout;
-
-		/*ping option
-		// Custom timer to detect connection loss
-		let pingCheckTimeout;
-
-		// This event is triggered whenever a ping is received
-		socket.io.on('ping', () => {
-		  console.log('Ping received from the server');
-		  clearTimeout(pingCheckTimeout);  // Clear any existing timeout
-		  pingCheckTimeout = setTimeout(() => {
-			alert('Server is not responding. Please refresh the page.');
-		  }, 5000);  // Show alert if no ping response in 5 seconds
-		});*/
 
 		socket.on('connect', () => {
 			clearTimeout(connectionLostTimeout); // Clear any previous timeout when reconnected
@@ -769,11 +688,6 @@ function GameWorld(){
 				console.log(data);
 				var state = data.state;	
 				var stateParams = data.stateParams;
-
-				//if receiving updates from the server, hide the leaderboard
-				if($('#btn_show_leaderboard').attr('show_leaderboard')){
-					$('#btn_show_leaderboard').trigger("click");				
-				}
 				
 				gameWorld.showAreasBasedOnRoleAndState(state,stateParams);
 				curState = state;
@@ -805,34 +719,13 @@ function GameWorld(){
 				else if(state == states.START_ENDGAME){
     				gameWorld.startEndgame(stateParams);
 				} 
-				else if(state == states.PRESCENARIO){
-					gameWorld.setPrescenario(data);
-				}
-				else if(state == states.POSTSCENARIO){
-					gameWorld.setPrescenario(data);
-				}
-				else if(state == states.BALLROLLING){
-					if(userType == 'official_participant'){
-						gameWorld.setPrescenario(data);
-					} else {
-						gameWorld.setBallrolling(data);
-					}
-				}
 			};
 		}(this)
 		);
 
 		socket.on('new_leaderboard',function(gameWorld){
 			return function(data){
-				if (userType == 'spectator'){
-					measures = data[1];
-					var measurebets = [];
-					for (m in measures){
-						measurebets.push(0);
-					}
-					var html = "";
-					html += "<div>";
-					
+				if (userType == 'spectator'){			
 					var types = ['official'];
 					var names = {
 						'official' : 'Live-score',
@@ -843,29 +736,6 @@ function GameWorld(){
 						var name = names[participantsType];
 						var elements = data[0][participantsType];
 						
-						html += "<h1>" + name + "</h1>";				
-						html += "<table class='table table-hover table-condensed table-striped table-bordered' style='width:80%; font-size: 1.8em; border-color:red;'>";
-						
-						html += "<thead>";
-						html += "<tr>";
-						html += "<th style='width:50px; border-color:red;' >" + "Rank" + "</th>" + "<th style='border-color:red;'>" + "Speler" + "</th>" + "<th style='border-color:red;'>" + "Score" + "</th>";
-						if(curState==states.PRESCENARIO || curState==states.POSTSCENARIO || curState==states.BALLROLLING){
-							var i = 0;
-							for (m in measures){
-								i++;
-								html+= "<th style='border-color:red;'>M"+i+"</th>";
-							}
-							html+="<th style='background-color:red; border-color:red;'></th><th style='background-color:black; border-color:red;'></th>";
-						} else if (curState==states.END){
-							html += "<th style='border-color:red;'></th><th style='border-color:red;'></th>";
-						} else {
-							html += "<th style='border-color:red;'>Antwoord</th><th style='border-color:red;'>Inzet</th>";
-						}
-						html += "</tr>";
-						html += "</thead>";
-						
-						html += "<tbody>";
-						
 						for(var j = 1; j < 7; j++){ //spelers leeg maken
 							$('#playerinfo'+j).html('');
 							$('#fichebox'+j).html('');
@@ -875,96 +745,35 @@ function GameWorld(){
 							var p = elements[elem];
 							j++;
 							if (p.issleeping == false){
-								var colorStyle = "background-color: green";
 								if(p.isLastCorrect === true){
-									colorStyle = "background-color: rgb(133, 255, 135)";
+									//potentially show on the spectator screen that the last answer was correct
 								}
 								else if(p.isLastCorrect === false){
-									colorStyle = "background-color: rgb(255, 162, 162)";
-								}
-								
-								if(curState==states.PRESCENARIO || curState==states.POSTSCENARIO || curState==states.END || curState==states.BALLROLLING){
-									colorStyle = "background-color: green";
+									//potentially show on the spectator screen that the last answer was wrong
 								}
 
-								html += "<tr style='"+colorStyle+"; height:56px; border-color:red;'>";
-								var resp = '';
-								if(p.response){ // if an answer was selected, show a picture of a card facing down
-									resp = '<img src="../content/KlimaatCasino/card.png" width="30" />';
-								}
 								var betv = '';
 								if(p.betValue > 0){
 									betv = p.betValue;
 								}
-								html += "<td>" + p.rank + "</td>" + "<td>" + p.team + "</td>" + "<td>" + p.score + "</td>";
+
 								if (j < 7){
 									$('#playerinfo'+j).html(p.team+'<br /><img src="content/bouwer.png" width="50" class="icon player'+j+'" />');
 									var counter = p.score;
 									ChipAdder(stacksCalculator(counter), 'fichebox'+j);
 
 									if(p.response){
-										const chip = document.createElement("div");
-										chip.className = 'cardbox player'+j;
-										chip.innerHTML = '<img src="content/KlimaatCasino/card.png" width="30" /><div style="position: absolute; left: 35px; top:10px; z-index:5;">'+p.betValue+'</div>';
-										$('#fichebox'+j).append(chip);
+										const card = document.createElement("div");
+										card.className = 'cardbox player'+j;
+										card.innerHTML = '<img src="content/KlimaatCasino/card.png" width="30" /><div style="position: absolute; left: 35px; top:10px; z-index:5;">'+p.betValue+'</div>';
+										$('#fichebox'+j).append(card);
 									}
 								} else {
 									$('#playerinfo6').html('+ en nog '+(j-5)+' anderen');
 								}
-								if(curState==states.PRESCENARIO || curState==states.POSTSCENARIO || curState==states.BALLROLLING){
-									var i = 0;
-									for (m in measures){
-										i++;
-										resp = '';
-										//console.log(typeof p.response[i].betval);
-										console.log(p);
-										if(typeof p.response[i] !== 'undefined' && typeof p.response[i] !=='string'){
-											var responseval = p.response[i].betval;
-											measurebets[i-1] += responseval;
-											$('#measurebet'+i).html(measurebets[i-1]);
-											console.log('measurebet'+i+': '+measurebets[i-1]);
-											if (data[1][m].unlocked == true){
-												$('#measuretext'+i).css('color','yellow');
-												$('#measurebet'+i).html(measures[m].currentcost);
-											}
-											if(responseval > 0){
-												resp += responseval;
-											}
-										}
-										html+= "<td>"+resp+"</td>";
-									}
-									i++;
-									resp = '';
-									if(typeof p.response[i] !== 'undefined'){
-										var responseval = p.response[i].betval;
-										if(responseval > 0){
-											resp += responseval;
-										}
-									}
-									html+= "<td>"+resp+"</td>";
-									i++;
-									resp = '';
-									if(typeof p.response[i] !== 'undefined'){
-										var responseval = p.response[i].betval;
-										if(responseval > 0){
-											resp += responseval;
-										}
-									}
-									html+= "<td>"+resp+"</td>";
-								} else if (curState==states.END){
-									html += "<td></td><td></td>";
-								} else {
-									html +=  "<td>" + resp + "</td>" + "<td>" + betv + "</td>";
-								}
-								html += "</tr>";
 							}
 						}
-						html += "</tbody>";
-						
-						html += "</table><br /><br /><br />";
 					}
-					
-					//$('#scores').html(html);
 				} else if (userType == 'admin'){
 					var curreceived = [];
 					var bettedplayerIDs = [];
@@ -1081,10 +890,6 @@ function GameWorld(){
 						}
 					    $("#results").show();
 					}
-				} else if (userType == 'official'){
-					if(curState==states.PRESCENARIO || curState==states.POSTSCENARIO){
-						//check unlocks?
-					}
 				}
 			};
 		}(this)
@@ -1110,145 +915,15 @@ function GameWorld(){
 				height: 200
 			});
 		}
-		/*this.setWaitStatus('Get ready! <div id="destroysession">DESTROY!</div>');
-		$('#destroysession').click(function(e){
-			socket.emit('refresh_me', localStorage.getItem('uniqueId'));
-			socket.removeAllListeners();  // Remove all event listeners
-  			socket.disconnect(true);
-			console.log('refreshing socket...');
-			location.reload();
-			return false;
-		});*/
+		added_chips = false;
 	}
 	
 	this.starting = function(stateParams){
 		this.setWaitStatus('Starting... Good luck and have fun!');
-		$('#endgame').html('');
 		$('#qr_area').html('');
 		$('#questiontext').html('');
 	}
 	
-	setBetarea = function(score){
-		$('#player_console').show();
-		var maxbet = Math.ceil(score * maxbetfraction);
-		var myanstot = 0; //the total betvalue, in case of refresh
-		if(userType === 'official_participant' && curState === states.PRESCENARIO){
-			for (let i in selectedAnswerId){
-				myanstot += selectedAnswerId[i].betval;
-			}
-		}
-		betValue += myanstot;
-		
-		var betarea = '<input type="submit" id="bet1" value="1" style="width: 40px; color: black;';
-		if((maxbet - myanstot) < 1){
-			betarea += 'display: none;';
-		}
-		betarea += '" /><input type="submit" id="bet10" value="10" style="width: 53px; color: black;';
-		if((maxbet - myanstot) < 10){
-			betarea += 'display: none;';
-		}
-		betarea += '"/>';
-		$('#question_area .bet').html(' inzetten: '+betarea);
-
-		$('#bet1').click(function() {
-			if(userType === 'official_participant' && (curState === states.SHOW_QUESTION || curState === states.PRESCENARIO)){
-				if(curState == states.SHOW_QUESTION || selectedMeasure != ''){
-					betValue += 1;
-					if (betValue >= maxbet){
-					$(this).css('display', 'none');
-					}
-					if (betValue >= (maxbet - 9)){
-					$('#bet10').css('display', 'none');
-					}
-					if(betValue > maxbet){
-						betValue = maxbet;
-					}
-				}
-				$('#totalbet').html(betValue); //update betted value displayed
-				// Check if user is an official_participant or unofficial_participant and if the current state is SHOW_QUESTION or TEST_QUESTION
-				if (curState == states.PRESCENARIO && selectedMeasure != ''){
-					selectedAnswerId[selectedMeasure].betval++;
-					$('#bet_m'+selectedMeasure).html(selectedAnswerId[selectedMeasure].betval+'&nbsp;&nbsp;&nbsp;<img id="cancel'+selectedMeasure+'" src="content/KlimaatCasino/cross.png" width="20" />');
-					for (let i in selectedAnswerId){
-						$('#cancel'+i).click(function() {
-							betValue -= selectedAnswerId[i].betval;
-							selectedAnswerId[i].betval = 0;
-							$('#bet_m'+i).html("");
-							if (betValue < 0){
-								betValue = 0;
-							}
-							if ((maxbet - betValue) > 0){
-								$('#bet1').css('display', 'inline');
-								if ((maxbet - betValue) >= 10){
-									$('#bet10').css('display', 'inline'); 
-								}
-							}
-							// Send socket event with answerId and betValue
-							socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
-							socket.emit('update_leaderboard');
-						}
-						);
-					}
-				}
-				if(curState == states.SHOW_QUESTION || selectedMeasure != ''){
-					// Send socket event with answerId and betValue
-					socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
-					socket.emit('update_leaderboard');
-				}
-			}
-		});
-		$('#bet10').click(function() {
-			if(userType === 'official_participant' && (curState === states.SHOW_QUESTION || curState === states.PRESCENARIO)){
-				// Get the value of 'bet' input field
-				//var betValue = $(this).val();
-				if(curState == states.SHOW_QUESTION || selectedMeasure != ''){
-					betValue += 10;
-					if (betValue >= maxbet){
-					$('#bet1').css('display', 'none');
-					}
-					if (betValue >= (maxbet - 9)){
-					$(this).css('display', 'none');
-					}
-					if(betValue > maxbet){
-						betValue = maxbet;
-					}
-					$('#totalbet').html(betValue); //update betted value displayed
-				}
-				// Check if user is an official_participant or unofficial_participant and if the current state is SHOW_QUESTION or TEST_QUESTION
-				if (curState == states.PRESCENARIO && selectedMeasure != ''){
-					selectedAnswerId[selectedMeasure].betval+= 10;
-					$('#bet_m'+selectedMeasure).html(selectedAnswerId[selectedMeasure].betval+'&nbsp;&nbsp;&nbsp;<img id="cancel'+selectedMeasure+'" src="content/KlimaatCasino/cross.png" width="20" />');
-					for (let i in selectedAnswerId){
-						$('#cancel'+i).click(function() {
-							betValue -= selectedAnswerId[i].betval;
-							selectedAnswerId[i].betval = 0;
-							$('#bet_m'+i).html("");
-							if (betValue < 0){
-								betValue = 0;
-							}
-							if ((maxbet - betValue) > 0){
-								$('#bet1').css('display', 'inline');
-								if ((maxbet - betValue) >= 10){
-									$('#bet10').css('display', 'inline'); 
-								}
-							}
-							// Send socket event with answerId and betValue
-							socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
-							socket.emit('update_leaderboard');
-						}
-						);
-					}
-				}
-
-				if(curState == states.SHOW_QUESTION || selectedMeasure != ''){
-					// Send socket event with answerId and betValue
-					socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
-					socket.emit('update_leaderboard');
-				}
-			}
-		});
-		
-	}
 	let betValue = 0;
 	var temp_answer = 404;
 	var temp_bet = 0;
@@ -1257,6 +932,7 @@ function GameWorld(){
 	let score = 0;
 	var answercolors = {0:'#F2EB17',1:'#B9519F',2:'#64CDF5',3:'#017591'};
 	this.showQuestion = function(stateParams){
+		$('#wait_area').hide();
 		if(curState == states.SHOW_QUESTION){
 			$('#fiches_inhand').css("opacity","1");
 			temp_bet = 0;
@@ -1266,15 +942,10 @@ function GameWorld(){
 		document.body.style.backgroundColor = "";	
 		receivedanswers = [];
 		openquestion = false;	
-		$('#answer_status').html("");
-		if(stateParams.pic!='') $('#question_area .pic').html("<img style='max-width: 500px; width:100%' src='"+stateParams.pic+"' />");
-		else $('#question_area .pic').html('');
 		
 		vidlink = '';
-		//$('#btn_admin_show_video').hide();
 		if(stateParams.vid!==''){
 			vidlink = stateParams.vid;
-			//$('#btn_admin_show_video').show();
 		}
 
 		if(stateParams){
@@ -1291,42 +962,17 @@ function GameWorld(){
     		     selectedAnswerId = false;
     		     socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
     		     
-				setBetarea(score);
-        		
-        		//showing the betted value
-        		var bettedarea = 'Inzet: <span id="totalbet">'+betValue+'</span> <input type="submit" id="min1" value="-1" style="width: 53px; color: black;';
-            bettedarea += '"/>';
-			
-			//bettedarea += '<div id="destroysession">DESTROY!</div>';
-			
-            
-        		$('#question_area .betted').html(bettedarea);
-
-				/*$('#destroysession').click(function(e){
-					socket.emit('refresh_me', localStorage.getItem('uniqueId'));
-					socket.removeAllListeners();  // Remove all event listeners
-					socket.disconnect(true);
-					console.log('refreshing socket...');
-					location.reload();
-					return false;
-				});*/
-
-        		$('#question_area .question').html("Kies je antwoord en zet in!");
+				$('#player_console').show();
         		if(stateParams.bonusrole.includes(temp_role)){
-            		$('#question_area .question').html("Bonusvraag! Dubbele punten verdienen.");
+            		// to do? show in player screen that this question is their bonus question
         		}
-			} else { //this means the state must be show video
-				$('#question_area .betted').html("Je inzet is "+betValue);
-				$('#question_area .question').html("");
-				$('#question_area .bet').html("");
 			}
     	} else { //the user is the admin or spectator
-    	   $('#question_area .question').html('Vraag '+stateParams.curq+'/'+stateParams.totalqs+' - '+stateParams.question);
     	   $('#q_area .questiontext').html('Vraag '+stateParams.curq+'/'+stateParams.totalqs+' - '+stateParams.question);
+    	   $('#question_area .question').html('Vraag '+stateParams.curq+'/'+stateParams.totalqs+' - '+stateParams.question);
     	   $('#video_area').hide();
 		   if (userType=='spectator'){
 			    if (curState==states.SHOW_VIDEO){
-			    	console.log(vidlink);
 					$('#myVideo').html('<video style="height: 100%;" controls id="videotag" ><source src="content/KlimaatCasino/'+ vidlink + '" type="video/mp4">Your browser does not support the video tag.</video>');
 					$('#vidvraagnummer').html('Vraag '+stateParams.curq+'/'+stateParams.totalqs+' - ');
     	   			$('#vidvraag').html('"'+stateParams.question+'"');
@@ -1339,33 +985,6 @@ function GameWorld(){
 				}
 			}
     	}
-
-     $('#min1').click(function() {
-		if(curState == states.SHOW_QUESTION){
-			if (betValue > 0){
-				betValue -= 1;
-			}
-			if ((score - betValue) > 0){
-				$('#bet1').css('display', 'inline');
-				if ((score - betValue) >= 10){
-					$('#bet10').css('display', 'inline');
-					if ((score - betValue) >= 100){
-						$('#bet100').css('display', 'inline');
-						if ((score - betValue) >= 1000){
-							$('#bet1000').css('display', 'inline');
-						}
-					}    
-				}
-			}
-			$('#totalbet').html(betValue);//update betted value displayed
-			// Check if user is an official_participant or unofficial_participant and if the current state is SHOW_QUESTION or TEST_QUESTION
-			if (userType === 'official_participant' && curState === states.SHOW_QUESTION) {
-				// Send socket event with answerId and betValue
-				socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
-				socket.emit('update_leaderboard');
-			}
-		}
-     });
 		
 		answers = stateParams.answers;		
 		var type = stateParams.type;	
@@ -1374,18 +993,7 @@ function GameWorld(){
 		
 	 	if (type == 'open'){
 			openquestion = true;
-			if(userType=='official_participant' && (curState==states.SHOW_QUESTION || curState==states.SHOW_VIDEO  || curState==states.SHOW_ANSWER)){
-				var html = '<div style="color:black;"><input type="text" id="openanswer" maxlength="40"';
-				if (curState==states.SHOW_VIDEO || curState==states.SHOW_ANSWER){
-					html += 'value="'+stateParams.myans+'" disabled';
-				}
-				html+= ' /><input type="submit" value="versturen" id="verzenden" ';
-				if (curState==states.SHOW_VIDEO || curState==states.SHOW_ANSWER){
-					html += 'disabled';
-				}
-				html +=' /></div>';
-				$('#question_area .answers').html(html);
-			} else if (userType=='admin' && (curState==states.SHOW_QUESTION || curState==states.SHOW_VIDEO || curState==states.SHOW_ANSWER)){
+			if (userType=='admin' && (curState==states.SHOW_QUESTION || curState==states.SHOW_VIDEO || curState==states.SHOW_ANSWER)){
 				goodanswers = [];
 				wronganswers = [];
 				if (curState==states.SHOW_VIDEO){
@@ -1442,14 +1050,11 @@ function GameWorld(){
 					createAnswerList('wrong', [], wronganswers); //insert standard wrong answers
 					createAnswerList('pending', [], receivedanswers);
 				}
-				var html = '<br /><table style="font-size: 18px;"><tr><td><b>Goed</b></td><td><b>Ingestuurde antwoorden</b></td><td width="150"><b>Fout</b></td></tr>';
-				html += '<tr><td><div id="good"></div></td><td style="border-left:1px white solid;border-right:1px white solid;"><div id="pending"></div></td><td><div id="wrong"></div></td></tr></table>';
-				//$('#question_area .answers').html(html);
+
 				createAnswerList('good', answers, goodanswers);
 				createAnswerList('wrong', [], wronganswers); // insert standard wrong answers
 			} 
 		} else {
-			$('#question_area .answers').html('');
 			for(var i=0;i<answers.length;i++){
 				var curLetter = String.fromCharCode(65 + i);
 				var answerId = (i+1);
@@ -1521,41 +1126,15 @@ function GameWorld(){
 			$('#verzenden2').css('background-color','blue');
 			$('#verzenden2').html('verzenden');
 		});
-
-		var d = new Date();
-		d.setSeconds(d.getSeconds()+stateParams.time);
-		
-		$('#timer').countdown({
-			until: d,
-			format: 'S',
-			labels: ['', '', '', '', '', '', ''],
-			labels1: ['', '', '', '', '', '', ''],
-			onExpiry: function(){				
-				$(this).countdown('destroy');
-			}
-		});
 	}
 
 	var correctAnswerId = 345543523;
 	this.showAnswer = function(stateParams){
-		this.setWaitStatus('Waiting for next question...');
-		$('#timer').countdown('destroy');
-	
 		correctAnswerId = stateParams.answerId;
-		var isTest = stateParams.test;
 		var answers = stateParams.answers;
-		if (stateParams.type == 'open' && userType == 'official_participant'){
-			$('#verzenden').prop('disabled', true);
-			$('#openanswer').prop('disabled', true);
-		}
-		
 		var correctAnswer = false;
 		if(correctAnswerId == selectedAnswerId){
 			correctAnswer = true;
-		}
-				
-		if(!correctAnswer && selectedAnswerId!=false){	
-			$('#question_area .answer_'+selectedAnswerId).css("background-color","rgb(255, 162, 162)");	
 		}
 
 		for(i=0;i<answers.length;i++){
@@ -1573,227 +1152,6 @@ function GameWorld(){
 				html += allgood[i] + ', ';
 			}
 			$("#q_area .answrs").html(html.substring(0,html.length-2));
-		}
-		else{
-			$('#answer_status').html("<span style='color:#f00'>Time over!</span>");
-		}
-	}
-
-	this.startEndgame = function(stateParams){
-		this.setWaitStatus('Maak je klaar voor de endgame!');
-		$('#endgame').html('');
-	}
-
-	this.getRoulette = function(disasters, scenario){
-		var rouletteslices = [
-			[["green"],[") 0deg 9.73deg"]], 
-			[["red"],[") 9.73deg 19.45deg"]],
-			[["black"],[") 19.45deg 29.18deg"]],
-			[["red"],[") 29.18deg 38.91deg"]],
-			[["black"],[") 38.91deg 48.63deg"]],
-			[["red"],[") 48.63deg 58.36deg"]],
-			[["black"],[") 58.36deg 68.09deg"]],
-			[["red"],[") 68.09deg 77.81deg"]],
-			[["black"],[") 77.81deg 87.54deg"]],
-			[["red"],[") 87.54deg 97.27deg"]],
-			[["black"],[") 97.27deg 107deg"]],
-			[["red"],[") 107deg 116.72deg"]],
-			[["black"],[") 116.72deg 126.45deg"]],
-			[["red"],[") 126.45deg 136.18deg"]],
-			[["black"],[") 136.18deg 145.9deg"]],
-			[["red"],[") 145.9deg 155.63deg"]],
-			[["black"],[") 155.63deg 165.36deg"]],
-			[["red"],[") 165.36deg 175.08deg"]],
-			[["black"],[") 175.08deg 184.81deg"]],
-			[["red"],[") 184.81deg 194.54deg"]],
-			[["black"],[") 194.54deg 204.27deg"]],
-			[["red"],[") 204.27deg 213.99deg"]],
-			[["black"],[") 213.99deg 223.72deg"]],
-			[["red"],[") 223.72deg 233.45deg"]],
-			[["black"],[") 233.45deg 243.17deg"]],
-			[["red"],[") 243.17deg 252.9deg"]],
-			[["black"],[") 252.9deg 262.63deg"]],
-			[["red"],[") 262.63deg 272.36deg"]],
-			[["black"],[") 272.36deg 282.08deg"]],
-			[["red"],[") 282.08deg 291.81deg"]],
-			[["black"],[") 291.81deg 301.54deg"]],
-			[["red"],[") 301.54deg 311.26deg"]],
-			[["black"],[") 311.26deg 320.99deg"]],
-			[["red"],[") 320.99deg 330.72deg"]],
-			[["black"],[") 330.72deg 340.45deg"]],
-			[["red"],[") 340.45deg 350.17deg"]],
-			[["black"],[") 350.17deg 360deg"]]
-		]
-		var vakje = 1;
-
-		for(m in measures){
-			if(measures[m].unlocked == true){
-				for(e in measures[m].effects){
-					if (measures[m].effects[e][1] == "="){
-						disasters[measures[m].effects[e][0]].risks[scenario] = measures[m].effects[e][2];
-					} else if (measures[m].effects[e][1] == "/"){
-						disasters[measures[m].effects[e][0]].risks[scenario] = Math.round(disasters[measures[m].effects[e][0]].risks[scenario] / measures[m].effects[e][2]);
-					}
-				}
-			}
-		}
-		for (d in disasters){
-			for (let step = 0; step < disasters[d].risks[scenario]; step++) {
-				rouletteslices[vakje][0] = disasters[d].color;
-				vakje++;
-			}
-		}
-		var roulettebackground = '';
-		for (slice in rouletteslices){
-			roulettebackground += 'var(--custom-'+rouletteslices[slice][0] + rouletteslices[slice][1] + ', ';
-		}
-		roulettebackground = roulettebackground.substring(0, roulettebackground.length - 2);
-		return roulettebackground;
-	}
-	var scenario;
-	this.setPrescenario = function(data){
-		measures = data.stateParams.measures;
-		betValue = 0;
-		if(userType == 'admin'){
-			console.log('show instructions');
-			$('#endgame').html("<h2>Laat spelers inzetten op maatregelen om de kans op klimaatrampen te verminderen. Als er niet meer ingezet wordt, roep 'rien ne va plus' en klik op draaien!</h2>");
-		} else if(userType == 'spectator'){
-			$('#qr').html("");
-			showedqr = false;
-			scenario = data.stateParams.scenario;
-			var html = '<h2>Scenario '+(scenario[0]+1)+': het is het jaar '+scenario[1]+'</h2><table style="margin:10px;"><tr><td><h2>Rampen:</h2>';
-			var disasters = data.stateParams.disasters;
-			for (d in disasters){
-				html += '<div style="background-color:var(--custom-'+disasters[d].color+'); padding-left:2px; padding-right:2px; text-align:center;"><h3>'+disasters[d].name+'</h3></div>';
-			}
-			html += '<h2>Levens: <span id="lives">'+data.stateParams.lives+'</span> / '+data.stateParams.totallives+'</h2>';
-			html += '</td><td width="10"></td><td><div id="spinnednumber" style="text-align:center;"></div><div class="roulette-container"><div class="roulette-wheel" id="roulette-wheel"><div class="numbers-container"></div></div></div><script src="js/game/roulette.js"></script></td><td width="10"></td>';
-			html += '<td><h2>Maatregelen:</h2>';
-			var i = 0;
-			for (m in measures){
-				i++;
-				html += '<div id="measuretext'+i+'" style="border: 1px #fff solid; padding-left:2px; padding-right:2px;"><h3>M'+i+'. '+m+'(<span id="measurebet'+i+'">0</span>/'+measures[m].currentcost+')</h3></div>';
-
-			}
-			html += '</td></tr></table>';
-			$('#endgame').html(html);
-			$('#roulette-wheel').css("background","conic-gradient("+this.getRoulette(disasters, scenario[0])+")");
-			if(typeof data.stateParams.rouletteresult != 'undefined'){
-				$('#spinnednumber').html('<h2>'+data.stateParams.rouletteresult+'</h2');
-				$('#spinnednumber').css("background-color","var(--custom-"+data.stateParams.resultcolor+")");
-			}
-		} else {
-			score = data.stateParams.score;
-			var html = '<table>';
-			var i = 0;
-
-			selectedAnswerId = data.stateParams.myans;
-			if(typeof selectedAnswerId !== 'object'){
-				selectedAnswerId = {}
-				var c = 0;
-				for(m in measures){
-					c++;
-					selectedAnswerId[c] = {name:m, betval: 0};
-				}
-				c++;
-				selectedAnswerId[c] = {name: 'rood', betval: 0};
-				c++;
-				selectedAnswerId[c] = {name: 'zwart', betval: 0};
-			}
-			alreadyBetted = function(i, betv, mtype='measure'){
-				var alreadybetted = '';
-				if(betv > 0 && (measures[m].unlocked == false || mtype == 'color')){ 
-					alreadybetted = betv;
-					if(data.state != states.BALLROLLING && data.state != states.POSTSCENARIO){
-						alreadybetted +='&nbsp;&nbsp;&nbsp;<img id="cancel'+i+'" src="content/KlimaatCasino/cross.png" width="20" />';
-					}
-				}
-
-				var $div = $("<div>", { id:"bet_m"+i})
-					.attr("style","font-size:0.6em; padding-top: 10px; border: margin-top: 2px; overflow:hidden; cursor: pointer; cursor: hand; min-height:43px; min-width:100px;")
-					.append("<span/>")
-					.addClass("something")
-					.html(alreadybetted);
-
-				$("#question_area .betted").append($div);
-				$('#cancel'+i).click(function() {
-						betValue -= selectedAnswerId[i].betval;
-						selectedAnswerId[i].betval = 0;
-						$('#bet_m'+i).html("");
-						if (betValue < 0){
-							betValue = 0;
-						}
-						if ((score - betValue) > 0){
-							$('#bet1').css('display', 'inline');
-							if ((score - betValue) >= 10){
-								$('#bet10').css('display', 'inline'); 
-							}
-						}
-						// Send socket event with answerId and betValue
-						socket.emit('quiz_send_answer', { answerId: selectedAnswerId, bet: betValue });
-						socket.emit('update_leaderboard');
-					});			
-			}
-
-			$("#question_area .answers").html("");
-			$('#question_area .betted').html("");
-			for (m in measures){
-				i++;
-				if(measures[m].unlocked == false){
-					var $div = $("<div>", { measure:i })
-						.attr("style","font-size:1.5em; padding-top: 10px; border: 1px solid; margin-top: 2px; overflow:hidden; cursor: pointer; cursor: hand; ")
-						.addClass("measure_"+i)
-						.append("<span/>")
-						.text("M"+i);
-						$div.click(function(){
-								selectedMeasure = $(this).attr("measure");
-								$('#question_area .answers div').css("background-color","inherit");			
-								$(this).css("background-color","rgb(255, 255, 162)");
-						});
-					$("#question_area .answers").append($div);	
-					alreadyBetted(i, selectedAnswerId[i].betval);
-				}
-			}
-			i++;
-			var $div = $("<div>", { measure:i })
-					.attr("style","font-size:1.5em; padding-top: 10px; border: 1px solid; margin-top: 2px; overflow:hidden; cursor: pointer; cursor: hand; ")
-					.addClass("measure_"+i)
-					.append("<span/>")
-					.text("Rood");
-					
-					$div.click(function(){
-							selectedMeasure = $(this).attr("measure");
-							
-							$('#question_area .answers div').css("background-color","inherit");			
-							$(this).css("background-color","rgb(255, 255, 162)");
-					});
-			$("#question_area .answers").append($div);	
-			alreadyBetted(i, selectedAnswerId[i].betval, 'color');		
-			i++;
-			var $div = $("<div>", { measure:i })
-					.attr("style","font-size:1.5em; padding-top: 10px; border: 1px solid; margin-top: 2px; overflow:hidden; cursor: pointer; cursor: hand; ")
-					.addClass("measure_"+i)
-					.append("<span/>")
-					.text("Zwart");
-					
-					$div.click(function(){
-							selectedMeasure = $(this).attr("measure");
-							
-							$('#question_area .answers div').css("background-color","inherit");			
-							$(this).css("background-color","rgb(255, 255, 162)");
-						});
-			$("#question_area .answers").append($div);		
-			alreadyBetted(i, selectedAnswerId[i].betval, 'color');
-			if(data.state != states.BALLROLLING && data.state != states.POSTSCENARIO){
-				setBetarea(score);
-				console.log(selectedAnswerId);
-			}
-		}
-	}
-
-	this.setBallrolling = function(data){
-		if(userType == 'spectator' || userType == 'admin'){
-			this.setWaitStatus('De bal rolt!');
 		}
 	}
 

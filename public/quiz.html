@@ -144,16 +144,7 @@
 		</style>
 	</head>
 <body style="background-color:#A1CC3A; color: white;">
-<!--
-<div id="destroy">Destroy socket</div>
 
-<div class="element" id="timer_area" style="position: fixed; top:0px; height: 70px; width:100%; background-color: rgb(126, 197, 104); font-size: 2em; color:#fff; padding: 5px;">
-	<div align="center">
-		<div id="timer" style="font-size:1.5em"></div>
-		<div id="answer_status" style="font-size:1.5em"></div>
-	</div>
-</div>
--->
 <div id="video_area" style="width:100vw; height: 100vh; position: absolute; padding: 40px; padding-bottom: 120px; display: none; z-index: 19;">
 	<div id="myVideo">
 		<video style="height: 100%;" controls ><source src="content/KlimaatCasino/frankrijk.mp4" type="video/mp4">Your browser does not support the video tag.</video>
@@ -200,8 +191,6 @@
 
 </div>
 
-
-
 <div class="player player1" id="playerinfo1"></div>
 <div class="fichebox player1" id="fichebox1">
 	<div class="cardbox player1">
@@ -240,10 +229,6 @@
 
 </div>
 
-
-<!--<div style="display:none; padding:20px;" id="qr_wrapper"><div id="qr_zone"></div><div id="qr_text" style="font-size:18px; padding-left: 15px;"></div></div>-->
-
-
 <div class="element" id="wait_area" style="display: table; width:100%; overflow: hidden;">
 	<div style="display: table-cell; vertical-align: middle;">
 		<div id="wait_status" style="font-size: 2em" align="center">
@@ -259,10 +244,6 @@
 	</div>
 </div>
 
-<!--<div id="qr" align="center" style="font-size:1.5em;">
-	
-</div>-->
-<!--<div id="qrcode"  align="center"></div>-->
 <div id="player_console" style="display:none; text-align:center; font-size: 32px;">
 	<div style="padding:15px; overflow:hidden;">
 		<span id="player_console_text"></span>
@@ -292,32 +273,9 @@
 	</div>
 </div>
 
-<div class="element" align="center" id="question_area" style="width: 100%; padding-top: 30px; padding-left:8px; padding-right: 8px">
-	<!--<div class="pic">
-	</div>-->
+<div class="element" align="center" id="question_area" style="width: 100%; padding-top: 30px; padding-left:8px; padding-right: 8px; display: none;">
 	<div class="question" style="font-size: 28px; overflow: hidden; max-height: 200px;">
 	</div>
-	<table>
-	<tr>
-	<td>
-	<div class="answers" style="min-width: 100px; text-align:center;">
-	</div>
-	</td>
-	<td>
-	<div class="betted" style="font-size: 2.5em; margin-left: 10px;">
-	</div>
-	</td>
-	</tr>
-	</table>
-	<br />
-	<div class="bet" style="font-size: 2.5em">
-	</div>
-</div>
-
-<div id="endgame" align="center">
-</div>
-
-<div id="scores" align="center">
 </div>
 
 <div id="btn_admin_start_quiz" style="height:100px; margin: 100px; background-color: #BFBFBF; border:1px #000 solid; display: none; align-items:center; text-align:center; justify-content:center; color:#000;">Start</div>
@@ -336,14 +294,14 @@
 	<div style="width:33%; text-align:center;">
 		<img src="../content/KlimaatCasino/check.png" height="20" />
 		<div style="border:1px #000 solid; text-align:left; padding: 5px; min-height:120px;" id="good">
-			<span>Lijst</span><br/><span>Goede</span><br/><span>Antwoorden</span>
+
 		</div>
 	</div>
-	<div style="width:33%;"> <br/><div id="pending" style="text-align: center;"><span>Lijst</span><br/><span>Ingezonden</span><br/><span>Antwoorden</span><br/></div></div>
+	<div style="width:33%;"> <br/><div id="pending" style="text-align: center;"></div></div>
 	<div style="width:34%; text-align:center; padding-left: 5px;">
 		<img src="../content/KlimaatCasino/cross.png" height="20" />
 		<div style="border:1px #000 solid; text-align:left; padding: 5px; min-height:120px;" id="wrong">
-			<span>Lijst</span><br/><span>Foute</span><br/><span>Antwoorden</span>
+
 		</div>
 	</div>
 </div>
@@ -357,35 +315,6 @@
 </div>
 
 <div id="btn_admin_next_question" style="height:70px; margin-left: 100px; margin-right: 100px; background-color: #fff; border:1px #000 solid; display: none; align-items:center; text-align:center; justify-content:center; color:#000;">volgende vraag</div>
-
-<div style="float:left">
-		<span class="element" id="generic_options_area">
-			<!--<button class="btn btn-default" id="btn_leave_quiz">Leave</button>-->
-		</span>
-	</div>
-	<div style="float:right">
-		<span class="element" id="participant_area">
-			<!--<span id="participant_rank" style="color:#fff; font-size:16px;"></span>-->
-		</span>
-		<span class="element" id="admin_area_before_start">
-			<!--
-			<button class="btn btn-default" id="btn_admin_test_question">Test Question</button>
-			-->
-			<!--<button class="btn btn-default" id="btn_admin_start_quiz">Start Quiz</button>-->
-		</span>			
-		<span class="element" id="admin_area_after_start">
-    		<!--<button class="btn btn-default" id="btn_admin_show_video">Video tonen</button>-->
-    		<!--<button class="btn btn-default" id="btn_admin_reveal_answer">Antwoord tonen</button>-->
-			<!--<button class="btn btn-default" id="btn_admin_next_question">Next Question</button>-->
-			<!--<button class="btn btn-default" id="btn_admin_end_quiz">End Quiz</button>-->
-		</span>
-		<span class="element" id="admin_area_endgame">
-    		<button class="btn btn-default" id="btn_admin_start_endgame">Start Eindspel</button>
-    		<button class="btn btn-default" id="btn_admin_spin">Draaien</button>
-    		<button class="btn btn-default" id="btn_admin_next_scenario">Volgend scenario</button>
-		</span>
-	</div>
-	<div style="clear:both"></div>
 
 <div style="height:60px;">
 	</div>
@@ -402,16 +331,6 @@
 			</div>
 		</div>
 	</div>
-	<!--<div id="btn_admin_starting_quiz" style="height:100%; background-color:#0f0; border:1px #000 solid; width:50%; align-items:center; text-align:center; justify-content:center; display: none;"><div class="spinner"  align="center">
-		  <div class="rect1"></div>
-		  <div class="rect2"></div>
-		  <div class="rect3"></div>
-		  <div class="rect4"></div>
-		  <div class="rect5"></div>
-		</div></div>-->
-</div>
-<div class="element" align="center" id="leaderboard_area" style="width: 100%; padding-top: 80px; padding-bottom: 80px; padding-left:8px; padding-right: 8px">
-	
 </div>
 
 </body>

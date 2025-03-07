@@ -19,7 +19,6 @@ var entities = new Entities();
 var fs = require('fs');
 eval(fs.readFileSync('quiz.js')+'');
 eval(fs.readFileSync('public/content/questions.js')+'');
-eval(fs.readFileSync('public/content/endgame.js')+'');
 
 app.use(express_session);
 app.use(express.static('public'));
@@ -165,43 +164,16 @@ io.on('connection', function(socket){
 			var currentquizzes = quizzes.getAll();
 			socket.emit('index_init_ok',currentquizzes);
 		});
-
-		/*socket.on('refresh_me',function(uniqueId){
-			var currentquizzes = quizzes.getAll();
-			var socketquiz_id = socket.handshake.session.quiz_id;
-			for (cq in currentquizzes){
-				var participants = currentquizzes[cq].getParticipants();
-				for (cp in participants){
-					if(uniqueId == participants[cp].getUniqueId()){ //maak nog werkend voor spectator en admin!
-						var oldpart = participants[cp];
-						var participant = new OfficialParticipant(socket,oldpart.getTeamname(),oldpart.getRole(), 'auto-reconnected');
-						participant.setScore(oldpart.getScore());
-						currentquizzes[cq].removeParticipant(uniqueId);
-						currentquizzes[cq].addParticipant(participant);
-						quizzes.updateLeaderboard(currentquizzes[cq].getId(), quizzes.getLeaderboard(currentquizzes[cq].getId()));
-						//socket.emit('refresh', uniqueId);
-						console.log('refreshed client')
-					}
-				}
-			}
-		});*/
 		
 		/*connect.html*/	
 		socket.on('connect_init',function(data){
 			var quiz_id = session.quiz_id;
-			//var potentialquiz = quizzes.potentialQuiz(data);
+
 			if(session.ready_for_quiz) socket.emit('connect_init_ok_ready_quiz');
 			else if(!quizzes.isValidQuizId(quiz_id)){
-				/*if(potentialquiz !== undefined){
-					console.log('doe een connect');
-				}*/
 				socket.emit('connect_init_nok');
 			}else{
-				var quiz_details = quizzes.getQuizDetails(quiz_id);
-				var quiz_desc = quiz_details.desc;
-				var quiz_pic = quiz_details.pic;
-
-				socket.emit('connect_init_ok',{quiz_desc:quiz_desc,quiz_pic:quiz_pic});
+				socket.emit('connect_init_ok');
 			}
 		});
 		
@@ -209,16 +181,11 @@ io.on('connection', function(socket){
 			var type = data.type;
 			var participant;
 			
-			if(type=='official' || type=='unofficial'){
+			if(type=='official'){
 				var team_name = data.team_name;
 				var role = rolenames[data.role];
 
 				if(team_name) team_name = team_name.toUpperCase();
-				
-				/*if(!quizzes.isValidTeamname(session.quiz_id,team_name)){
-					socket.emit('connect_connect_nok_invalid_team_name');
-					return;
-				}*/	
 				
 				if(type=='official'){
 					var quiz_code = data.quiz_code;
@@ -229,12 +196,8 @@ io.on('connection', function(socket){
 					}
 					else{
 						participant = new OfficialParticipant(socket,team_name.slice(0,10),role, data.browser);
-						//socket.emit('quiz_get_leaderboard');
 					}
 				}
-				/*else if(type=='unofficial'){
-					participant = new UnofficialParticipant(socket,team_name);
-				}*/
 			}
 			else if(type=='spectator'){
 				participant = new Spectator(socket, data.browser);
@@ -243,9 +206,6 @@ io.on('connection', function(socket){
 				var admin_password = data.admin_password;
 				
 				if(admin_password == 'tttt'){
-					if(data.endgame){
-						quizzes.enableEndgame(session.quiz_id);
-					}
 					quizzes.addQuestions(session.quiz_id,data.questions);
 					participant = new Administrator(socket, data.browser);
 				} else if(quizzes.isValidAdminPassword(session.quiz_id,admin_password)){
@@ -277,7 +237,6 @@ io.on('connection', function(socket){
 			participant.updateSocket(socket);
 			quizzes.sendUpdates(participant);
 			var leaderboard = quizzes.getLeaderboard(session.quiz_id);
-			//socket.emit('quiz_leaderboard',leaderboard);
 			socket.emit('new_leaderboard', leaderboard);
 		});
 		
@@ -305,7 +264,6 @@ io.on('connection', function(socket){
 		socket.on('quiz_leave_quiz',function(data){
 			quizzes.removeParticipant(session);
 			var leaderboard = quizzes.getLeaderboard(session.quiz_id);
-			//socket.emit('quiz_leaderboard',leaderboard);
 			session.ready_for_quiz = false;
 			session.participantId = false;
 			socket.emit('quiz_init_nok');
@@ -314,7 +272,6 @@ io.on('connection', function(socket){
 		socket.on('quiz_get_leaderboard',function(data){
 			if(!session.ready_for_quiz){
 				socket.emit('quiz_init_nok');	
-				console.log('quiz_init_nok leaderboard');	
 				return;
 			}
 			
@@ -323,7 +280,6 @@ io.on('connection', function(socket){
 					
 			var leaderboard = quizzes.getLeaderboard(session.quiz_id);
 			socket.emit('quiz_leaderboard',leaderboard);
-			console.log('quiz_leaderboard from quiz_get_leaderboard');
 		});
 		
 		/*admin functions*/
@@ -335,21 +291,9 @@ io.on('connection', function(socket){
 			}
 		});
 		
-		socket.on('quiz_admin_test_question',function(data){
-			if(isAdmin(socket,session)){
-				quizzes.showTestQuestion(session.quiz_id);
-			}
-		});
-		
 		socket.on('quiz_admin_next_question',function(data){
 			if(isAdmin(socket,session)){
 				quizzes.showNextQuestion(session.quiz_id);
-			}
-		});
-		
-		socket.on('quiz_admin_cancel_last_question',function(data){
-			if(isAdmin(socket,session)){
-				quizzes.cancelLastQuestion(session.quiz_id);
 			}
 		});
 		
@@ -366,27 +310,7 @@ io.on('connection', function(socket){
 		
 		socket.on('show_video',function(data){
 			if(isAdmin(socket,session)){
-				quizzes.hideCoins(session.quiz_id, data);
-			}
-		});
-
-		socket.on('start_endgame',function(data){
-			if(isAdmin(socket,session)){
-				quizzes.startEndgame(session.quiz_id);
-				var leaderboard = quizzes.getLeaderboard(session.quiz_id);
-				quizzes.updateLeaderboard(session.quiz_id, leaderboard);
-			}
-		});
-
-		socket.on('spin_endgame',function(data){
-			if(isAdmin(socket,session)){
-				quizzes.spinEndgame(session.quiz_id, data);
-			}
-		});
-
-		socket.on('next_scenario',function(data){
-			if(isAdmin(socket,session)){
-				quizzes.nextScenario(session.quiz_id, data);
+				quizzes.showVideo(session.quiz_id, data);
 			}
 		});
 		

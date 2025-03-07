@@ -1,15 +1,22 @@
+/* the javascript file for connect.html
+
+- shows the admin area if the user wants to login as an admin
+- shows and handles the pregame if the user wants to be a player
+- redirects the user if they want to be the digiboard
+*/
+
 function Connect(){
 	var socket = false;
-	var uniqueId = localStorage.getItem('uniqueId');
-	var qID = -1;
+	var uniqueId = localStorage.getItem('uniqueId'); //get the cookie of the player id
+	var qID = -1; // keep track of which question we are at during the pregame
 	var personQs = {
 		1: ['Ik werk het liefst met...','Mensen','Dingen'],
 		2: ['Ik vind het leukste om...','Nieuwe ideeën te bedenken','Een idee helemaal uit te werken en werkelijkheid te maken'],
 		3: ['Ik...','Neem graag de leiding','Ben liever onderdeel van een team'],
 		4: ['Ik wil het liefst dingen...','Bedenken','Bouwen'],
 		5: ['Ik haal voldoening uit...','Iemand te kunnen helpen','Iets helemaal te snappen']
-	}
-	var pregameanswers = {1:0,2:0,3:0,4:0,5:0};
+	} // these are the questions for the pregame
+	var pregameanswers = {1:0,2:0,3:0,4:0,5:0}; //object to store answers to the pregame (0 is left, 1 is right)
 
 	this.start = function(){
 		socket = io();
@@ -20,20 +27,14 @@ function Connect(){
 	
 	this.bindSocketEvents = function(){
 		socket.on('connect_init_ok',function(data){
-			if(data.quiz_desc){
-				//$('#quiz_title').html('<h1>'+data.quiz_desc+'</h1>');
-			}
-			
-			/*if(data.quiz_pic){
-				$('#quiz_pic').html('<img src="'+data.quiz_pic+'"/>');
-			}*/
+			//
 		});
 		
 		socket.on('connect_init_nok',function(){
 			location.href = '/';
 		});
 		
-		socket.on('connect_init_ok_ready_quiz',function(){
+		socket.on('connect_init_ok_ready_quiz',function(){ //if already loggin in, redirect to quiz.html
 			location.href = '/quiz.html';
 		});
 		
@@ -41,24 +42,20 @@ function Connect(){
 			alert('Invalid quiz code!');
 		});
 		
-		/*socket.on('connect_connect_nok_invalid_team_name',function(){
-			alert('Je naam moet minstens 2 letters hebben en niet al in gebruik zijn.');
-		});*/
-		
 		socket.on('connect_connect_nok_invalid_admin_password',function(){
 			alert('Invalid administrator password!');
 		});
 		
 		socket.on('connect_connect_ok',function(data){
-			location.href='quiz.html';
-			localStorage.setItem('uniqueId', data);
+			location.href='quiz.html'; //login is complete, redirect to quiz.html
+			localStorage.setItem('uniqueId', data); //set the cookie for the player id
 			return false;
 		});		
 		
 	}
 	
 	this.bindViewEvents = function(){
-		function getBrowserName() {
+		function getBrowserName() { //get the browser for fixing bugs related to browser type
 			const userAgent = navigator.userAgent;
 			
 			if (userAgent.indexOf("Firefox") > -1) {
@@ -84,7 +81,13 @@ function Connect(){
 		    return String(val).charAt(0).toUpperCase() + String(val).slice(1);
 		}
 
-		function getRole(){
+		function getRole(){ 
+			/* determine the role of the player after completing the pregame, based on the weights of the answers
+			- there are 5 questions
+			- there are 6 roles
+			- for each question, each role has a weight for the left and right answer (0, 0.5 or 1)
+			- the role with the highest final score becomes the role of the player
+			*/
 			var answerweights = {
 					1: {
 						1: [0,1],
@@ -130,8 +133,7 @@ function Connect(){
 				for (let rl in rolenames){
 					rolescores[rl] = 0;
 				}
-				console.log(pregameanswers);
-				console.log(rolescores);
+
 				for (let quest in pregameanswers){
 					for (let rl in rolescores){
 						rolescores[rl] += answerweights[quest][rl][parseInt(pregameanswers[quest])];
@@ -149,7 +151,11 @@ function Connect(){
 				return(maxKey);
 		}
 
-		function nextQuestion(ans){
+		function nextQuestion(ans){ 
+			/* handles clicking on the left or right answer or arrow to move to the next slide in the pregame.
+			- saves the answers (ans) for each question
+			- on the final question (after qID == 7), connection is made with the server (through app.js) by connect_connect
+			*/
 			qID++;
 			if (0 < qID && qID < 6){
 				if (qID > 1){
@@ -196,25 +202,14 @@ function Connect(){
 				nextQuestion();
 			}
 		});
-		  
-		/*$('#btn_connect_unofficial').click(function(){
-			socket.emit('connect_connect',{type:'unofficial',team_name:$('#unofficial_team_name').val()});			
-			return false;
-		});*/
 		
-		$('#btn_connect_official').click(function(){
-			var pregameanswers = {q1:$('input[name="q1"]:checked').val(),q2:$('input[name="q2"]:checked').val(),q3:$('input[name="q3"]:checked').val(),q4:$('input[name="q4"]:checked').val(),q5:$('input[name="q5"]:checked').val()}
-			socket.emit('connect_connect',{type:'official',team_name:$('#official_team_name').val(),quiz_code:$('#official_quiz_code').val(),pregameanswers:pregameanswers, browser: getBrowserName()});
-			socket.emit('update_leaderboard');
-			return false;
-		});
 
-		$('#btn_connect_spectator').click(function(){
+		$('#btn_connect_spectator').click(function(){ //handle clicking the button to connect as the digiboard
 			socket.emit('connect_connect',{type:'spectator', browser: getBrowserName()});
 			return false;
 		});
 		
-		$('#btn_admin_connect').click(function(){
+		$('#btn_admin_connect').click(function(){ //handle clicking the button to connect as the admin
 			let qlist = []; 
 			for (let i in questions) {
 				if ($('#check'+i).is(':checked')) {
@@ -224,7 +219,7 @@ function Connect(){
 			socket.emit('connect_connect',{type:'admin',admin_password:$('#admin_password').val(),questions:qlist,endgame:$('#admin_endgame').is(':checked'), browser: getBrowserName()});
 			return false;
 		});	
-		$('#btn_admin_questions').click(function(){
+		$('#btn_admin_questions').click(function(){ //handle clicking the button to view all the questions to select them
 			if ($('#admin_password').val() == 'tttt') {
 				$('#questions').show();
 				$(this).hide();
@@ -234,7 +229,7 @@ function Connect(){
 			return false;
 		});	
 
-		function getQueryParams() {
+		function getQueryParams() { // from the url, determine if the user wants to login as a player or as an admin/bigiboard, and for which quiz session.
 			const params = new URLSearchParams(window.location.search);
 			return {
 				quiz_id: params.get('quiz_id'),
@@ -244,15 +239,14 @@ function Connect(){
 	
 		// URL parameters ophalen
 		const params = getQueryParams();
-		console.log(params.type);
+
 		// Controleren of spectator true is
 		if (params.type === 'spectator' && params.quiz_id) {
-			socket.emit('connect_connect',{type:'spectator'});
-		} else if (params.type === 'player' && params.quiz_id) {
+			socket.emit('connect_connect',{type:'spectator'}); //if it is the digiboard, immediately connect, which will redirect to quiz.html
+		} else if (params.type === 'player' && params.quiz_id) { //if it is a player, hide the admin area in connect.html
 			$('#admin').hide();
-		} else if (params.type === 'admin') {
+		} else if (params.type === 'admin') { //if it is an admin, hide the player area in connect.html
 			$('#player').hide();
-			console.log('yez');
 		}
 	}
 
@@ -263,38 +257,26 @@ $(document).ready(function(){
 	var connect = new Connect();
 	connect.start();
 	qhtml = '';
-	aqhtml = '';
 	var categories = {};
-	var aq = {};
-	for (let i in questions) {
+	for (let i in questions) { //create the dropdown menu with all questions and checkboxes
 		cat = questions[i].category;
 		if (!(cat in categories)){
 			categories[cat] = '<details><summary style="cursor:pointer;"><b>'+cat+'</b></summary><table>';
-			aq[cat] = '<b>'+cat+'</b><br/>';
 		}
 		categories[cat] += '<tr><td><input type="checkbox" ';
 		if (cat == 'Basis'){
 			categories[cat] += 'checked ';
 		}
 		categories[cat] += 'value="' +  i + '" id="check' + i + '" /></td><td text-align="left"> ' ;
-		aq[cat] += i+'. ';
 		if(questions[i].type){
 			categories[cat] += '<b>[open vraag]</b> ';
-			aq[cat] += '[open vraag]';
 		}
 		categories[cat] += questions[i].question + '</td></tr>';
-		aq[cat] += '<u>'+questions[i].question+'</u><br />';
-		for(let a in questions[i].answers){
-			aq[cat] += questions[i].answers[a]+'<br />';
-		}
-		aq[cat] += '<br />';
 	}
 	for (let i in categories){
 		qhtml += '';
 		qhtml += categories[i];
-		aqhtml += aq[i];
 		qhtml += '</table></details>';
 	}
 	$('#questions').html(qhtml);
-	//$('#allquestions').html(aqhtml);
 });
